@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#05060a">
+<title>404 — nothing here | Aryan Verma</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700&family=Shippori+Mincho:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .nf {
+    min-height: 100svh;
+    display: grid;
+    place-content: center;
+    gap: 1.4rem;
+    padding: 2rem var(--gut);
+    text-align: center;
+  }
+  .nf__code {
+    font: 700 clamp(5rem, 22vw, 13rem)/.85 var(--f-sans);
+    letter-spacing: -.06em;
+    -webkit-text-stroke: 2px var(--red);
+    color: transparent;
+  }
+  .nf__jp {
+    font: 500 var(--t-lg)/1 var(--f-jp);
+    letter-spacing: .3em;
+    color: var(--txt-3);
+  }
+  .nf__msg { color: var(--txt-2); max-width: 40ch; margin-inline: auto; }
+  .nf__term {
+    display: inline-block;
+    margin-top: .4rem;
+    padding: .7em 1.1em;
+    font: 400 var(--t-sm)/1 var(--f-mono);
+    color: var(--grn);
+    background: var(--elev);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    text-align: left;
+  }
+  .nf__cta { display: flex; gap: .7rem; justify-content: center; flex-wrap: wrap; margin-top: .6rem; }
+</style>
+</head>
+<body>
+<div class="fx-grain" aria-hidden="true"></div>
+<div class="fx-scan" aria-hidden="true"></div>
+<div class="fx-vignette" aria-hidden="true"></div>
+
+<main class="nf">
+  <p class="nf__jp">見つかりません</p>
+  <h1 class="nf__code">404</h1>
+  <p class="nf__msg">That path doesn't resolve. Either it moved, or it never existed.</p>
+  <p class="nf__term">$ cat <span style="color:var(--txt-3)">this-page</span><br>
+     cat: this-page: No such file or directory</p>
+  <div class="nf__cta">
+    <a class="btn btn--solid" href="./"><span>Back home</span><i>帰る</i></a>
+    <a class="btn btn--ghost" href="./#work"><span>See the work</span><i>作品</i></a>
+  </div>
+</main>
+</body>
+</html>

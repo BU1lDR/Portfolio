@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Dark only. Telling the browser so stops it tinting form controls
+     and scrollbars for a light theme this site does not have. -->
+<meta name="color-scheme" content="dark">
+
+<!-- ============================================================
+     EDIT #1 — SEO / identity
+     Replace the URL if you use a custom domain instead of
+     https://bu1ldr.github.io/Portfolio/
+     ============================================================ -->
+<title>Aryan Verma — Cybersecurity Analyst &amp; Ethical Hacker</title>
+<meta name="description" content="Aryan Verma — cybersecurity and ethical hacking, based in Delhi, India. B.Tech at GGSIPU. Projects, certifications, and an interactive terminal.">
+<meta name="author" content="Aryan Verma">
+<meta name="keywords" content="Aryan Verma, cybersecurity, ethical hacking, penetration testing, data analysis, portfolio, GGSIPU, Delhi, India, Python, Linux">
+<link rel="canonical" href="https://bu1ldr.github.io/Portfolio/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Aryan Verma">
+<meta property="og:title" content="Aryan Verma — Cybersecurity Analyst &amp; Ethical Hacker">
+<meta property="og:description" content="Cybersecurity and ethical hacking, from Delhi, India. I like understanding how systems work — and how they can be made harder to break.">
+<meta property="og:url" content="https://bu1ldr.github.io/Portfolio/">
+<!-- TODO: drop a 1200x630 PNG at assets/og.png — see assets/README.txt -->
+<meta property="og:image" content="https://bu1ldr.github.io/Portfolio/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Aryan Verma — cybersecurity portfolio">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Aryan Verma — Cybersecurity Analyst &amp; Ethical Hacker">
+<meta name="twitter:description" content="Cybersecurity and ethical hacking, from Delhi, India. I like understanding how systems work — and how they can be made harder to break.">
+<meta name="twitter:image" content="https://bu1ldr.github.io/Portfolio/assets/og.png">
+
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/favicon.svg">
+<meta name="theme-color" content="#05060a">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=Shippori+Mincho:wght@500;700&display=swap" rel="stylesheet">
+<!-- ?v= is a cache buster, and it earns its keep: GitHub Pages serves assets
+     with a ten-minute max-age, so without it a visitor who has been here
+     before can sit on an old stylesheet and an old main.js after a deploy —
+     which looks exactly like a broken button. Bump the number in all four
+     references below whenever you change css/ or js/. -->
+<link rel="stylesheet" href="css/style.css?v=2">
+
+<!-- The boot overlay shows this ~0.7s in, so it must not be discovered
+     late by the parser. 15 KB — it is on the critical path by design. -->
+<link rel="preload" as="image" href="assets/pfp.jpg" fetchpriority="high">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Aryan Verma",
+  "url": "https://bu1ldr.github.io/Portfolio/",
+  "email": "mailto:aryanverma102007@gmail.com",
+  "jobTitle": "Cybersecurity Analyst",
+  "description": "Cybersecurity and ethical hacking, with a working interest in data analysis and system design.",
+  "nationality": "Indian",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Delhi",
+    "addressCountry": "IN"
+  },
+  "alumniOf": {
+    "@type": "CollegeOrUniversity",
+    "name": "Guru Gobind Singh Indraprastha University"
+  },
+  "knowsAbout": [
+    "Cybersecurity", "Ethical Hacking", "Penetration Testing",
+    "Network Analysis", "Data Analysis", "Python", "Linux"
+  ],
+  "sameAs": [
+    "https://github.com/BU1lDR",
+    "https://www.linkedin.com/in/aryanver",
+    "https://www.credly.com/users/aryan_v"
+  ]
+}
+</script>
+</head>
+
+<body>
+
+<!-- ── boot overlay ──────────────────────────────────────────── -->
+<div id="boot" class="boot" role="status" aria-label="Loading">
+  <div class="boot__inner">
+    <!-- The wrapper is what holds the fixed height and pins the log to its
+         bottom edge. Doing that on the <pre> itself would make it a flex
+         container, which turns every inline <b>ok</b> into its own row. -->
+    <div class="boot__logwrap" aria-hidden="true">
+      <pre class="boot__log" id="bootLog"></pre>
+    </div>
+
+    <!-- Identity frame. The photo fades in when the log reaches the
+         "verifying identity" line and fades back out on "handshake
+         complete" — roughly two seconds on screen, then gone with the
+         overlay.
+
+         Two things about its position. It sits *below* the log because the
+         log is bottom-anchored inside a fixed 21em box: above it, the frame
+         would float 300px clear of the first line with nothing in between.
+         And it is in the flow from the first paint, empty, rather than being
+         inserted when the photo arrives — an element appearing mid-sequence
+         inside a vertically-centred overlay drags the log and the progress
+         bar upward as it lands. -->
+    <figure class="boot__id" id="bootId" aria-hidden="true">
+      <div class="boot__id-frame">
+        <img src="assets/pfp.jpg" alt="" width="480" height="480"
+             decoding="async" fetchpriority="high">
+        <span class="boot__id-scan"></span>
+      </div>
+      <figcaption id="bootIdCap">認証待ち<i>awaiting subject</i></figcaption>
+    </figure>
+    <div class="boot__bar"><span id="bootBar"></span></div>
+    <p class="boot__skip">press any key to skip</p>
+  </div>
+</div>
+
+<!-- ── ambience ─────────────────────────────────────────────── -->
+<div class="cursor" id="cursorDot" aria-hidden="true"></div>
+<div class="cursor-ring" id="cursorRing" aria-hidden="true"><span class="cursor-ring__label"></span></div>
+<div class="fx-grain" aria-hidden="true"></div>
+<div class="fx-scan" aria-hidden="true"></div>
+<div class="fx-vignette" aria-hidden="true"></div>
+<canvas id="matrixCanvas" class="fx-matrix" aria-hidden="true"></canvas>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<!-- ── nav ──────────────────────────────────────────────────── -->
+<header class="nav" id="nav">
+  <a class="nav__mark" href="#home" aria-label="Aryan Verma — home">
+    <span class="nav__glyph">零</span>
+    <span class="nav__name">ARYAN<em>VERMA</em></span>
+  </a>
+
+  <nav class="nav__links" aria-label="Sections">
+    <a href="#terminal"><i>端末</i><span>Terminal</span></a>
+    <a href="#about"><i>私</i><span>About</span></a>
+    <a href="#skills"><i>技術</i><span>Skills</span></a>
+    <a href="#work"><i>作品</i><span>Work</span></a>
+    <a href="#path"><i>経歴</i><span>Path</span></a>
+    <a href="#contact"><i>連絡</i><span>Contact</span></a>
+  </nav>
+
+  <div class="nav__tools">
+    <button class="btn-icon nav__burger" id="burger" type="button" aria-label="Menu" aria-expanded="false" aria-controls="nav">
+      <span></span><span></span>
+    </button>
+  </div>
+  <div class="nav__progress" id="navProgress" aria-hidden="true"></div>
+</header>
+
+<!-- ── terminal window ──────────────────────────────────────────
+     The shell doesn't live in the page flow any more — it's a small
+     floating window pinned to the bottom-right corner, open from the
+     first paint and closable. The boot overlay (z 500) covers it while
+     the machine "comes up", so it arrives as the curtain lifts.
+
+     #terminal further down is its home base: the section heading, the
+     command palette, and the way back in once you've closed it.
+
+     Sitting here — after the nav, before <main> — means keyboard order
+     runs skip-link → nav → terminal → page, which matches what you see.
+     Not draggable, on purpose: a drag handle needs a keyboard equivalent
+     to be usable by everyone, and this window has nowhere useful to go.
+     ──────────────────────────────────────────────────────────── -->
+<aside class="termwin is-open" id="termWin" aria-label="Terminal">
+  <div class="term">
+    <!-- The traffic lights are real controls now: red closes, amber
+         collapses to the title bar. The green one is decoration and stays
+         out of the tab order. Each has a 23px hit area via ::after — the
+         11px circle is the paint, not the target. -->
+    <div class="term__bar" id="termBar">
+      <span class="term__dots">
+        <button class="term__dot term__dot--close" type="button" id="termClose"
+                aria-label="Close terminal" title="Close terminal (esc)"></button>
+        <button class="term__dot term__dot--min" type="button" id="termMin"
+                aria-label="Collapse terminal" aria-expanded="true"
+                aria-controls="termBody" title="Collapse to title bar"></button>
+        <i aria-hidden="true"></i>
+      </span>
+      <span class="term__path">aryan@shadow ~ /bin/sh</span>
+      <button class="term__clear" type="button" id="termClear">clear</button>
+      <!-- The English half comes from CSS, because it depends on the input
+           device rather than the screen size: "tap" only if there's no
+           hover-capable pointer. Safe as generated content — decoration. -->
+      <span class="term__peek" aria-hidden="true">開く</span>
+    </div>
+
+    <div class="term__body" id="termBody">
+      <div class="term__screen" id="termScreen" tabindex="0" role="log" aria-live="polite" aria-label="Terminal output"></div>
+
+      <form class="term__form" id="termForm" autocomplete="off">
+        <label class="term__ps1" for="termInput"><span>aryan@shadow</span>:<b>~</b>$</label>
+        <input class="term__input" id="termInput" name="cmd" type="text"
+               spellcheck="false" autocapitalize="none" autocorrect="off"
+               aria-label="Terminal command" placeholder="help">
+        <span class="term__hintkey" aria-hidden="true">↹ tab &nbsp;↑ history</span>
+      </form>
+    </div>
+  </div>
+</aside>
+
+<!-- Reopen affordance. It takes the corner the window vacated, so closing
+     and reopening are the same gesture in the same place. -->
+<button class="termlaunch" id="termLaunch" type="button"
+        aria-controls="termWin" aria-expanded="true" data-cursor="shell">
+  <span class="termlaunch__ps1" aria-hidden="true">❯_</span>
+  <span class="termlaunch__label">Terminal</span>
+  <i aria-hidden="true">端末</i>
+</button>
+
+<main id="main">
+
+  <!-- ══ HERO ═══════════════════════════════════════════════ -->
+  <section class="hero" id="home">
+    <canvas id="scene" class="hero__canvas" aria-hidden="true"></canvas>
+
+    <p class="vrail vrail--left" aria-hidden="true">零と壱より生まれる</p>
+    <p class="vrail vrail--right" aria-hidden="true">影の中で構築する</p>
+
+    <div class="hero__body">
+      <p class="hero__eyebrow reveal"><span class="prompt">&gt;</span> ./initialize --user <b>aryan</b> <span class="caret"></span></p>
+
+      <h1 class="hero__title reveal" data-reveal-delay="60">
+        <!-- The <i> carries a second copy of the word with the portrait poured
+             into its letterforms, stacked over the white text. It sits low most
+             of the time and surges with the glitch, so the face reads as
+             something coming *through* the interference rather than a photo
+             pasted behind the type.
+
+             The word is in data-text, not between the tags, and CSS draws it
+             from there — same trick the chromatic split above already uses.
+             Real text here would put "ARYAN" in this <h1> twice, which is what
+             a search engine and a copy-paste would both read. -->
+        <span class="glitch" data-text="ARYAN">ARYAN<i class="glitch__photo" data-text="ARYAN" aria-hidden="true"></i></span>
+        <span class="glitch glitch--accent" data-text="VERMA">VERMA</span>
+      </h1>
+
+      <p class="hero__role reveal" data-reveal-delay="120">
+        <span class="hero__role-static">I'm into</span>
+        <span class="type" id="typewriter" aria-live="polite"></span>
+      </p>
+
+      <!-- ============================================================
+           EDIT #2 — your one-line pitch
+           ============================================================ -->
+      <p class="hero__lede reveal" data-reveal-delay="180">
+        Cybersecurity and ethical hacking, based in Delhi. I like understanding
+        how systems work underneath — and how they can be made harder to break.
+      </p>
+
+      <div class="hero__cta reveal" data-reveal-delay="240">
+        <a class="btn btn--solid" href="#work" data-cursor="view">
+          <span>View work</span><i>作品</i>
+        </a>
+        <!-- TODO: put your real PDF at assets/resume.pdf -->
+        <a class="btn btn--ghost" href="assets/resume.pdf" download data-cursor="save">
+          <span>Resume</span><i class="ico-dl">↓</i>
+        </a>
+      </div>
+
+      <!-- ============================================================
+           EDIT #3 — social links
+           ============================================================ -->
+      <ul class="hero__social reveal" data-reveal-delay="300">
+        <li><a href="https://github.com/BU1lDR" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+        <li><a href="https://www.linkedin.com/in/aryanver" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+        <li><a href="https://www.credly.com/users/aryan_v" target="_blank" rel="noopener noreferrer">Credly</a></li>
+        <li><a href="mailto:aryanverma102007@gmail.com">Email</a></li>
+      </ul>
+    </div>
+
+    <a class="hero__scroll" href="#terminal" aria-label="Scroll to terminal">
+      <span>scroll</span><i></i>
+    </a>
+  </section>
+
+  <!-- ══ TERMINAL ═══════════════════════════════════════════ -->
+  <section class="sec sec--terminal" id="terminal">
+    <div class="wrap">
+      <header class="sec__head reveal">
+        <span class="sec__num">01<i>壱</i></span>
+        <h2 class="sec__title">Terminal <em>端末</em></h2>
+        <p class="sec__sub">Born of 1s &amp; 0s — 「零と壱より生まれる」. The shell floats in the
+          corner of the screen. Type in it, or fire a command from here.</p>
+      </header>
+
+      <!-- Home base. The window itself is a fixed overlay declared near the
+           top of this document; this is where you reach it from. Clicking a
+           chip opens the window if it's closed, then runs the command. -->
+      <div class="termhome reveal" data-reveal-delay="80">
+        <div class="term__chips" id="termChips">
+          <button type="button" data-cmd="help">help</button>
+          <button type="button" data-cmd="whoami">whoami</button>
+          <button type="button" data-cmd="skills">skills</button>
+          <button type="button" data-cmd="projects">projects</button>
+          <button type="button" data-cmd="certs">certs</button>
+          <button type="button" data-cmd="resume">resume</button>
+          <button type="button" data-cmd="neofetch">neofetch</button>
+          <button type="button" data-cmd="matrix">matrix</button>
+        </div>
+
+        <div class="termhome__foot">
+          <button class="btn btn--solid termhome__open" type="button" id="termOpen" data-cursor="shell">
+            <span id="termOpenLabel">Open terminal</span><i>起動</i>
+          </button>
+          <p class="termhome__hint">
+            35 commands. <kbd>↹</kbd> completes, <kbd>↑</kbd> walks history,
+            <kbd>esc</kbd> closes the window. Start with <code>help</code>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ ABOUT ══════════════════════════════════════════════ -->
+  <section class="sec" id="about">
+    <div class="wrap">
+      <header class="sec__head reveal">
+        <span class="sec__num">02<i>弐</i></span>
+        <h2 class="sec__title">About <em>私について</em></h2>
+        <p class="sec__sub">The short version.</p>
+      </header>
+
+      <div class="about">
+        <!-- ============================================================
+             EDIT #4 — your bio. Three short paragraphs works well.
+             ============================================================ -->
+        <div class="about__text reveal">
+          <p><span class="dropcap">私</span> Hi, I'm Aryan — a curious learner, always looking for a reason to
+            pull something apart and find out how it actually works.</p>
+          <p>I'm particularly interested in cybersecurity and ethical hacking:
+            understanding how systems behave, where they give, and how they can be
+            made harder to break. Most of that curiosity ends up in a terminal —
+            reading traffic in Wireshark, mapping a host with Nmap, or writing a
+            small Python tool because the manual version got tedious.</p>
+          <p>Alongside that I'm working through data analysis and system design,
+            while reading for a B.Tech at GGSIPU in Delhi. Right now I'm looking
+            for internships where I can put this to work on real systems.</p>
+
+          <ul class="about__facts">
+            <li><b>Based in</b><span>Delhi, India · IST (UTC+5:30)</span></li>
+            <li><b>Focus</b><span>Cybersecurity, ethical hacking</span></li>
+            <li><b>Also learning</b><span>Data analysis, system design</span></li>
+            <li><b>Status</b><span class="ok">Open to internships</span></li>
+            <li><b>Languages</b><span>English, Hindi</span></li>
+          </ul>
+        </div>
+
+        <aside class="about__card reveal" data-reveal-delay="120" data-tilt>
+          <div class="about__card-inner">
+            <div class="idcard">
+              <div class="idcard__top">
+                <span class="idcard__label">識別票 / ID</span>
+                <span class="idcard__chip" aria-hidden="true"></span>
+              </div>
+              <div class="idcard__avatar" aria-hidden="true">
+                <!-- TODO: swap for a photo -> <img src="assets/me.jpg" alt="Aryan Verma"> -->
+                <span>零</span>
+              </div>
+              <p class="idcard__name">ARYAN VERMA</p>
+              <p class="idcard__role">cybersecurity · ethical hacking</p>
+              <dl class="idcard__meta">
+                <div><dt>REGION</dt><dd>IN · DEL</dd></div>
+                <div><dt>SHELL</dt><dd>bash</dd></div>
+                <div><dt>UPTIME</dt><dd id="uptime">—</dd></div>
+              </dl>
+              <p class="idcard__strip" aria-hidden="true">零壱零壱壱零壱零零壱壱零壱零壱壱零壱零</p>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ SKILLS ═════════════════════════════════════════════ -->
+  <section class="sec sec--alt" id="skills">
+    <div class="wrap">
+      <header class="sec__head reveal">
+        <span class="sec__num">03<i>参</i></span>
+        <h2 class="sec__title">Skills <em>技術</em></h2>
+        <p class="sec__sub">What I reach for. No percentages — those are unverifiable;
+          the work below is the evidence.</p>
+      </header>
+
+      <!-- ============================================================
+           EDIT #5 — skills. Plain lists, no ratings. Add or remove an
+           <article> to change a group; keep the kanji in <i> short.
+           Mirror any change in js/data.js (EDIT #9).
+           ============================================================ -->
+      <div class="skills">
+        <article class="skillgroup reveal" data-tilt>
+          <h3><i aria-hidden="true">言</i>Languages</h3>
+          <ul class="skilltags">
+            <li>Python</li><li>C</li><li>C++</li><li>SQL</li><li>JavaScript</li>
+          </ul>
+        </article>
+
+        <article class="skillgroup reveal" data-reveal-delay="70" data-tilt>
+          <h3><i aria-hidden="true">攻</i>Security &amp; Recon</h3>
+          <ul class="skilltags">
+            <li>Nmap</li><li>Wireshark</li><li>Burp Suite</li><li>sqlmap</li>
+            <li>Metasploit</li><li>Hydra</li><li>Shodan</li>
+          </ul>
+        </article>
+
+        <article class="skillgroup reveal" data-reveal-delay="140" data-tilt>
+          <h3><i aria-hidden="true">系</i>Systems</h3>
+          <ul class="skilltags">
+            <li>Linux</li><li>Bash</li><li>Docker</li><li>Git &amp; GitHub</li>
+            <li>Networking fundamentals</li>
+          </ul>
+        </article>
+
+        <article class="skillgroup reveal" data-reveal-delay="210" data-tilt>
+          <h3><i aria-hidden="true">基</i>Backend</h3>
+          <ul class="skilltags">
+            <li>FastAPI</li><li>Uvicorn</li><li>Pydantic</li><li>REST APIs</li>
+            <li>pytest</li>
+          </ul>
+        </article>
+
+        <article class="skillgroup reveal" data-reveal-delay="280" data-tilt>
+          <h3><i aria-hidden="true">構</i>Frontend</h3>
+          <ul class="skilltags">
+            <li>HTML &amp; CSS</li><li>React</li><li>Tailwind CSS</li><li>Vite</li>
+            <li>react-router</li>
+          </ul>
+        </article>
+
+        <article class="skillgroup reveal" data-reveal-delay="350" data-tilt>
+          <h3><i aria-hidden="true">知</i>Data &amp; AI</h3>
+          <ul class="skilltags">
+            <li>Pandas</li><li>NumPy</li><li>Prompt engineering</li>
+            <li>LLM workflows</li><li>IBM Project Bob</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="tags reveal" data-reveal-delay="200">
+        <span class="tags__label">also</span>
+        <ul>
+          <li>JSON</li><li>CLI tooling</li><li>httpx</li><li>ESLint</li>
+          <li>GitHub Actions</li><li>OSINT</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ WORK ═══════════════════════════════════════════════ -->
+  <section class="sec" id="work">
+    <div class="wrap">
+      <header class="sec__head reveal">
+        <span class="sec__num">04<i>肆</i></span>
+        <h2 class="sec__title">Selected Work <em>作品</em></h2>
+        <p class="sec__sub">Things I built and actually finished.</p>
+      </header>
+
+      <!-- ============================================================
+           EDIT #6 — projects. Duplicate one "article.card" block per project.
+           Keep the data-* attributes: the terminal `projects` command
+           reads the same list from js/data.js — update both.
+           ============================================================ -->
+      <div class="work">
+
+        <article class="card reveal" data-tilt>
+          <div class="card__inner">
+            <span class="card__index" aria-hidden="true">01</span>
+            <div class="card__thumb" aria-hidden="true"><span>壱</span></div>
+            <div class="card__body">
+              <h3 class="card__title">File Integrity Checker</h3>
+              <p class="card__desc">A lightweight file integrity monitor. Take a
+                trusted baseline once, run a check whenever you need one, and it
+                names exactly what was modified, added or deleted — no manual
+                diffing, no guesswork.</p>
+              <ul class="card__stack"><li>Python</li><li>JSON</li><li>CLI</li><li>Git</li></ul>
+              <div class="card__links">
+                <a href="https://github.com/BU1lDR/my_projects/tree/main/file_integrity_checker"
+                   target="_blank" rel="noopener noreferrer">Code<i>↗</i></a>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card reveal" data-reveal-delay="80" data-tilt>
+          <div class="card__inner">
+            <span class="card__index" aria-hidden="true">02</span>
+            <div class="card__thumb" aria-hidden="true"><span>弐</span></div>
+            <div class="card__body">
+              <h3 class="card__title">अर्थNiti</h3>
+              <p class="card__desc">Smart India Hackathon 2026 — an AI-driven
+                hyper-local business advisory and financial structuring assistant
+                for rural micro-entrepreneurs. I built the backend: the API
+                surface and the integrations behind it.</p>
+              <ul class="card__stack"><li>Python</li><li>FastAPI</li><li>React</li><li>Tailwind CSS</li><li>Vite</li></ul>
+              <p class="card__note">Prototype phase · repository private</p>
+            </div>
+          </div>
+        </article>
+
+      </div>
+
+      <p class="work__more reveal">
+        More on <a href="https://github.com/BU1lDR" target="_blank" rel="noopener noreferrer">GitHub<i>↗</i></a>
+      </p>
+    </div>
+  </section>
+
+  <!-- ══ PATH ═══════════════════════════════════════════════ -->
+  <section class="sec sec--alt" id="path">
+    <div class="wrap">
+      <header class="sec__head reveal">
+        <span class="sec__num">05<i>伍</i></span>
+        <h2 class="sec__title">Path <em>経歴</em></h2>
+        <p class="sec__sub">Education and experience, most recent first.</p>
+      </header>
+
+      <!-- ============================================================
+           EDIT #7 — timeline. Swap in real dates, places, and detail.
+           ============================================================ -->
+      <ol class="timeline">
+        <li class="tl reveal">
+          <span class="tl__dot" aria-hidden="true"></span>
+          <p class="tl__when">Apr — Sep 2026</p>
+          <h3 class="tl__what">Data Analytics Intern</h3>
+          <p class="tl__where">IBM SkillsBuild × BharatCares — Remote</p>
+          <p class="tl__note">Worked with real-world datasets and learned to apply
+            analytical thinking to them — which is where data analytics and AI
+            stopped being two separate subjects for me.</p>
+        </li>
+        <li class="tl reveal" data-reveal-delay="80">
+          <span class="tl__dot" aria-hidden="true"></span>
+          <p class="tl__when">2026</p>
+          <h3 class="tl__what">Backend — API &amp; Integration</h3>
+          <p class="tl__where">Smart India Hackathon — अर्थNiti</p>
+          <p class="tl__note">Problem statement: AI-driven hyper-local business
+            advisory and financial structuring assistant for rural
+            micro-entrepreneurs.</p>
+        </li>
+        <li class="tl reveal" data-reveal-delay="160">
+          <span class="tl__dot" aria-hidden="true"></span>
+          <p class="tl__when">2025 — 2029</p>
+          <h3 class="tl__what">B.Tech — Information Technology</h3>
+          <p class="tl__where">Guru Gobind Singh Indraprastha University (GGSIPU) — Delhi, India</p>
+          <p class="tl__note">CGPA 9.04.</p>
+        </li>
+      </ol>
+
+      <!-- ============================================================
+           EDIT #7b — certifications. Add an <li> per credential.
+           Mirror any change in js/data.js.
+           ============================================================ -->
+      <div class="certs reveal" data-reveal-delay="80">
+        <h3 class="certs__head">Certifications <em>認定</em></h3>
+        <ul class="certs__list">
+          <li>
+            <b>Junior Cybersecurity Analyst Career Path</b>
+            <span>Cisco Networking Academy</span>
+          </li>
+          <li>
+            <b>Foundations of Prompt Engineering</b>
+            <span>Amazon Web Services (AWS)</span>
+          </li>
+          <li>
+            <b>Fundamentals of C Programming</b>
+            <span>EICT Academy, IIT Roorkee</span>
+          </li>
+          <li>
+            <b>Generative AI Essentials: Using LLMs with Data</b>
+            <span>IBM SkillsBuild</span>
+          </li>
+          <li>
+            <b>Make Agentic AI Work for You</b>
+            <span>IBM SkillsBuild</span>
+          </li>
+          <li>
+            <b>Data Fundamentals</b>
+            <span>IBM SkillsBuild</span>
+          </li>
+          <li>
+            <b>Getting Started with Data</b>
+            <span>IBM SkillsBuild</span>
+          </li>
+        </ul>
+        <p class="certs__verify">
+          Badges verifiable on
+          <a href="https://www.credly.com/users/aryan_v" target="_blank" rel="noopener noreferrer">Credly<i>↗</i></a>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ CONTACT ════════════════════════════════════════════ -->
+  <section class="sec sec--contact" id="contact">
+    <div class="wrap">
+      <header class="sec__head reveal">
+        <span class="sec__num">06<i>陸</i></span>
+        <h2 class="sec__title">Get in touch <em>連絡</em></h2>
+        <p class="sec__sub">Internships, freelance, or just to say hello. I reply.</p>
+      </header>
+
+      <div class="contact">
+        <!-- ============================================================
+             EDIT #8 — contact form
+             1. Make a free form at https://formspree.io
+             2. Paste your form ID below (replace YOUR_FORMSPREE_ID)
+             Until then the form falls back to opening your mail client.
+             ============================================================ -->
+        <form class="form reveal" id="contactForm"
+              action="https://formspree.io/f/YOUR_FORMSPREE_ID"
+              method="POST" novalidate
+              data-fallback-email="aryanverma102007@gmail.com">
+          <div class="form__row">
+            <div class="field">
+              <label for="fName">Name</label>
+              <input id="fName" name="name" type="text" required maxlength="80" autocomplete="name" placeholder="Your name">
+              <small class="field__err" data-err-for="fName"></small>
+            </div>
+            <div class="field">
+              <label for="fEmail">Email</label>
+              <input id="fEmail" name="email" type="email" required maxlength="120" autocomplete="email" placeholder="you@domain.com">
+              <small class="field__err" data-err-for="fEmail"></small>
+            </div>
+          </div>
+          <div class="field">
+            <label for="fSubject">Subject</label>
+            <input id="fSubject" name="subject" type="text" maxlength="120" placeholder="What's this about?">
+          </div>
+          <div class="field">
+            <label for="fMsg">Message</label>
+            <textarea id="fMsg" name="message" rows="6" required maxlength="2000" placeholder="Say what you need. Short is fine."></textarea>
+            <small class="field__err" data-err-for="fMsg"></small>
+          </div>
+
+          <!-- simple bot trap; real humans never fill this -->
+          <div class="hp" aria-hidden="true">
+            <label for="fHp">Leave this empty</label>
+            <input id="fHp" name="_gotcha" type="text" tabindex="-1" autocomplete="off">
+          </div>
+
+          <button class="btn btn--solid form__submit" type="submit" id="formSubmit">
+            <span>Send message</span><i>送信</i>
+          </button>
+          <p class="form__status" id="formStatus" role="status" aria-live="polite"></p>
+        </form>
+
+        <aside class="contact__side reveal" data-reveal-delay="120">
+          <div class="contact__block">
+            <h3>Direct</h3>
+            <a class="contact__mail" href="mailto:aryanverma102007@gmail.com">aryanverma102007@gmail.com</a>
+          </div>
+          <div class="contact__block">
+            <h3>Elsewhere</h3>
+            <ul class="contact__links">
+              <li><a href="https://github.com/BU1lDR" target="_blank" rel="noopener noreferrer">GitHub<i>↗</i></a></li>
+              <li><a href="https://www.linkedin.com/in/aryanver" target="_blank" rel="noopener noreferrer">LinkedIn<i>↗</i></a></li>
+              <li><a href="https://www.credly.com/users/aryan_v" target="_blank" rel="noopener noreferrer">Credly<i>↗</i></a></li>
+            </ul>
+          </div>
+          <div class="contact__block">
+            <h3>Resume</h3>
+            <a class="btn btn--ghost btn--sm" href="assets/resume.pdf" download>
+              <span>Download PDF</span><i class="ico-dl">↓</i>
+            </a>
+          </div>
+          <p class="contact__ascii" aria-hidden="true">また会いましょう<br>/* see you around */</p>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot__in">
+    <p class="foot__left">
+      <span class="foot__glyph" aria-hidden="true">零</span>
+      © <span id="year">2026</span> Aryan Verma — 零と壱より生まれる
+    </p>
+    <p class="foot__right">
+      Built by hand. No framework.
+      <a href="https://github.com/BU1lDR/Portfolio" target="_blank" rel="noopener noreferrer">Source<i>↗</i></a>
+    </p>
+  </div>
+</footer>
+
+<!-- Keep ?v= in step with the stylesheet's, up in <head>. -->
+<script src="js/data.js?v=2"></script>
+<script src="js/scene.js?v=2" defer></script>
+<script src="js/terminal.js?v=2" defer></script>
+<script src="js/main.js?v=2" defer></script>
+</body>
+</html>
