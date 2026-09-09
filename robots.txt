@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://bu1ldr.github.io/Portfolio/sitemap.xml
