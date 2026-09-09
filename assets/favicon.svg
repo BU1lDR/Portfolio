@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Torii gate mark">
+  <rect width="64" height="64" rx="10" fill="#05060a"/>
+  <g fill="#ff3b53">
+    <!-- kasagi (top beam) with a slight upward sweep -->
+    <rect x="5"  y="13" width="54" height="7" rx="1.5"/>
+    <rect x="3"  y="11" width="10" height="6" rx="1.5"/>
+    <rect x="51" y="11" width="10" height="6" rx="1.5"/>
+    <!-- nuki (lower crossbeam) -->
+    <rect x="12" y="25" width="40" height="5" rx="1"/>
+    <!-- gakuzuka (centre post) -->
+    <rect x="30" y="19" width="4" height="7"/>
+    <!-- pillars, tapering outward at the base -->
+    <path d="M17 13h7l2 40h-11z"/>
+    <path d="M40 13h7l2 40h-11z"/>
+  </g>
+</svg>
