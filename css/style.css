@@ -1030,8 +1030,9 @@ body.cursor-down .cursor-ring { transform: scale(.82); }
 
 /* ── 10 terminal ─────────────────────────────────────────────── */
 
-/* The shell is a floating window, not a block in the page. It's on screen
-   from the first paint, pinned bottom-right, and stays until you close it.
+/* The shell is a floating window, not a block in the page: pinned
+   bottom-right, stowed while you're up in the hero, and on screen from the
+   terminal section down until you close it. See "stowed" below.
 
    z-index 96 is chosen against the rest of the stack, not picked at random:
    it clears the grain/scanline/vignette layers (90) and the matrix rain (95)
@@ -1053,7 +1054,7 @@ body.cursor-down .cursor-ring { transform: scale(.82); }
   transform-origin: 100% 100%;
 
   /* Closed is the resting state in CSS; index.html ships `is-open` on the
-     element so there's no frame of empty corner before JS runs.
+     element so the window is there whether or not a script ever runs.
 
      `visibility 0s linear .34s` on the way out, `0s` on the way in. That
      asymmetry is the point: hiding waits for the fade to finish, revealing
@@ -1066,12 +1067,48 @@ body.cursor-down .cursor-ring { transform: scale(.82); }
   transition: opacity .3s var(--ease), transform .34s var(--ease-io),
               visibility 0s linear .34s;
 }
-.termwin.is-open {
+
+/* ── stowed above the terminal section ─────────────────────────
+   The window used to be on screen from the first paint, and in this corner
+   that meant it sat on the lower-right quadrant of the hero's torii — the
+   right pillar and the near end of the kasagi. So above #terminal the shell
+   is *stowed*, and module 09 in js/main.js puts `term-stowed` on <body> to
+   say so.
+
+   Note what this does and doesn't do. It gates the state class rather than
+   restating the hidden values: `is-open` and `is-min` still mean exactly what
+   they meant, so scrolling back up and down again restores whichever state
+   you left the window in, and closing it while stowed still sticks. It also
+   means every breakpoint's own hidden state is reused as its stowed state —
+   the desktop window fades down 14px, the mobile one slides off the bottom
+   edge (see §18) — instead of one hard-coded transform being wrong at one of
+   them. And the outbound transition on .termwin above is the one that plays,
+   `visibility` delay and all.
+
+   :not() on <body> and not on <html> because that's where this file's other
+   body-level state lives (is-locked, cursor-ready). With no JS the class is
+   never added, the selector matches, and the window is simply always there. */
+body:not(.term-stowed) .termwin.is-open {
   opacity: 1;
   visibility: visible;
   transform: none;
   transition: opacity .3s var(--ease), transform .34s var(--ease-io), visibility 0s;
 }
+
+/* Cold start: the very first stow is a starting condition, not something the
+   visitor did, so it must not animate. `is-open` ships in the markup, which
+   means adding term-stowed at boot is a state *change* as far as the engine is
+   concerned — it dutifully plays the exit transition, and the window fades down
+   out of the hero's corner over .34s. Under the boot overlay nobody sees that;
+   on a second visit in the same session the overlay is skipped and you watch
+   the whole thing.
+
+   Held for one frame while module 09 forces a reflow, then dropped, so every
+   later stow animates normally. No !important needed: 0,2,1 beats the .termwin
+   base rule, and the is-open rules that outrank it can't match while the window
+   is stowed anyway. */
+body.term-cold .termwin,
+body.term-cold .termlaunch { transition: none; }
 
 .term {
   border: 1px solid var(--line-2);
@@ -1345,8 +1382,12 @@ body.cursor-down .cursor-ring { transform: scale(.82); }
               visibility 0s linear .3s;
 }
 /* Shown on the same tick as the class — close() hands focus straight to this
-   button, and it has to be focusable by then. */
-.termlaunch.is-shown {
+   button, and it has to be focusable by then.
+
+   Stowed with the window, for the same reason: a pill is small, but it would
+   be the one thing left sitting on the gate. Same gating trick — see the note
+   above .termwin's own is-open rule. */
+body:not(.term-stowed) .termlaunch.is-shown {
   opacity: 1;
   visibility: visible;
   transform: none;
@@ -2167,7 +2208,10 @@ body.cursor-down .cursor-ring { transform: scale(.82); }
     box-shadow: 0 -16px 42px -18px rgba(0, 0, 0, .92);
     transform: translateY(100%);
   }
-  .termwin.is-open { transform: none; }
+  /* Same specificity as the desktop rule and later in the file, so this wins.
+     Which also means the stowed strip slides down off the edge here instead of
+     fading 14px, without either value being written twice. */
+  body:not(.term-stowed) .termwin.is-open { transform: none; }
   /* The strip's own frame does the work now — the inner card would draw a
      second border and a floating shadow inside a flush-mounted panel. */
   .termwin .term,
@@ -2189,7 +2233,7 @@ body.cursor-down .cursor-ring { transform: scale(.82); }
     bottom: calc(.8rem + env(safe-area-inset-bottom));
     transform: translate(-50%, 10px) scale(.96);
   }
-  .termlaunch.is-shown { transform: translate(-50%, 0); }
+  body:not(.term-stowed) .termlaunch.is-shown { transform: translate(-50%, 0); }
 
   /* The docked strip permanently covers the last ~46px of the document. */
   .foot { padding-bottom: calc(2.2rem + 46px + env(safe-area-inset-bottom)); }

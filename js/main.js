@@ -487,7 +487,12 @@
 
      Open is the shipped state: index.html carries `is-open` on the element so
      the window is there whether or not this file ever runs. Everything below
-     is about taking it away again and bringing it back. */
+     is about taking it away again and bringing it back.
+
+     On top of those three states there's a fourth thing that can hide it, and
+     it isn't a state the visitor chose: above the terminal section the window
+     is *stowed*, because the corner it sits in is the corner the hero's torii
+     turns in. See the stow block near the bottom of this module. */
 
   (function termWindow() {
     var win = $('#termWin');
@@ -501,9 +506,16 @@
     var openLabel = $('#termOpenLabel');
     var narrow = window.matchMedia('(max-width: 860px)');
 
-    function isOpen() { return win.classList.contains('is-open'); }
-    function isMin()  { return win.classList.contains('is-min'); }
-    function isVisible() { return isOpen() && !isMin(); }
+    function isOpen()   { return win.classList.contains('is-open'); }
+    function isMin()    { return win.classList.contains('is-min'); }
+    function isStowed() { return doc.body.classList.contains('term-stowed'); }
+
+    /* Three separate ways for this window not to be in front of you, and
+       "visible" has to mean none of them: closed, folded to its title bar, or
+       stowed because you haven't scrolled down to it yet. terminal.js asks
+       this before it types its intro, so getting it wrong plays the whole
+       sequence out to an empty corner — once, unrepeatably. */
+    function isVisible() { return isOpen() && !isMin() && !isStowed(); }
 
     /* Never pull focus on a narrow screen: the window is docked to the bottom
        edge there, so raising the on-screen keyboard would cover the very
@@ -533,9 +545,11 @@
 
     /* Deliberately not in sync(): sync() also runs at init, while the boot
        overlay is still in front of everything, and kicking the intro there
-       would play it out behind the curtain. Only the two paths that put the
-       window on screen because someone asked release it. (On desktop nobody
-       has to ask — terminal.js kicks it itself once boot finishes.) */
+       would play it out behind the curtain. Only the paths that actually put
+       the window in front of someone release it — opening, unfolding, and
+       un-stowing. (terminal.js also kicks it itself on boot:done, but its own
+       guard means that only lands when the window is already visible as the
+       curtain lifts, which now takes a page that loaded below the hero.) */
     function releaseWelcome() {
       if (isVisible() && window.Terminal) window.Terminal.welcome();
     }
@@ -543,6 +557,13 @@
     function open() {
       win.classList.add('is-open');
       win.classList.remove('is-min');
+      /* Being asked outranks where you are on the page. Nothing in the UI can
+         reach this from inside the hero — the pill is stowed too, and the chips
+         and the Open button are both down in the terminal section — but open()
+         is a public method, and a window that silently ignores it is a worse
+         bug than one that turns up somewhere unexpected. The observer stows it
+         again at the next crossing. */
+      stow(false);
       sync();
       releaseWelcome();
       focusPrompt();
@@ -614,9 +635,83 @@
       close();
     }, true);
 
+    /* ── stowed until you reach the terminal section ──────────────
+       The corner this window lives in is the corner the hero's torii turns in,
+       and at 540×418 it took out the gate's lower-right quadrant — the right
+       pillar and the near end of the kasagi. So above #terminal the shell is
+       put away: CSS hides it off a class on <body>, the state classes are left
+       untouched, and scrolling back up stows it again.
+
+       That last part is why this is a separate layer rather than a close():
+       is-open and is-min still mean what they meant, so whatever state you
+       left the window in is the state you get back on the way down — and a
+       window you closed stays closed instead of being reopened by a scroll. */
+    var STOW_AT = .62;
+    var home = $('#terminal');
+
+    function stow(on) {
+      if (on === isStowed()) return;
+      doc.body.classList.toggle('term-stowed', on);
+      /* Arriving is the only direction with anything to do. The intro was held
+         back while there was nothing to watch it on, so let it play now — it
+         types itself out as the window slides in, which is a better first
+         impression than a shell that was already talking to an empty corner.
+         Not focusPrompt(), though: the visitor scrolled, they didn't ask for
+         the keyboard. */
+      if (!on) releaseWelcome();
+    }
+
+    /* Where the line is: #terminal's top edge coming up past 62% of the
+       viewport height. Late enough that the gate has scrolled clear of the
+       corner before anything lands on it — at 1686×822 its lowest point is
+       ~90px above the window's top edge at the moment this fires — and early
+       enough that the window is already there by the time the heading is.
+
+       Read off the rect rather than off isIntersecting, because isIntersecting
+       also goes false at the far end, when the terminal section leaves through
+       the top of the screen. "The terminal section or after" includes
+       everything below it, and a negative top is still past the line.
+
+       Sampling only on crossings is safe, which is all an observer offers: a
+       crossing is the only moment the answer can change. Resize included — the
+       test below is the observer's own intersection test with the bottom
+       clause dropped, and dropping it can only ever hold the answer at true. */
+    function past(rect) { return rect.top <= window.innerHeight * STOW_AT; }
+
+    if (home && 'IntersectionObserver' in window) {
+      /* Measured synchronously first. The observer's opening callback lands a
+         frame or two later, and on a second visit in the same session the boot
+         overlay has been skipped and isn't there to cover the gap — long
+         enough to watch the window flash into the hero's corner and then be
+         taken away again.
+
+         Synchronous isn't sufficient on its own, though. `is-open` ships in the
+         markup, so stowing at boot reads as a state change and the exit
+         transition plays: the window fades down out of the corner over .34s,
+         which is the same flash by a slower route. So the first one is a cold
+         start — transitions off (see §10 in the stylesheet), reflow to commit
+         the hidden values as the resting state, transitions back on at the next
+         frame. Everything after this animates.
+
+         The reflow is what makes one frame enough: style is resolved while
+         term-cold still applies, so by the time the class comes off there is no
+         longer a change left to interpolate. */
+      if (!past(home.getBoundingClientRect())) {
+        doc.body.classList.add('term-cold');
+        stow(true);
+        void win.offsetWidth;
+        requestAnimationFrame(function () { doc.body.classList.remove('term-cold'); });
+      }
+
+      new IntersectionObserver(function (entries) {
+        stow(!past(entries[entries.length - 1].boundingClientRect));
+      }, { rootMargin: '0px 0px -' + Math.round((1 - STOW_AT) * 100) + '% 0px' })
+        .observe(home);
+    }
+
     /* On a phone the window docks to the bottom edge, and a 46vh panel over a
        390px-wide hero isn't "present on screen", it's in the way. So it
-       arrives folded: the title bar is there from the first paint — still
+       arrives folded: the title bar is there as soon as it arrives — still
        present, still unclosed — and one tap opens it. */
     if (narrow.matches) win.classList.add('is-min');
     sync();
@@ -627,6 +722,7 @@
       collapse: collapse,
       expand: expand,
       isOpen: isOpen,
+      isStowed: isStowed,
       isVisible: isVisible
     };
   })();

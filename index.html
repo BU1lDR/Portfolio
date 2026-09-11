@@ -43,9 +43,10 @@
 <!-- ?v= is a cache buster, and it earns its keep: GitHub Pages serves assets
      with a ten-minute max-age, so without it a visitor who has been here
      before can sit on an old stylesheet and an old main.js after a deploy —
-     which looks exactly like a broken button. Bump the number in all four
-     references below whenever you change css/ or js/. -->
-<link rel="stylesheet" href="css/style.css?v=2">
+     which looks exactly like a broken button. Bump the number in all five
+     references — this one and the four scripts at the end of <body> —
+     whenever you change css/ or js/. -->
+<link rel="stylesheet" href="css/style.css?v=3">
 
 <!-- The boot overlay shows this ~0.7s in, so it must not be discovered
      late by the parser. 15 KB — it is on the critical path by design. -->
@@ -156,9 +157,15 @@
 
 <!-- ── terminal window ──────────────────────────────────────────
      The shell doesn't live in the page flow any more — it's a small
-     floating window pinned to the bottom-right corner, open from the
-     first paint and closable. The boot overlay (z 500) covers it while
-     the machine "comes up", so it arrives as the curtain lifts.
+     floating window pinned to the bottom-right corner, closable, and
+     stowed until you scroll down to the terminal section.
+
+     It used to be there from the first paint. In this corner that put it
+     over the lower-right quadrant of the hero's torii, so now it waits
+     above #terminal and slides in as that section comes up. `is-open`
+     below is still the shipped state — main.js does the stowing, so with
+     no script at all the window is simply always there. Module 09 in
+     js/main.js owns it.
 
      #terminal further down is its home base: the section heading, the
      command palette, and the way back in once you've closed it.
@@ -205,8 +212,10 @@
   </div>
 </aside>
 
-<!-- Reopen affordance. It takes the corner the window vacated, so closing
-     and reopening are the same gesture in the same place. -->
+<!-- Reopen affordance. It takes the corner the window vacated, so closing and
+     reopening are the same gesture in the same place — and it stows with the
+     window above the terminal section, or it would be the one thing left
+     sitting on the gate. -->
 <button class="termlaunch" id="termLaunch" type="button"
         aria-controls="termWin" aria-expanded="true" data-cursor="shell">
   <span class="termlaunch__ps1" aria-hidden="true">❯_</span>
@@ -286,8 +295,9 @@
       <header class="sec__head reveal">
         <span class="sec__num">01<i>壱</i></span>
         <h2 class="sec__title">Terminal <em>端末</em></h2>
-        <p class="sec__sub">Born of 1s &amp; 0s — 「零と壱より生まれる」. The shell floats in the
-          corner of the screen. Type in it, or fire a command from here.</p>
+        <p class="sec__sub">Born of 1s &amp; 0s — 「零と壱より生まれる」. The shell turns up in
+          the corner of the screen here and follows you down the page. Type in
+          it, or fire a command from this list.</p>
       </header>
 
       <!-- Home base. The window itself is a fixed overlay declared near the
@@ -690,9 +700,9 @@
 </footer>
 
 <!-- Keep ?v= in step with the stylesheet's, up in <head>. -->
-<script src="js/data.js?v=2"></script>
-<script src="js/scene.js?v=2" defer></script>
-<script src="js/terminal.js?v=2" defer></script>
-<script src="js/main.js?v=2" defer></script>
+<script src="js/data.js?v=3"></script>
+<script src="js/scene.js?v=3" defer></script>
+<script src="js/terminal.js?v=3" defer></script>
+<script src="js/main.js?v=3" defer></script>
 </body>
 </html>
