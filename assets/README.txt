@@ -14,7 +14,25 @@ assets/ — two files left to drop in, and the site is complete.
        cp ../../Resume_AryanVerma.pdf assets/resume.pdf
 
 
-2. og.png                                            ← RECOMMENDED
+2. pfp.jpg                                           ← IN PLACE ✓
+   Used twice, both times briefly and both times processed so it
+   never reads as a plain photo:
+
+     · the boot overlay's identity frame, for about a second
+       while the loading sequence runs
+     · poured into the letterforms of "ARYAN" in the hero, via
+       background-clip: text on .glitch__photo
+
+   Copied from ..\..\hacker_pfp.png. If you swap it, keep it
+   roughly square — the hero crop assumes it.
+
+
+3. certs/ and badges/                                ← IN PLACE ✓
+   Eleven certificate PDFs and the seven issuer badge images
+   behind the Certifications block. See the note at the bottom.
+
+
+4. og.png                                            ← RECOMMENDED
    The image people see when your link is shared on WhatsApp,
    LinkedIn, X, Slack, Discord.
 
@@ -30,7 +48,7 @@ assets/ — two files left to drop in, and the site is complete.
    image. Nothing else breaks.
 
 
-3. me.jpg                                            ← OPTIONAL
+5. me.jpg                                            ← OPTIONAL
    A photo of you for the ID card in the About section.
    Square crop, 400x400 or larger.
 
@@ -49,17 +67,58 @@ site's accent.
 
 ────────────────────────────────────────────────────────────────
 
-OPTIONAL — certificate PDFs
+certs/ — the certificate PDFs
 
-The Certifications block links to your Credly profile, which
-publicly verifies the badge-backed ones. If you'd rather offer
-the PDFs directly, copy them in:
+Eleven files, ~4.5 MB in total, copied from
+D:/DATA/Desktop/Aryan/certifications/ on 2026-09-10 and renamed
+to kebab-case. Nothing loads them until a visitor clicks, so
+they cost the page nothing.
 
-    mkdir -p assets/certs
-    cp "D:/DATA/Desktop/Aryan/certifications/Junior_Cybersecurity_Analyst.pdf" \
-       assets/certs/cisco-junior-cybersecurity-analyst.pdf
-    # …and the rest
+All eleven were read before publishing. Each contains only your
+name, the course, the issuer, a completion date and a course or
+certificate ID — no address, no phone number, no date of birth,
+and no identifying metadata (no author field, no local paths).
+Check any file you add later the same way, because that is not
+true of certificates generally.
 
-then wrap each <b> in index.html's .certs__list in an <a href>.
-Worth knowing: certificate PDFs sometimes carry your full
-address or an ID number, so open them before publishing.
+Two of them were the reason a couple of entries got corrected:
+the C programming course is E&ICT Academy, IIT *Kanpur* (the
+page had said Roorkee), and the IBM one is "Using LLMs *to
+Work* with Data".
+
+Where a credential exists as both a terse award and a fuller
+"Certificate of Course Completion" — the three Cisco ones — the
+fuller version is here, because it lists the learning outcomes
+and carries a QR verification code.
+
+One source filename contained your email address; it was
+renamed to cisco-packet-tracer-getting-started.pdf on the way
+in, so the published URL doesn't carry it.
+
+badges/ — issuer badge art
+
+Seven transparent PNGs, 600x600 (networking-basics is 650), the
+official Credly badge images. The grid shows them at 64px, muted
+with saturate(.62), and restores full colour on hover or
+keyboard focus — Cisco cyan and IBM magenta at full strength
+fight this site's palette.
+
+Muted rather than greyed, which was the first attempt and worth
+not repeating: these badges are small posters with their own
+typography, so desaturating them entirely turns all eleven rows
+into the same illegible grey square. 64px is roughly the size
+where the wordmark becomes readable.
+
+The four credentials with no badge art show the issuer's short
+name in mono instead ("cisco", "aws", "IBM", "IIT Kanpur"). A ✓
+was there first, but an empty 64px box reads as an image that
+failed to load.
+
+If you add a credential later, grab its badge from Credly at
+600px or larger, save it as PNG with transparency, and name it
+to match the PDF.
+
+Not published, and deliberately so: the seven "Digital Sticker"
+PNGs in the source folder. They're participation stickers rather
+than certifications, and mixing them into the list would dilute
+the eleven that are real credentials.
