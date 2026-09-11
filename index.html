@@ -564,41 +564,163 @@
       <!-- ============================================================
            EDIT #7b — certifications. Add an <li> per credential.
            Mirror any change in js/data.js.
+
+           Each <li> is: a 64px leading tile, then the title, then the
+           issuer and the date on their own lines, then the links. The
+           tile is either the issuer's badge from assets/badges/ or, for
+           the four with no badge art, the issuer's short name set in
+           mono — so every row has a tile and the grid doesn't go ragged.
+           Both kinds are aria-hidden; the issuer is spelled out in full
+           two lines below either way.
+
+           Titles, issuers and dates here are transcribed from the PDFs
+           themselves, not from memory. Two were wrong before: the C
+           programming course is IIT *Kanpur*, and the IBM one is "Using
+           LLMs *to Work* with Data".
+
+           `Verify` points at Credly where the badge PDF embeds its own
+           verification URL. The Cisco certificates carry a printed Cert
+           ID and a QR code instead, so for those the PDF *is* the
+           verification artifact and there's no second link.
            ============================================================ -->
       <div class="certs reveal" data-reveal-delay="80">
         <h3 class="certs__head">Certifications <em>認定</em></h3>
         <ul class="certs__list">
           <li>
-            <b>Junior Cybersecurity Analyst Career Path</b>
-            <span>Cisco Networking Academy</span>
+            <img class="certs__badge" src="assets/badges/junior-cybersecurity-analyst-career-path.png"
+                 alt="" width="600" height="600" loading="lazy" decoding="async">
+            <div class="certs__body">
+              <b>Junior Cybersecurity Analyst Career Path</b>
+              <span>Cisco Networking Academy</span>
+              <span class="certs__when">Jul 2026</span>
+              <p class="certs__act">
+                <a href="assets/certs/junior-cybersecurity-analyst-career-path.pdf" target="_blank" rel="noopener">PDF<i>↓</i></a>
+              </p>
+            </div>
           </li>
           <li>
-            <b>Foundations of Prompt Engineering</b>
-            <span>Amazon Web Services (AWS)</span>
+            <img class="certs__badge" src="assets/badges/introduction-to-cybersecurity.png"
+                 alt="" width="600" height="600" loading="lazy" decoding="async">
+            <div class="certs__body">
+              <b>Introduction to Cybersecurity</b>
+              <span>Cisco Networking Academy</span>
+              <span class="certs__when">Aug 2026</span>
+              <p class="certs__act">
+                <a href="assets/certs/introduction-to-cybersecurity.pdf" target="_blank" rel="noopener">PDF<i>↓</i></a>
+              </p>
+            </div>
           </li>
           <li>
-            <b>Fundamentals of C Programming</b>
-            <span>EICT Academy, IIT Roorkee</span>
+            <img class="certs__badge" src="assets/badges/networking-basics.png"
+                 alt="" width="650" height="650" loading="lazy" decoding="async">
+            <div class="certs__body">
+              <b>Networking Basics</b>
+              <span>Cisco Networking Academy</span>
+              <span class="certs__when">Aug 2026</span>
+              <p class="certs__act">
+                <a href="assets/certs/networking-basics.pdf" target="_blank" rel="noopener">PDF<i>↓</i></a>
+              </p>
+            </div>
           </li>
           <li>
-            <b>Generative AI Essentials: Using LLMs with Data</b>
-            <span>IBM SkillsBuild</span>
+            <span class="certs__badge certs__badge--mark" aria-hidden="true">cisco</span>
+            <div class="certs__body">
+              <b>Getting Started with Cisco Packet Tracer</b>
+              <span>Cisco Networking Academy</span>
+              <span class="certs__when">Jul 2026</span>
+              <p class="certs__act">
+                <a href="assets/certs/cisco-packet-tracer-getting-started.pdf" target="_blank" rel="noopener">PDF<i>↓</i></a>
+              </p>
+            </div>
           </li>
           <li>
-            <b>Make Agentic AI Work for You</b>
-            <span>IBM SkillsBuild</span>
+            <span class="certs__badge certs__badge--mark" aria-hidden="true">aws</span>
+            <div class="certs__body">
+              <b>Foundations of Prompt Engineering</b>
+              <span>Amazon Web Services (AWS)</span>
+              <span class="certs__when">Aug 2026</span>
+              <p class="certs__act">
+                <a href="assets/certs/aws-foundations-of-prompt-engineering.pdf" target="_blank" rel="noopener">PDF<i>↓</i></a>
+              </p>
+            </div>
           </li>
           <li>
-            <b>Data Fundamentals</b>
-            <span>IBM SkillsBuild</span>
+            <img class="certs__badge" src="assets/badges/generative-ai-essentials-llms-with-data.png"
+                 alt="" width="600" height="600" loading="lazy" decoding="async">
+            <div class="certs__body">
+              <b>Generative AI Essentials: Using LLMs to Work with Data</b>
+              <span>IBM SkillsBuild</span>
+              <span class="certs__when">Aug 2026</span>
+              <p class="certs__act">
+                <a href="assets/certs/generative-ai-essentials-llms-with-data.pdf" target="_blank" rel="noopener">PDF<i>↓</i></a>
+                <a href="https://www.credly.com/go/MD6b8lPb" target="_blank" rel="noopener noreferrer">Verify<i>↗</i></a>
+              </p>
+            </div>
           </li>
           <li>
-            <b>Getting Started with Data</b>
-            <span>IBM SkillsBuild</span>
+            <img class="certs__badge" src="assets/badges/make-agentic-ai-work-for-you.png"
+                 alt="" width="600" height="600" loading="lazy" decoding="async">
+            <div class="certs__body">
+              <b>Make Agentic AI Work for You</b>
+              <span>IBM SkillsBuild</span>
+              <span class="certs__when">Aug 2026</span>
+              <p class="certs__act">
+                <a href="assets/certs/make-agentic-ai-work-for-you.pdf" target="_blank" rel="noopener">PDF<i>↓</i></a>
+                <a href="https://www.credly.com/go/oF0xxDVH" target="_blank" rel="noopener noreferrer">Verify<i>↗</i></a>
+              </p>
+            </div>
+          </li>
+          <li>
+            <img class="certs__badge" src="assets/badges/data-fundamentals.png"
+                 alt="" width="600" height="600" loading="lazy" decoding="async">
+            <div class="certs__body">
+              <b>Data Fundamentals</b>
+              <span>IBM SkillsBuild</span>
+              <span class="certs__when">Aug 2026</span>
+              <p class="certs__act">
+                <a href="assets/certs/data-fundamentals.pdf" target="_blank" rel="noopener">PDF<i>↓</i></a>
+                <a href="https://www.credly.com/badges/b2e70cb2-0c1f-45d9-98b2-631d94b0a88b" target="_blank" rel="noopener noreferrer">Verify<i>↗</i></a>
+              </p>
+            </div>
+          </li>
+          <li>
+            <img class="certs__badge" src="assets/badges/getting-started-with-data.png"
+                 alt="" width="600" height="600" loading="lazy" decoding="async">
+            <div class="certs__body">
+              <b>Getting Started with Data</b>
+              <span>IBM SkillsBuild</span>
+              <span class="certs__when">Aug 2026</span>
+              <p class="certs__act">
+                <a href="assets/certs/getting-started-with-data.pdf" target="_blank" rel="noopener">PDF<i>↓</i></a>
+                <a href="https://www.credly.com/badges/05298fad-c459-4c7d-96db-8f3d82d3754b" target="_blank" rel="noopener noreferrer">Verify<i>↗</i></a>
+              </p>
+            </div>
+          </li>
+          <li>
+            <span class="certs__badge certs__badge--mark" aria-hidden="true">IBM</span>
+            <div class="certs__body">
+              <b>Lab: Troubleshoot Your Code Using IBM Bob</b>
+              <span>IBM SkillsBuild</span>
+              <span class="certs__when">Aug 2026</span>
+              <p class="certs__act">
+                <a href="assets/certs/ibm-bob-troubleshoot-your-code.pdf" target="_blank" rel="noopener">PDF<i>↓</i></a>
+              </p>
+            </div>
+          </li>
+          <li>
+            <span class="certs__badge certs__badge--mark" aria-hidden="true">IIT<br>Kanpur</span>
+            <div class="certs__body">
+              <b>Fundamentals of C Programming</b>
+              <span>E&amp;ICT Academy, IIT Kanpur</span>
+              <span class="certs__when">Nov 2025</span>
+              <p class="certs__act">
+                <a href="assets/certs/fundamentals-of-c-programming.pdf" target="_blank" rel="noopener">PDF<i>↓</i></a>
+              </p>
+            </div>
           </li>
         </ul>
         <p class="certs__verify">
-          Badges verifiable on
+          Every certificate above is downloadable. Badges also verifiable on
           <a href="https://www.credly.com/users/aryan_v" target="_blank" rel="noopener noreferrer">Credly<i>↗</i></a>
         </p>
       </div>
