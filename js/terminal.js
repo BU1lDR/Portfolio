@@ -242,7 +242,10 @@
         if (!list.length) { out('Nothing listed yet.', 'tl-dim'); return; }
         list.forEach(function (c) {
           out('<span class="tl-key">✓</span> <span class="tl-hi">' + esc(c.what) + '</span>');
-          out('  <span class="tl-dim">' + esc(c.issuer) + '</span>');
+          // Date on the issuer line rather than its own — eleven entries at
+          // three lines each scrolls the window twice over.
+          out('  <span class="tl-dim">' + esc(c.issuer) +
+              (c.when ? ' · ' + esc(c.when) : '') + '</span>');
         });
         if (P.certsVerify) {
           gap();
@@ -759,16 +762,19 @@
     else seq(welcome, 170);
   }
 
-  /* The window is on screen from the first paint, so there is nothing to
-     scroll into view any more — but the boot overlay sits in front of it for
-     the first few seconds, and typing the intro then would play the whole
-     thing behind the curtain. main.js fires this when the curtain lifts
-     (immediately, if boot was skipped or the visitor asked for less motion).
+  /* The intro plays once and can't be replayed, so it has to wait until there
+     is something to watch it on. Three separate things can be in the way, and
+     main.js's window controller owns all three: the boot overlay is in front
+     of everything for the first few seconds, the window arrives folded on
+     phones, and it arrives stowed anywhere above the terminal section. Its
+     isVisible() accounts for all of them and it calls Terminal.welcome() at
+     whichever moment the window actually turns up — opened, unfolded, or
+     scrolled to.
 
-     If the window arrived folded — which it does on phones — hold the intro
-     until it is opened; the controller calls Terminal.welcome() at that
-     point. The timeout is belt and braces for the case where main.js never
-     ran at all: whatever else happens, the screen doesn't stay blank. */
+     boot:done covers the one case nothing else will: the page loaded already
+     below the hero, on a wide screen, so the window is up and unfolded the
+     moment the curtain lifts. The timeout is belt and braces for main.js never
+     having run — whatever else happens, the screen doesn't stay blank. */
   function kickIfVisible() {
     if (window.TermWindow && !window.TermWindow.isVisible()) return;
     kick();

@@ -135,16 +135,26 @@ window.PORTFOLIO = {
   ],
 
   /* ── certifications ─────────────────────────────────────── */
-  /* Most relevant first. `verify` is the public badge profile.  */
+  /* Most relevant first — security, then AI and data, then the
+     fundamentals. `certsVerify` is the public badge profile; `when`
+     and `issuer` are transcribed off the certificates themselves.
+
+     Keep this list and the one in index.html in step. The terminal
+     prints from here, the page renders from there, and a visitor can
+     compare the two in the same screenful.                          */
   certsVerify: 'https://www.credly.com/users/aryan_v',
   certifications: [
-    { what: 'Junior Cybersecurity Analyst Career Path',        issuer: 'Cisco Networking Academy' },
-    { what: 'Foundations of Prompt Engineering',               issuer: 'Amazon Web Services (AWS)' },
-    { what: 'Fundamentals of C Programming',                   issuer: 'EICT Academy, IIT Roorkee' },
-    { what: 'Generative AI Essentials: Using LLMs with Data',  issuer: 'IBM SkillsBuild' },
-    { what: 'Make Agentic AI Work for You',                    issuer: 'IBM SkillsBuild' },
-    { what: 'Data Fundamentals',                               issuer: 'IBM SkillsBuild' },
-    { what: 'Getting Started with Data',                       issuer: 'IBM SkillsBuild' }
+    { what: 'Junior Cybersecurity Analyst Career Path',              issuer: 'Cisco Networking Academy',      when: 'Jul 2026' },
+    { what: 'Introduction to Cybersecurity',                         issuer: 'Cisco Networking Academy',      when: 'Aug 2026' },
+    { what: 'Networking Basics',                                    issuer: 'Cisco Networking Academy',      when: 'Aug 2026' },
+    { what: 'Getting Started with Cisco Packet Tracer',              issuer: 'Cisco Networking Academy',      when: 'Jul 2026' },
+    { what: 'Foundations of Prompt Engineering',                     issuer: 'Amazon Web Services (AWS)',     when: 'Aug 2026' },
+    { what: 'Generative AI Essentials: Using LLMs to Work with Data', issuer: 'IBM SkillsBuild',              when: 'Aug 2026' },
+    { what: 'Make Agentic AI Work for You',                          issuer: 'IBM SkillsBuild',              when: 'Aug 2026' },
+    { what: 'Data Fundamentals',                                     issuer: 'IBM SkillsBuild',              when: 'Aug 2026' },
+    { what: 'Getting Started with Data',                             issuer: 'IBM SkillsBuild',              when: 'Aug 2026' },
+    { what: 'Lab: Troubleshoot Your Code Using IBM Bob',             issuer: 'IBM SkillsBuild',              when: 'Aug 2026' },
+    { what: 'Fundamentals of C Programming',                         issuer: 'E&ICT Academy, IIT Kanpur',    when: 'Nov 2025' }
   ],
 
   /* ── neofetch art ───────────────────────────────────────── */
