@@ -59,7 +59,7 @@
   var narrow = matchMedia('(max-width: 860px)');
   var squat = matchMedia('(max-height: 599px)');
 
-  var POSES = ['p-idle', 'p-run', 'p-leap', 'p-land', 'p-cut-min', 'p-cut-close'];
+  var POSES = ['p-idle', 'p-run', 'p-leap', 'p-fall', 'p-land', 'p-cut-min', 'p-cut-close'];
   /* The run-in is the only move there is. He used to have a lunge per cut as
      well; §10b's "why he no longer drops" is the whole story. */
   var MOVES = ['is-runin'];
@@ -80,15 +80,28 @@
     min: {
       pose: 'p-cut-min', vfx: 'is-cut-min',
       lead: 120,         // contact — the fold commits here
-      land: 200,         // ...then the Jump tail, riding the roof down
-      done: 620,
+      /* ...then the Jump tail, riding the roof down. Offsets are from contact,
+         and they are timed against a trace of the real fold rather than spaced
+         evenly, because the fold is not an even motion: it carries him 468px in
+         .34s and peaks near 4700px/s. 140 is the follow-through the stroke needs.
+         300 is where the card has nearly run out of travel, so the sheet's own
+         return to the ground reads as the impact. §10b's "riding the fold down"
+         works through why p-fall cannot be handed to him any earlier. */
+      tail: [[140, 'p-fall'], [300, 'p-land']],
+      /* 780 because the tail has to finish: 120 + 300 + 240 = 660, and then he
+         gets 120ms standing before the breath comes back. terminal.js holds the
+         typed `minimise` for 620ms, which looks like this number and is not —
+         that one is a runway, and nothing reads this. */
+      done: 780,
       needs: ['attack_3', 'jump'],
       act: function () { T.collapse(); }
     },
     close: {
       pose: 'p-cut-close', vfx: 'is-cut-close',
       lead: 150,
-      land: 0,           // no landing: he holds the finished cut and goes with it
+      /* No tail. The fold needs one because the window survives it and so does
+         he; here the window is leaving in two pieces and he holds the finished
+         cut all the way through. Nothing to land on. */
       /* 1140 rather than 700 because the halves now fall off the bottom of the
          screen instead of fading out over it, and 860ms of falling that starts at
          contact is not finished until 1010 — after which §10b holds the emptied
@@ -107,7 +120,8 @@
      frame: the fold plays attack_3 and *then* the Jump tail, and a half-warmed
      cache that can draw the swing but not the landing is still a hole. */
   var SHEET = {
-    'p-idle': 'idle', 'p-run': 'run', 'p-leap': 'jump', 'p-land': 'jump',
+    'p-idle': 'idle', 'p-run': 'run', 'p-leap': 'jump',
+    'p-fall': 'jump', 'p-land': 'jump',
     'p-cut-min': 'attack_3', 'p-cut-close': 'attack_2'
   };
   function drawable(list) {
@@ -366,7 +380,15 @@
        stopped, planted. */
     at(run, function () { pose(c.pose); move(null); });
     at(run + c.lead, commit);
-    if (c.land) at(run + c.lead + c.land, function () { pose('p-land'); });
+    /* The tail, if the cut has one. Each step is [ms after contact, pose]. The
+       IIFE is not decoration: this file is `var`-scoped, so without one every
+       timer would close over the same loop variable and they would all fire the
+       last pose in the list. */
+    for (var i = 0; c.tail && i < c.tail.length; i++) {
+      (function (step) {
+        at(run + c.lead + step[0], function () { pose(step[1]); });
+      }(c.tail[i]));
+    }
     at(run + c.done, finish);
     watchdog = setTimeout(function () { commit(); finish(); }, run + c.done + 400);
     return true;
