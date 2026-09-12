@@ -4,7 +4,7 @@
    He stands on the floating window's top border and breathes. When you dismiss
    the window he cuts it down, and the cut is what actually dismisses it.
 
-   Almost all of the choreography is in style.css §10b — poses, the lunge, the
+   Almost all of the choreography is in style.css §10b — poses, the run-in, the
    two cut beams. This file only decides WHEN, and it is small on purpose,
    because everything about WHERE he is turns out to be a layout problem rather
    than a scripting one: he is an absolutely positioned child of .termwin at
@@ -60,7 +60,9 @@
   var squat = matchMedia('(max-height: 599px)');
 
   var POSES = ['p-idle', 'p-run', 'p-leap', 'p-land', 'p-cut-min', 'p-cut-close'];
-  var MOVES = ['is-runin', 'is-lunge-min', 'is-lunge-close'];
+  /* The run-in is the only move there is. He used to have a lunge per cut as
+     well; §10b's "why he no longer drops" is the whole story. */
+  var MOVES = ['is-runin'];
 
   var dead = false;            // sheets failed to load — never fire a cut
   var pend = null;             // the strike in flight, or null
@@ -76,7 +78,7 @@
      those frames imply. */
   var CUT = {
     min: {
-      pose: 'p-cut-min', move: 'is-lunge-min', vfx: 'is-cut-min',
+      pose: 'p-cut-min', vfx: 'is-cut-min',
       lead: 120,         // contact — the fold commits here
       land: 200,         // ...then the Jump tail, riding the roof down
       done: 620,
@@ -84,7 +86,7 @@
       act: function () { T.collapse(); }
     },
     close: {
-      pose: 'p-cut-close', move: 'is-lunge-close', vfx: 'is-cut-close',
+      pose: 'p-cut-close', vfx: 'is-cut-close',
       lead: 150,
       land: 0,           // no landing: he holds the finished cut and goes with it
       /* 1140 rather than 700 because the halves now fall off the bottom of the
@@ -198,9 +200,11 @@
     var to = ghost.querySelectorAll('input, textarea');
     for (var k = 0; k < from.length && k < to.length; k++) to[k].value = from[k].value;
 
-    /* Before .sam, so he keeps painting over the card: the close lunge drops
-       him 36 device px, which puts his blade inside the card's top rows, and a
-       photograph laid over that would swallow the steel. */
+    /* Before .sam, so he keeps painting over the card. He no longer reaches into
+       it — the lunge that used to put his blade inside the card's top rows is
+       gone — but his drop-shadow spills ~10px past his feet onto the border he is
+       standing on, and a photograph of the card inserted after him would paint
+       over that. Him on top is also the order that survives the next pose. */
     win.insertBefore(ghost, sam);
     /* 2px of overshoot on the outer edges — the polygon must not shave a
        piece's own 1px border off the sides it is supposed to keep. */
@@ -328,7 +332,12 @@
     }
 
     pend = c;
-    at(run, function () { pose(c.pose); move(c.move); });
+    /* move(null) rather than a lunge: the run-in has to come off here — its
+       `both` fill would otherwise keep holding him at 0, which is where it
+       ends anyway, but a strike that inherits a finished animation is a strike
+       that breaks the day someone retimes the run. He cuts from where he
+       stopped, planted. */
+    at(run, function () { pose(c.pose); move(null); });
     at(run + c.lead, commit);
     if (c.land) at(run + c.lead + c.land, function () { pose('p-land'); });
     at(run + c.done, finish);
