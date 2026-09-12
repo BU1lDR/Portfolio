@@ -454,7 +454,13 @@
           return out('There is no exit. <span class="tl-dim">Just scroll.</span>');
         }
         out('Closing session… <span class="tl-dim">reopen with the ❯_ button, bottom right.</span>');
-        // Long enough to read the line you just triggered.
+        // Long enough to read the line you just triggered — and long enough for
+        // the guard on the roof to run the length of the window first. He
+        // commits the close himself, on the frame the blade lands, so the delay
+        // is the same 700ms either way. If he is switched off, absent, or
+        // standing down (reduced motion, small screens, hidden tab) he says so
+        // and we close it ourselves as before.
+        if (window.Samurai && window.Samurai.strike('close', 700)) return;
         setTimeout(function () { window.TermWindow.close(); }, 700);
       }
     },
@@ -467,6 +473,8 @@
       run: function () {
         if (!window.TermWindow) return out('Nothing to fold — this shell is inline.', 'tl-dim');
         out('Folded. <span class="tl-dim">Click the title bar to unfold.</span>');
+        // Same arrangement as `exit` above: the guard fills the 620ms if he can.
+        if (window.Samurai && window.Samurai.strike('min', 620)) return;
         setTimeout(function () { window.TermWindow.collapse(); }, 620);
       }
     },
