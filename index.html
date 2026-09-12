@@ -46,7 +46,7 @@
      which looks exactly like a broken button. Bump the number in all five
      references — this one and the four scripts at the end of <body> —
      whenever you change css/ or js/. -->
-<link rel="stylesheet" href="css/style.css?v=4">
+<link rel="stylesheet" href="css/style.css?v=5">
 
 <!-- The boot overlay shows this ~0.7s in, so it must not be discovered
      late by the parser. 15 KB — it is on the critical path by design. -->
@@ -208,6 +208,47 @@
                aria-label="Terminal command" placeholder="help">
         <span class="term__hintkey" aria-hidden="true">↹ tab &nbsp;↑ history</span>
       </form>
+    </div>
+
+    <!-- Where the blade lands. Inside .term so its overflow:hidden and its
+         radius clip them to the card, which is what makes a raked line read as
+         a cut through this window rather than a stray diagonal on the page.
+         The horizontal one is the fold, the kesa-giri is the close, the wash
+         is the card flinching. All three are lit by a class on .termwin. -->
+    <b class="term__cut term__cut--h" aria-hidden="true"></b>
+    <b class="term__cut term__cut--v" aria-hidden="true"></b>
+    <b class="term__cut term__cut--wash" aria-hidden="true"></b>
+  </div>
+
+  <!-- ── the guard ────────────────────────────────────────────────
+       A pixel-art samurai stands on this window's top border and cuts it down
+       when you dismiss it. See style.css §10b for why he is a child of .termwin
+       and not a fixed sibling: `bottom: 100%` puts his feet on the roof by
+       layout, so he rides the fold with no measurement and no JS, and he
+       inherits the window's opacity — meaning he is present in exactly the
+       states the window is, including stowed and printed.
+
+       Six nested boxes, each doing exactly one thing, because collapsing any two
+       of them breaks something: .sam is pure layout (never transformed, so the
+       roof anchor cannot be broken by a stray transform), .sam__zoom applies the
+       2× once so everything below it can be written in the sprite's own 0..127
+       cell coordinates, .sam__rig carries movement, .sam__stage is the porthole
+       (inside the rig, or a run-in would slice him against a stationary clip),
+       .sam__flip turns him to face the page, and .sam__cel is the sprite strip.
+       He renders and breathes from CSS alone; js/samurai.js only decides when he
+       swings.
+
+       aria-hidden and pointer-events:none — he is decoration on a control, and
+       must never be between you and the button. -->
+  <div class="sam p-idle" id="sam" aria-hidden="true">
+    <div class="sam__zoom">
+      <div class="sam__rig">
+        <div class="sam__stage">
+          <div class="sam__flip">
+            <div class="sam__cel"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </aside>
@@ -816,15 +857,23 @@
     </p>
     <p class="foot__right">
       Built by hand. No framework.
+      <!-- The one thing on this page I didn't make. CraftPix's licence permits
+           commercial use without credit; it gets credited anyway. -->
+      Samurai by <a href="https://craftpix.net/file-licenses/" target="_blank" rel="noopener noreferrer">CraftPix<i>↗</i></a>
       <a href="https://github.com/BU1lDR/Portfolio" target="_blank" rel="noopener noreferrer">Source<i>↗</i></a>
     </p>
   </div>
 </footer>
 
 <!-- Keep ?v= in step with the stylesheet's, up in <head>. -->
-<script src="js/data.js?v=4"></script>
-<script src="js/scene.js?v=4" defer></script>
-<script src="js/terminal.js?v=4" defer></script>
-<script src="js/main.js?v=4" defer></script>
+<script src="js/data.js?v=5"></script>
+<script src="js/scene.js?v=5" defer></script>
+<script src="js/terminal.js?v=5" defer></script>
+<script src="js/main.js?v=5" defer></script>
+<!-- After main.js, not before: samurai.js checks for window.TermWindow and
+     stands down if it is missing, which is only a meaningful test once module 09
+     has defined it. Deleting this one line is the samurai's kill switch — he
+     stays on the roof, breathing, from CSS alone. -->
+<script src="js/samurai.js?v=5" defer></script>
 </body>
 </html>
