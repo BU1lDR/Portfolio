@@ -1623,17 +1623,34 @@ body:not(.term-stowed) .termlaunch.is-shown {
    `forwards`, so the last frame is a real frame and is *held* — plain steps(n)
    would land on the strip's end and flash frame 0 at the worst moment. */
 
+/* The `left` values are registration, not layout. CraftPix drew these sheets one
+   action at a time and did not align them to a shared origin, so his hips sit at
+   a different column in every sheet: idle 57.9, run 40.9, jump 49.2, attack_2
+   53.1, attack_3 54.1 (mean x of the hip band, the steadiest anchor on the
+   figure). Left uncorrected, every pose change slides him sideways — worst on
+   idle -> run, 17 cell px, which at scale(2) is a 34 device px jump the instant
+   the class flips. Nudging each strip back to idle's column costs nothing:
+   `left` is not animated, so it composes with the animated translateX for free.
+
+   Two things this could have broken, both checked against the sheets rather than
+   assumed. Rail: he is mirrored, so shifting a strip right in cell space moves
+   his pixels left, toward the page. Reach works out to term-edge + 10 + 2*maxX
+   against a 288px reserved rail, and the tightest sheet still clears by 4px.
+   Bleed: the porthole is exactly one cell wide, so a shift of S trims S columns
+   off the far edge of every frame — those columns have to be empty, and the
+   tightest margin is 3px. Both verified per frame, not per sheet. */
+
 .sam.p-idle  .sam__cel { width:  640px; background-image: url(../assets/samurai/idle.png);
                          animation: sam-idle 850ms steps(5) infinite; }
-.sam.p-run   .sam__cel { width: 1024px; background-image: url(../assets/samurai/run.png);
+.sam.p-run   .sam__cel { width: 1024px; left: 17px; background-image: url(../assets/samurai/run.png);
                          animation: sam-run var(--sam-run-dur) steps(8) infinite; }
-.sam.p-leap  .sam__cel { width:  896px; background-image: url(../assets/samurai/jump.png);
+.sam.p-leap  .sam__cel { width:  896px; left:  9px; background-image: url(../assets/samurai/jump.png);
                          animation: sam-leap 340ms steps(5, jump-none) forwards; }
-.sam.p-land  .sam__cel { width:  896px; background-image: url(../assets/samurai/jump.png);
-                         animation: sam-land 300ms steps(3, jump-none) forwards; }
-.sam.p-cut-min   .sam__cel { width: 512px; background-image: url(../assets/samurai/attack_3.png);
+.sam.p-land  .sam__cel { width:  896px; left:  9px; background-image: url(../assets/samurai/jump.png);
+                         animation: sam-land 300ms steps(2, jump-none) forwards; }
+.sam.p-cut-min   .sam__cel { width: 512px; left: 4px; background-image: url(../assets/samurai/attack_3.png);
                              animation: sam-a3 160ms steps(4, jump-none) forwards; }
-.sam.p-cut-close .sam__cel { width: 640px; background-image: url(../assets/samurai/attack_2.png);
+.sam.p-cut-close .sam__cel { width: 640px; left: 5px; background-image: url(../assets/samurai/attack_2.png);
                              animation: sam-a2 150ms steps(5, jump-none) forwards; }
 
 @keyframes sam-idle { from { transform: translate3d(0, 0, 0); }
@@ -1643,8 +1660,13 @@ body:not(.term-stowed) .termlaunch.is-shown {
 /* jump frames 2..6 — rise, apex, fall, land, recover */
 @keyframes sam-leap { from { transform: translate3d(-256px, 0, 0); }
                       to   { transform: translate3d(-768px, 0, 0); } }
-/* jump frames 4..6 — the tail of the same arc, for dropping onto the folded bar */
-@keyframes sam-land { from { transform: translate3d(-512px, 0, 0); }
+/* jump frames 5..6, not 4..6. Frame 4 is still airborne — its feet sit at row
+   117 where every other sheet plants them at 127 — so handing off to it straight
+   from attack_3's last frame yanked him 10 cell px (20 device px) up the instant
+   the class changed, then dropped him again. Frame 5 already has his feet at 127,
+   exactly where the strike left them, so entering there is a true zero-pop
+   handoff and f5 -> f6 reads as the weight settling. */
+@keyframes sam-land { from { transform: translate3d(-640px, 0, 0); }
                       to   { transform: translate3d(-768px, 0, 0); } }
 @keyframes sam-a3   { from { transform: translate3d(0, 0, 0); }
                       to   { transform: translate3d(-384px, 0, 0); } }
