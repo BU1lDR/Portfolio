@@ -555,6 +555,15 @@
     }
 
     function open() {
+      /* First, before is-open goes back on: if the samurai is mid-cut, take the
+         cut down. His close holds a cloned half-card and two clip-paths on this
+         element for about a second while the pieces fall off the screen, and
+         `body:not(.term-stowed) .termwin.is-open` outranks his .is-sliced — so
+         opening on top of a strike in flight would restore a full-opacity window
+         that is still sliced into two falling halves. abort() is idempotent and a
+         no-op when nothing is pending; it dismisses first and tears down after,
+         which is why this has to run before the class rather than after it. */
+      if (window.Samurai && window.Samurai.abort) window.Samurai.abort();
       win.classList.add('is-open');
       win.classList.remove('is-min');
       /* Being asked outranks where you are on the page. Nothing in the UI can

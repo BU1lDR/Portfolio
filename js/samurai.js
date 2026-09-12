@@ -460,7 +460,10 @@
   addEventListener('boot:done', warm, { once: true });
   setTimeout(warm, 4000);        // belt: boot:done may already have fired
 
-  /* terminal.js asks for the typed dismissals. Nothing else is exposed — the
-     poses are not a public toy. */
-  window.Samurai = { strike: strike };
+  /* terminal.js asks for the typed dismissals, and main.js's open() calls abort
+     so that reopening the window mid-strike does not reopen it around a clone
+     and two clip-paths — the fall lasts most of a second now, and the pill that
+     can trigger that reopen turns up 450ms into it. Nothing else is exposed —
+     the poses are not a public toy. */
+  window.Samurai = { strike: strike, abort: abort };
 })();
