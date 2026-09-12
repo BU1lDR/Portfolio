@@ -1231,8 +1231,14 @@ body.term-cold .termlaunch { transition: none; }
      and scrollback out of the tab order and out of a screen reader — clipping
      to zero height with overflow:hidden does neither. */
   visibility: hidden;
+  /* `transform` is in the list for §10b's severed slab, which sets a value and
+     nothing else. It has to be listed HERE rather than declared over there: a
+     `transition` shorthand on .termwin.is-cut-min .term__body has the same
+     specificity as this rule and comes later in the file, so it would replace
+     this list wholesale — and the first thing to go would be `height`, i.e. the
+     fold itself. It did, once, and only a filmstrip caught it. */
   transition: height .34s var(--ease-io), opacity .24s var(--ease),
-              visibility 0s linear .34s;
+              transform .18s var(--ease), visibility 0s linear .34s;
 }
 
 /* Folded, there is nothing left to show but the title bar — so it stops
@@ -1257,7 +1263,8 @@ body.term-cold .termlaunch { transition: none; }
   overflow: hidden;
   /* Unfolding reveals on the same tick, so the prompt is focusable the moment
      the class comes off. See the note on .termwin. */
-  transition: height .34s var(--ease-io), opacity .24s var(--ease), visibility 0s;
+  transition: height .34s var(--ease-io), opacity .24s var(--ease),
+              transform .18s var(--ease), visibility 0s;
 }
 
 .term__screen {
@@ -1836,16 +1843,50 @@ body.term-stowed .sam.p-idle .sam__cel,
 }
 @keyframes sam-wash { 0% { opacity: 0; } 22% { opacity: 1; } 100% { opacity: 0; } }
 
-/* What actually sells "severed": the scrollback and the prompt slide off the
-   cut and fade while the body collapses under them, clipped away by .term. No
-   forged geometry — the body genuinely goes to zero height, so this is the real
-   collapse with a shear on it. Only on the fold: closing already dissolves the
-   whole card, and doubling up there would just muddy the diagonal. */
-.termwin.is-cut-min .term__screen,
-.termwin.is-cut-min .term__form {
-  transform: translateY(7px) skewX(-2.5deg);
-  opacity: 0;
-  transition: transform .3s var(--ease-io), opacity .22s var(--ease);
+/* ── the fold: one piece comes off ─────────────────────────────
+   The fold cannot be two falling halves, and that is geometry rather than
+   timidity. His blade lands on the ROOF line — .sam sits at `bottom: 100%` of
+   .termwin, so his feet and .term__cut--h are the same 2px of screen — and the
+   piece above a cut at the very top edge is the top edge. Two halves would need
+   the cut moved down to the bar/body seam, which would put the line 38px below
+   the steel that supposedly made it.
+
+   So the fold severs the piece it actually can: the BODY comes off the bar
+   along the line he cut, and the bar is what is left standing. That is still
+   two pieces of window, one of which survives — which is exactly what minimise
+   means, and why this reads better here than a shatter would.
+
+   The transform is on .term__body rather than on its two children so the slab
+   stays RIGID: shearing the scrollback and the prompt independently reads as
+   text sliding around inside a window, not as a piece of the window leaving it.
+   Origin at the top-right is where the cut began — attack_3's blade travels
+   right-to-left, so the far end is the end that drops. The body genuinely goes
+   to zero height underneath all this (see .termwin.is-min .term__body), so the
+   collapse is real and .term's overflow does the clipping for free.
+
+   The box-shadow is the cut edge, and it is what makes the severance visible at
+   all. Without it the slab is the same colour as the card it is sliding off, so
+   the only evidence it moved is the text — and .termwin.is-min .term__body has
+   already faded that to nothing by 240ms. A red hairline along the slab's top,
+   with a glow above it, draws the raw edge into the gap the slide opens up.
+
+   Which is also why the slide is 180ms (see .term__body) and not the .34s of the
+   collapse it rides: the slab has to finish travelling while it is still opaque
+   enough to see. A blade's impulse should outrun the fold anyway — the piece is
+   kicked off, and then the window closes over where it was.
+
+   A value, an origin and a shadow, and deliberately no `transition`: the timing
+   lives on .term__body's own rule, because a shorthand here outranks nothing but
+   replaces everything.
+
+   No separate rule for .term__screen / .term__form any more. They used to carry
+   the shear and their own fade; the shear moved up to the slab so it would stay
+   rigid, and the fade was always being done twice — .termwin.is-min .term__body
+   fades the whole slab, these two just did it again a hair faster. */
+.termwin.is-cut-min .term__body {
+  transform: translate3d(-16px, 26px, 0) rotate(-2deg);
+  transform-origin: 100% 0;
+  box-shadow: 0 -1px 0 var(--red), 0 -12px 22px -6px var(--red-soft);
 }
 
 /* The pill acknowledges the kill as it arrives, so the window's replacement
