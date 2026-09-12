@@ -122,3 +122,36 @@ Not published, and deliberately so: the seven "Digital Sticker"
 PNGs in the source folder. They're participation stickers rather
 than certifications, and mixing them into the list would dilute
 the eleven that are real credentials.
+
+
+samurai/ — the guard on the terminal window
+
+Five sprite sheets, 128x128 cells, 17KB for the lot. Art by
+CraftPix ("Samurai Pixel Art Sprite Sheets", the free pack) and
+used under their file licence: https://craftpix.net/file-licenses/
+Credited in the footer as well as here, because a licence that
+costs nothing still costs an attribution.
+
+  idle.png       640x128   5 frames   at his post, breathing
+  run.png       1024x128   8 frames   entrances and the run-up
+  jump.png       896x128   7 frames   f2-f6 leap, f4-f6 land
+  attack_2.png   640x128   5 frames   overhead kesa-giri -> close
+  attack_3.png   512x128   4 frames   horizontal cut -> minimise
+
+Lowercased on the way in, because GitHub Pages is case-sensitive
+and the source pack ships Title Case — a mismatch that works
+locally on Windows and 404s only once it's published.
+
+The source pack has ten poses for each of three characters. Only
+these five, from Samurai_Commander alone, are in this repo. The
+rest stay out on purpose: Walk, Protect, Hurt, Dead and Attack_1
+are never referenced, and shipping the other two characters, the
+PSDs, or the pack's coupon would put ~40MB of unused binary into
+a repo that is otherwise a few hundred KB of text. If you want a
+different pose later, take it from the original download rather
+than expecting to find it here.
+
+Which frames of jump.png get used is not arbitrary — f0 and f1
+are the crouch, and starting a leap from them makes him hesitate
+before a window that has already begun moving. See style.css
+§10b for the frame maths and js/samurai.js for the timing.
