@@ -1511,12 +1511,35 @@ body:not(.term-stowed) .termlaunch.is-shown {
    point of anchoring to the roof rather than to the bar. */
 
 .termwin {
-  /* Where the close-cut crosses the roof, derived from the art rather than
-     eyeballed. Attack_2's blade resolves at cell x115 on its contact frame;
-     mirrored that is 12px in from the stage's right edge — 24px at 2× — and the
-     stage sits 8px inside the window, so the blade crosses the top border
-     240px from the window's right corner. The diagonal hangs off that point. */
-  --sam-cut-x: 240px;
+  /* Where the close-cut crosses the roof. Measured off the composited page
+     rather than derived from the cell grid, because deriving it got two separate
+     things wrong.
+
+     The tip of attack_2's blade, on the contact frame the beam is actually drawn
+     against — sam-a2 is 150ms in steps of 5 and holds frame 4 from 120ms, and
+     the beam is not born until 150 — lands 247.5px from the window's right
+     corner and 32.5px above the roof. That is ~7.5px further out than cell
+     arithmetic predicts, and the bulk of it is the `left: 5px` registration
+     nudge this pose carries below: the zoom doubles those 5 cell px and
+     .sam__flip turns them around, so they move his blade 10px AWAY from the
+     corner rather than 5 towards it. Easy to miss on paper. Impossible to miss
+     in a screenshot diff.
+
+     Then the beam is not vertical. It rakes down-left at 32deg — the angle of
+     the tip's own travel between frames — so the point where its line has to
+     cross the roof is not under the tip at all, it is 32.5 x tan32 = 20.3px
+     further left again. 247.5 + 20.3 = 267.8 for the centreline, and
+     .term__cut--v is a 3px bar pinned by its right edge, so this is that
+     minus 1.5.
+
+     What that buys: his blade, the 32.5px of border it does not reach, and the
+     beam are one straight stroke. At the old value the line, projected back up
+     to the blade's own height, passed 26px to the right of the tip — so the
+     stroke went right, then kinked left, and the tip hung off the side of it.
+     "Why he no longer drops" below is the other half of this: the drop existed
+     to close the same gap by moving HIM, and this closes it by aiming the beam,
+     which is the half that does not put a man through a window. */
+  --sam-cut-x: 266px;
   /* How far off to the right he starts a run-in. Deliberately more than the
      corner offset, so he enters from off-screen rather than fading in. In cell
      px like everything below, so the scale doubles it — which is right, because
