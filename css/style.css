@@ -1123,7 +1123,8 @@ body:not(.term-stowed) .termwin.is-open {
    Held for one frame while module 09 forces a reflow, then dropped, so every
    later stow animates normally. No !important needed: 0,2,1 beats the .termwin
    base rule, and the is-open rules that outrank it can't match while the window
-   is stowed anyway. */
+   is stowed anyway.
+
    .term__body is in the list because the same frame may also decide the window
    should arrive *folded* — land on #contact from a shared link and the shipped
    full-size window would otherwise fold itself over .34s while you watch. The
