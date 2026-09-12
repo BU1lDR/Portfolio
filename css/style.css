@@ -1466,6 +1466,336 @@ body:not(.term-stowed) .termlaunch.is-shown {
 }
 
 
+/* ── 10b the samurai ─────────────────────────────────────────── */
+
+/* A pixel-art samurai stands on the window's top border, breathing, and cuts
+   the window down when you dismiss it. Art: CraftPix's free Samurai_Commander
+   sheets — see assets/README.txt for the credit and the frame counts.
+
+   HE IS A CHILD OF .termwin, AND THAT IS THE WHOLE DESIGN.
+
+   The hard part of a figure standing on this window is that the window's height
+   changes: folding runs a .34s `height` transition on .term__body. The obvious
+   approach — measure the window in JS and match a transform to that duration
+   and easing — is a race between the compositor and the main thread, and it
+   loses on any long task: his feet float above a roof that has stopped moving.
+   It is also wrong from the first frame, because offsetHeight read straight
+   after `.is-min` lands still reports the *old* height (measured: 488px when
+   the answer is 38px — the bar's display swaps apply instantly, the body's
+   height does not).
+
+   `bottom: 100%` on an absolutely-positioned child has neither problem. A
+   percentage offset resolves against the parent's used height in the *same*
+   layout pass that shrank it, so his feet are on the roof frame-for-frame with
+   no JS at all. Measured across a fold and an unfold at five viewports: the gap
+   between his feet and the window's top edge is 0.00px on every animation
+   frame. Nothing to desync, nothing to cache, nothing to re-probe on resize.
+
+   Being a child also settles his presence for free, and correctly. He inherits
+   the window's opacity, so he is there in exactly the states the window is
+   there in: he rides the fold down onto the folded bar, he fades out with the
+   window when you close it, and he is stowed with it up in the hero — which is
+   the right answer, because the hero's corner is the torii's corner and §10's
+   stow rule exists precisely to clear it. He also inherits §19's print rule.
+
+   Note what is NOT tokenised: the title bar's height. It is 54px open and 36px
+   folded (the path and the `clear` button both leave), so any constant would be
+   wrong by 18px in one state. Nothing here needs that number — which is the
+   point of anchoring to the roof rather than to the bar. */
+
+.termwin {
+  /* Where the close-cut crosses the roof, derived from the art rather than
+     eyeballed. Attack_2's blade resolves at cell x115 on its contact frame;
+     mirrored that is 12px in from the stage's right edge — 24px at 2× — and the
+     stage sits 8px inside the window, so the blade crosses the top border
+     240px from the window's right corner. The diagonal hangs off that point. */
+  --sam-cut-x: 240px;
+  /* How far off to the right he starts a run-in. Deliberately more than the
+     corner offset, so he enters from off-screen rather than fading in. In cell
+     px like everything below, so the scale doubles it — which is right, because
+     his stride doubles too and the apparent speed is unchanged. */
+  --sam-run-x: 120px;
+  --sam-run-dur: 440ms;
+}
+
+/* The anchor. Never transformed — every animation lives on a descendant, so
+   this box stays pure layout and the roof contract above cannot be broken by a
+   stray transform.
+
+   WHY 2× AND NOT 1×. At 1× the art is a 55×92 smudge: these sheets were drawn
+   to be displayed doubled, and undoubled he reads as a coloured smear rather
+   than a figure. The argument against 2× was arithmetic — a 256px box against a
+   240px folded window overhangs the reserved rail by 16px — but that measures
+   the BOX, and the box is mostly empty. Measuring the pixels instead: the cell's
+   figure occupies x27..82 idling and never exceeds x10..120 on any frame of any
+   sheet, so mirrored and doubled and right-anchored, the furthest-left painted
+   pixel lands 274px from the viewport's right edge against a --term-rail of
+   288.5px. Nothing he paints, in any pose, reaches page text. The 16px of
+   overhang is transparent, pointer-events:none, and paints nothing.
+
+   Only integer scale. The sashimono pole is 1px wide and strobes at anything
+   fractional, which is also why this is a flat 2× rather than something that
+   adapts: a scale that changes mid-session pops, and 1.5× shimmers. */
+.sam {
+  position: absolute;
+  right: 8px;
+  bottom: 100%;
+  width: 256px;
+  height: 256px;
+  pointer-events: none;
+  /* Lifts him off body text, the matrix rain and the hero canvas without a halo
+     ring; the second shadow doubles as a contact shadow under his feet. Out here
+     rather than inside the scale, so the radii stay in screen pixels. */
+  filter: drop-shadow(0 0 3px var(--bg)) drop-shadow(0 0 7px rgba(5, 6, 10, .92));
+}
+
+/* The only node that knows about the scale. Everything below it works in CELL
+   coordinates — 0..127, one sheet frame — so every keyframe offset, the blade
+   drop and the run-in distance are all written as the numbers measured off the
+   PNGs, and the doubling is applied once, here. Changing 2 to 3 is the entire
+   diff for a 3× guard.
+
+   It is also deliberately NOT the rig: the rig animates `transform`, and
+   `transform` is one property, so a scale living there would have to be
+   repeated in every keyframe of every pose and would silently multiply the
+   translate distances. */
+.sam__zoom {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 128px;
+  height: 128px;
+  transform: scale(2);
+  transform-origin: 0 0;
+}
+
+/* Carries the run-in and the strike lunge. Separate from the cel because the
+   two need different timing functions: poses step, movement eases. */
+.sam__rig {
+  position: absolute;
+  inset: 0;
+}
+
+/* The 128px porthole. Inside the rig, so the clip travels with him — a
+   stationary clip would slice him in half during a run-in. */
+.sam__stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* Every CraftPix sheet faces right; the window is in the right-hand corner, so
+   unmirrored he would be staring off the edge of the screen and cutting away
+   from the page. Mirrored he faces into the content and his cuts sweep across
+   the window. -1 is exact, so nothing resamples.
+
+   Its own node rather than a transform on the stage or the cel: on the stage
+   the clip would flip too (harmless but confusing), and on the cel the frame
+   stepping would run backwards. */
+.sam__flip {
+  position: absolute;
+  inset: 0;
+  transform: scaleX(-1);
+}
+
+/* The strip. One sheet at a time as a background, stepped by translating the
+   strip behind the porthole — never by animating background-position, which
+   repaints instead of compositing. */
+.sam__cel {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 128px;
+  background-repeat: no-repeat;
+  background-size: auto 128px;      /* sheets are 128 tall — 1:1, no resampling */
+  image-rendering: pixelated;
+  will-change: transform;
+}
+
+/* ── poses ─────────────────────────────────────────────────────
+   One class per pose on .sam. Every offset is a literal multiple of 128px and
+   every timing function is a literal steps() — no var() inside a keyframe or a
+   timing function, which is the kind of thing that parses in three engines and
+   silently kills all animation in the fourth.
+
+   Loops use steps(n), which never shows the out-of-range frame because the
+   animation restarts at 100%. One-shots use steps(n, jump-none) with
+   `forwards`, so the last frame is a real frame and is *held* — plain steps(n)
+   would land on the strip's end and flash frame 0 at the worst moment. */
+
+.sam.p-idle  .sam__cel { width:  640px; background-image: url(../assets/samurai/idle.png);
+                         animation: sam-idle 850ms steps(5) infinite; }
+.sam.p-run   .sam__cel { width: 1024px; background-image: url(../assets/samurai/run.png);
+                         animation: sam-run var(--sam-run-dur) steps(8) infinite; }
+.sam.p-leap  .sam__cel { width:  896px; background-image: url(../assets/samurai/jump.png);
+                         animation: sam-leap 340ms steps(5, jump-none) forwards; }
+.sam.p-land  .sam__cel { width:  896px; background-image: url(../assets/samurai/jump.png);
+                         animation: sam-land 300ms steps(3, jump-none) forwards; }
+.sam.p-cut-min   .sam__cel { width: 512px; background-image: url(../assets/samurai/attack_3.png);
+                             animation: sam-a3 160ms steps(4, jump-none) forwards; }
+.sam.p-cut-close .sam__cel { width: 640px; background-image: url(../assets/samurai/attack_2.png);
+                             animation: sam-a2 150ms steps(5, jump-none) forwards; }
+
+@keyframes sam-idle { from { transform: translate3d(0, 0, 0); }
+                      to   { transform: translate3d(-640px, 0, 0); } }
+@keyframes sam-run  { from { transform: translate3d(0, 0, 0); }
+                      to   { transform: translate3d(-1024px, 0, 0); } }
+/* jump frames 2..6 — rise, apex, fall, land, recover */
+@keyframes sam-leap { from { transform: translate3d(-256px, 0, 0); }
+                      to   { transform: translate3d(-768px, 0, 0); } }
+/* jump frames 4..6 — the tail of the same arc, for dropping onto the folded bar */
+@keyframes sam-land { from { transform: translate3d(-512px, 0, 0); }
+                      to   { transform: translate3d(-768px, 0, 0); } }
+@keyframes sam-a3   { from { transform: translate3d(0, 0, 0); }
+                      to   { transform: translate3d(-384px, 0, 0); } }
+@keyframes sam-a2   { from { transform: translate3d(0, 0, 0); }
+                      to   { transform: translate3d(-512px, 0, 0); } }
+
+/* ── the lunge ─────────────────────────────────────────────────
+   Both sheets resolve their blade well above his feet, so a samurai standing on
+   the roof and swinging would visibly cut the air above the line that lights
+   up. Measured off the actual pixels: Attack_3's blade lands 64px above his
+   feet on its contact frame, Attack_2's finishes 18px above them (it is an
+   overhead cut, so the blade has already swept down past him). Dropping him by
+   exactly those numbers for the duration of the strike puts the blade ON the
+   border it severs. It reads as a step down into the window's face, which is
+   what it is.
+
+   The return to 0 is not a return to where he started: `bottom: 100%` is
+   carrying him down with the folding roof at the same time, so easing the
+   lunge out over the fold lands him standing on whatever is left. */
+.sam.is-lunge-min   .sam__rig { animation: sam-lunge-min   460ms var(--ease-io) both; }
+.sam.is-lunge-close .sam__rig { animation: sam-lunge-close 500ms var(--ease-io) both; }
+.sam.is-runin       .sam__rig { animation: sam-runin var(--sam-run-dur) linear both; }
+
+@keyframes sam-lunge-min {
+  0%   { transform: translate3d(0, 0, 0); }
+  26%  { transform: translate3d(0, 64px, 0); }   /* contact, t=120ms */
+  46%  { transform: translate3d(0, 64px, 0); }   /* follow-through, held */
+  100% { transform: translate3d(0, 0, 0); }      /* rides the roof down */
+}
+@keyframes sam-lunge-close {
+  0%   { transform: translate3d(0, 0, 0); }
+  30%  { transform: translate3d(0, 18px, 0); }   /* contact, t=150ms */
+  100% { transform: translate3d(0, 18px, 0); }   /* holds while the window dies */
+}
+/* Linear, because ground speed under a run cycle has to be constant or his
+   feet skate. 120px in 440ms is ~273px/s, about three body-heights a second. */
+@keyframes sam-runin {
+  from { transform: translate3d(var(--sam-run-x), 0, 0); }
+  to   { transform: translate3d(0, 0, 0); }
+}
+
+/* Breathing costs a composited frame six times a second, forever, on every
+   page. Free to stop when nobody can see him: closed, or stowed up in the hero.
+   Scoped to the idle loop so a strike still plays out — the close choreography
+   deliberately outlives `is-open`. Hidden tabs are handled in JS, which also
+   has to abort a pending cut. */
+.termwin:not(.is-open) .sam.p-idle .sam__cel,
+body.term-stowed .sam.p-idle .sam__cel,
+.sam.is-still .sam__cel { animation-play-state: paused; }
+
+/* ── the cuts ──────────────────────────────────────────────────
+   Both are absolutely positioned inside .term, so its existing overflow:hidden
+   and border-radius clip them to the card — which is what makes a raked line
+   read as a cut through a window rather than a stray diagonal on the page.
+   .term gains `position: relative` for this; relative does not trap fixed
+   descendants, and .term has none. */
+.term { position: relative; }
+
+.term__cut {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Minimise: a horizontal line along the top border, growing right-to-left out
+   of his blade. The whole width, not just his 73px of reach — a cut line longer
+   than the blade is the convention, and the window then folds along it. */
+.term__cut--h {
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  transform-origin: 100% 50%;
+  transform: scaleX(0);
+  background: linear-gradient(to left, #fff 0 6%, rgba(226, 240, 255, .95) 6% 26%,
+                              var(--red) 26% 74%, transparent);
+  box-shadow: 0 0 14px 1px rgba(255, 59, 83, .55);
+}
+
+/* Close: a kesa-giri. 32deg is measured, not chosen — Attack_2's blade travels
+   48px across and 76px down between its overhead frame and its contact frame,
+   and atan(48/76) is 32deg. Clockwise sends the bottom of the bar leftward,
+   which is the direction the mirrored blade descends. */
+.term__cut--v {
+  top: 0;
+  right: var(--sam-cut-x);
+  width: 3px;
+  height: 150%;
+  transform-origin: 50% 0;
+  transform: rotate(32deg) scaleY(0);
+  background: linear-gradient(to bottom, #fff 0 4%, rgba(226, 240, 255, .9) 4% 20%,
+                              var(--red) 20% 78%, transparent);
+  box-shadow: 0 0 16px 1px rgba(255, 59, 83, .5);
+}
+
+/* One red pulse across the card as it dies. An overlay rather than a filter on
+   .term, so nothing new becomes a containing block. */
+.term__cut--wash { inset: 0; background: var(--red-soft); }
+
+.termwin.is-cut-min   .term__cut--h    { animation: sam-slash-h 220ms var(--ease) forwards; }
+.termwin.is-cut-close .term__cut--v    { animation: sam-slash-v 250ms var(--ease) forwards; }
+.termwin.is-cut-close .term__cut--wash { animation: sam-wash   280ms var(--ease) forwards; }
+
+@keyframes sam-slash-h {
+  0%   { opacity: 1; transform: scaleX(0); }
+  55%  { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+@keyframes sam-slash-v {
+  0%   { opacity: 1;   transform: rotate(32deg) scaleY(0); }
+  50%  { opacity: 1;   transform: rotate(32deg) scaleY(1); }
+  70%  { opacity: .85; transform: rotate(32deg) scaleY(1); }
+  100% { opacity: 0;   transform: rotate(32deg) scaleY(1); }
+}
+@keyframes sam-wash { 0% { opacity: 0; } 22% { opacity: 1; } 100% { opacity: 0; } }
+
+/* What actually sells "severed": the scrollback and the prompt slide off the
+   cut and fade while the body collapses under them, clipped away by .term. No
+   forged geometry — the body genuinely goes to zero height, so this is the real
+   collapse with a shear on it. Only on the fold: closing already dissolves the
+   whole card, and doubling up there would just muddy the diagonal. */
+.termwin.is-cut-min .term__screen,
+.termwin.is-cut-min .term__form {
+  transform: translateY(7px) skewX(-2.5deg);
+  opacity: 0;
+  transition: transform .3s var(--ease-io), opacity .22s var(--ease);
+}
+
+/* The pill acknowledges the kill as it arrives, so the window's replacement
+   reads as a consequence rather than a coincidence. */
+.termlaunch.is-cut { animation: sam-pill 260ms var(--ease); }
+@keyframes sam-pill {
+  0%, 100% { border-color: var(--line-2); }
+  30%      { border-color: var(--red); color: var(--red); }
+}
+
+/* ── where he is not ───────────────────────────────────────────
+   Below 861px there is no reserved rail (§18 drops the page's padding and the
+   window becomes a full-width strip docked to the bottom edge), so a 56px
+   figure in the corner would stand on the last paragraph of every section with
+   nothing set aside for him. He exists exactly where the page reserves space
+   for him — the same line §18 already draws — and nowhere else.
+
+   The height cut-off is the nav: at 600px of viewport the open window's roof is
+   close enough to the 68px nav that his sashimono would be sliced by it. A flat
+   query needs no clearance arithmetic to stay correct when an unrelated clamp
+   changes. */
+@media (max-width: 860px) { .sam { display: none; } }
+@media (max-height: 599px) { .sam { display: none; } }
+
+
 /* ── 11 about ────────────────────────────────────────────────── */
 
 .about {
@@ -2428,6 +2758,17 @@ body:not(.term-stowed) .termlaunch.is-shown {
   .cursor, .cursor-ring { display: none; }
   .hero__canvas { opacity: .3; }
   .caret, .type::after { animation: none; }
+
+  /* The blanket rule above is not enough for a sprite sheet, and the failure is
+     silent: `.001ms` with one iteration still RUNS the animation, and lands on
+     its LAST keyframe — which for a cel strip is the far end of the sheet, i.e.
+     an empty porthole where the samurai should be standing. He needs the
+     animation genuinely off so the cel rests at translate 0, which is idle
+     frame 0: a still, standing guard. js/samurai.js checks the same query and
+     never fires a cut here, so no beam can appear without him. */
+  .sam__cel, .sam__rig { animation: none !important; transform: none !important; }
+  .sam__flip { transform: scaleX(-1) !important; }   /* not motion — he still faces the page */
+  .term__cut { display: none; }
 }
 
 @media print {
