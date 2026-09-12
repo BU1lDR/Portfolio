@@ -430,9 +430,15 @@
     }
 
     if (id !== 'termClose' && id !== 'termMin') return;
-    /* Keyboard activation reports detail 0. Someone driving the window from the
-       keyboard is navigating, not watching, and should not be made to wait for
-       a sword. Esc is likewise left alone in main.js as the fire exit. */
+    /* Keyboard activation reports detail 0 — Space or Enter on a focused ✕. Left
+       alone, because someone tabbing through the window is navigating rather than
+       watching and should not be made to wait for a sword to finish.
+
+       Esc is the exception and it is deliberate: main.js's Esc handler does call
+       strike('close', 0), because Esc is the gesture people use to be rid of the
+       thing, not to move through it, and it is worth the 150ms. It guards on
+       isMin() and on window.Samurai existing for the same reasons this handler
+       does. If that ever changes, change it there — not here. */
     if (ev.detail === 0) return;
 
     if (!strike(id === 'termClose' ? 'close' : 'min', 0)) return;

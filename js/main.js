@@ -656,6 +656,28 @@
       // Only from inside the window. Esc elsewhere on the page shouldn't
       // dismiss something the visitor may not even be looking at.
       if (!win.contains(ev.target) && !win.contains(doc.activeElement)) return;
+      /* Esc is the ✕ button by another route, so it gets the same sword. The
+         guards are what make that safe rather than clever:
+
+         isMin() — a window folded to its 38px title bar has no body left to
+         sever, so samurai.js's own click path refuses it outright and this has
+         to refuse it for the same reason. A red diagonal across a title bar
+         would be a shrug.
+
+         window.Samurai — the whole animation is one deletable <script> tag, and
+         that promise is only true if every caller checks. Delete the tag and
+         this line falls through to a plain, instant close().
+
+         The return value is the contract, not a courtesy: strike() answers false
+         whenever it will not be taking the dismissal on — he is switched off, the
+         sheets have not decoded yet, prefers-reduced-motion — and then the close
+         below still happens, on this same keypress. Esc never fails to shut the
+         window. A second Esc during the wind-up cuts the ceremony short rather
+         than queueing another one, which is strike()'s job and it already does
+         it. Runway 0 to match the button: there is no dead time to run through
+         here the way terminal.js has after a typed `exit`. */
+      if (!isMin() && window.Samurai && window.Samurai.strike &&
+          window.Samurai.strike('close', 0)) return;
       close();
     }, true);
 
