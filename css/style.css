@@ -1641,7 +1641,7 @@ body:not(.term-stowed) .termlaunch.is-shown {
    tightest margin is 3px. Both verified per frame, not per sheet. */
 
 .sam.p-idle  .sam__cel { width:  640px; background-image: url(../assets/samurai/idle.png);
-                         animation: sam-idle 850ms steps(5) infinite; }
+                         animation: sam-idle 3200ms step-end infinite; }
 .sam.p-run   .sam__cel { width: 1024px; left: 17px; background-image: url(../assets/samurai/run.png);
                          animation: sam-run var(--sam-run-dur) steps(8) infinite; }
 .sam.p-leap  .sam__cel { width:  896px; left:  9px; background-image: url(../assets/samurai/jump.png);
@@ -1653,8 +1653,34 @@ body:not(.term-stowed) .termlaunch.is-shown {
 .sam.p-cut-close .sam__cel { width: 640px; left: 5px; background-image: url(../assets/samurai/attack_2.png);
                              animation: sam-a2 150ms steps(5, jump-none) forwards; }
 
-@keyframes sam-idle { from { transform: translate3d(0, 0, 0); }
-                      to   { transform: translate3d(-640px, 0, 0); } }
+/* The breath. Worth spelling out, because the obvious `steps(5)` is wrong here
+   for a reason that is invisible in the CSS and obvious in the sheet.
+
+   idle.png is not five poses. Diffed frame against frame, the whole figure —
+   legs and feet included, residual exactly zero — is drawn at one of two
+   heights: f0/f1/f2 sit 1px low, f3/f4 sit 1px high. Everything else that looks
+   like change is every interior pixel inheriting its neighbour's colour, which
+   is what a 1px translation does to a diff. So the artist drew one breath: rest
+   low, rise 1px, hold, fall back. f1 and f2 differ from f0 only in some chest
+   and banner shading, and f3/f4 are near-duplicates of each other.
+
+   Two consequences. First, nothing here should add vertical motion of its own —
+   the bob is already in the art, and doubling it would read as a hop. Second,
+   the only thing wrong with it was the clock: five uniform frames in 850ms is a
+   breath every 0.85s, about 73 a minute, which is not breathing, it is
+   shivering. A resting human runs 12–20.
+
+   So: 3.2s a cycle (~19 a minute) with step-end and hand-weighted dwells, since
+   steps(5) can only ever divide the time equally. Low frames get the long, easy
+   dwells and shorten as he gathers; the rise lands at 56%; the high pose is held
+   through to the wrap, which is the fall. */
+@keyframes sam-idle {
+  0%   { transform: translate3d(   0, 0, 0); }   /* f0  low  — settled     768ms */
+  24%  { transform: translate3d(-128px, 0, 0); } /* f1  low  — chest shifts 576ms */
+  42%  { transform: translate3d(-256px, 0, 0); } /* f2  low  — gathering   448ms */
+  56%  { transform: translate3d(-384px, 0, 0); } /* f3  HIGH — the 1px rise 704ms */
+  78%  { transform: translate3d(-512px, 0, 0); } /* f4  high — held        704ms */
+}                                                /* wrap to f0 is the fall */
 @keyframes sam-run  { from { transform: translate3d(0, 0, 0); }
                       to   { transform: translate3d(-1024px, 0, 0); } }
 /* jump frames 2..6 — rise, apex, fall, land, recover */
