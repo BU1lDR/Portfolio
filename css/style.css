@@ -1190,7 +1190,43 @@ body.term-cold .termlaunch { transition: none; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* The two transitions here do unrelated jobs. `color`/`border-color` are the
+   hover. `font-size`/`border-width` are the fold, and they are the fold because
+   of what this button does to the bar's HEIGHT.
+
+   Folding used to `display: none` this button, and the button is the tallest
+   thing in the bar — 30px against the peek label's 12px — so the bar lost 18px
+   of height in the frame the class landed. .termwin is bottom-anchored, so an
+   18px shorter card is an 18px LOWER roof, and .sam stands at `bottom: 100%` of
+   it: the samurai dropped 18px, un-eased, on the exact frame his sword landed.
+   Which is the same complaint the lunge earned, at an eighth the size.
+
+   Collapsing it instead costs no magic numbers, because every dimension of this
+   button is already proportional to its font size: `line-height` is a unitless
+   1.7 and the padding is in `em`. Take font-size to 0 and the box goes with it,
+   both axes, no height:auto to interpolate from and no bound to guess. The
+   border is the one part that is not proportional, so it goes on its own.
+
+   `margin-right` is the third thing, and it is here because a collapsed button
+   is still a flex ITEM: it keeps its share of .term__bar's `gap`, and measured,
+   the folded 240px bar has 8.6px of slack in its flex line against a 15.3px gap.
+   So keeping it in flow overran the line by 6.7px, both `margin-left: auto`s
+   collapsed, and the peek label was shoved 6.6px into the bar's right padding —
+   a resting state, and a visibly lopsided one. The negative margin gives the gap
+   back. It is not a magic number either: .term__bar's gap is `.9em` of an
+   inherited --t-base, and `-.9 * var(--t-base)` is that same length written out,
+   so it tracks the type clamp across every viewport instead of being right at
+   one of them. It transitions with the rest so the label never jumps.
+
+   `visibility` is what display:none was really buying — a 0×0 button at opacity 0
+   is still tabbable and still announced — and it has to wait for the collapse or
+   it blinks out on frame one. But a transition list is read off the style being
+   transitioned TO, and unfolding transitions to THIS rule, so a delay written
+   here would apply to coming back as well: the button would grow for 340ms while
+   still invisible and then pop in. Hence --clear-hide, which the is-min rule
+   raises to .34s and this one leaves at 0. Leaving is delayed; arriving is not. */
 .term__clear {
+  --clear-hide: 0s;
   margin-left: auto;
   flex-shrink: 0;
   padding: .3em .7em;
@@ -1198,7 +1234,10 @@ body.term-cold .termlaunch { transition: none; }
   color: var(--txt-3);
   border: 1px solid var(--line);
   border-radius: 3px;
-  transition: color .2s var(--ease), border-color .2s var(--ease);
+  transition: color .2s var(--ease), border-color .2s var(--ease),
+              font-size .34s var(--ease-io), border-width .34s var(--ease-io),
+              margin-right .34s var(--ease-io),
+              opacity .2s var(--ease), visibility 0s linear var(--clear-hide);
 }
 .term__clear:hover { color: var(--red); border-color: var(--red); }
 
@@ -1221,7 +1260,18 @@ body.term-cold .termlaunch { transition: none; }
 /* Collapsed — the window folds to its title bar rather than leaving. Two
    different needs: "stop covering that paragraph" and "I'm done with you". */
 .termwin.is-min .term__bar { cursor: pointer; border-bottom-color: transparent; }
-.termwin.is-min .term__clear { display: none; }
+/* Not `display: none` — see .term__clear above for why an instant 18px is
+   worse than a transitioned one. `visibility` still takes it out of the tab
+   order and out of a screen reader once it has finished shrinking, which is
+   the only thing display:none was really buying. */
+.termwin.is-min .term__clear {
+  --clear-hide: .34s;                        /* leave the a11y tree last, not first */
+  font-size: 0;
+  border-width: 0;
+  margin-right: calc(-.9 * var(--t-base));   /* hand .term__bar's gap back */
+  opacity: 0;
+  visibility: hidden;
+}
 .termwin.is-min .term__peek { display: block; }
 .termwin.is-min .term__body {
   height: 0;
@@ -1677,8 +1727,12 @@ body:not(.term-stowed) .termlaunch.is-shown {
                          animation: sam-run var(--sam-run-dur) steps(8) infinite; }
 .sam.p-leap  .sam__cel { width:  896px; left:  9px; background-image: url(../assets/samurai/jump.png);
                          animation: sam-leap 340ms steps(5, jump-none) forwards; }
+/* One frame, held, so there is nothing to animate and no keyframes for it. See
+   "riding the fold down" below for why the fold needs a falling frame at all. */
+.sam.p-fall  .sam__cel { width:  896px; left:  9px; background-image: url(../assets/samurai/jump.png);
+                         transform: translate3d(-512px, 0, 0); }
 .sam.p-land  .sam__cel { width:  896px; left:  9px; background-image: url(../assets/samurai/jump.png);
-                         animation: sam-land 300ms steps(2, jump-none) forwards; }
+                         animation: sam-land 240ms step-end forwards; }
 .sam.p-cut-min   .sam__cel { width: 512px; left: 4px; background-image: url(../assets/samurai/attack_3.png);
                              animation: sam-a3 160ms steps(4, jump-none) forwards; }
 .sam.p-cut-close .sam__cel { width: 640px; left: 5px; background-image: url(../assets/samurai/attack_2.png);
@@ -1717,14 +1771,34 @@ body:not(.term-stowed) .termlaunch.is-shown {
 /* jump frames 2..6 — rise, apex, fall, land, recover */
 @keyframes sam-leap { from { transform: translate3d(-256px, 0, 0); }
                       to   { transform: translate3d(-768px, 0, 0); } }
-/* jump frames 5..6, not 4..6. Frame 4 is still airborne — its feet sit at row
-   117 where every other sheet plants them at 127 — so handing off to it straight
-   from attack_3's last frame yanked him 10 cell px (20 device px) up the instant
-   the class changed, then dropped him again. Frame 5 already has his feet at 127,
-   exactly where the strike left them, so entering there is a true zero-pop
-   handoff and f5 -> f6 reads as the weight settling. */
-@keyframes sam-land { from { transform: translate3d(-640px, 0, 0); }
-                      to   { transform: translate3d(-768px, 0, 0); } }
+/* Four frames, not two, and the last two are not from the landing at all.
+
+   Measured off the sheet, jump.png's ground row per frame is 127, 127, 125, 113,
+   117, 127, 127 and its silhouette top is 43, 46, 30, 31, 34, 59, 59 — so f5 and
+   f6 are the same deep crouch, 22 cell px shorter than idle. This used to run
+   f5 -> f6 and stop, which meant the move ended with him folded over his knees
+   and the next pose, p-idle, stood him up in a single frame: 44 device px of
+   silhouette, un-eased, at the quietest moment of the whole sequence. A move has
+   to end where the next one begins, so the recovery is part of it: f1 takes the
+   weight back and f0 is jump.png's own standing frame.
+
+   That leaves 12 device px, not none — jump f0's top is 43 and idle f0's is 37,
+   because f0 is drawn as the gather before a leap and is a touch shorter than a
+   man standing. It is the floor for this sheet; nothing in jump.png tops out at
+   37. But the residual runs the right way. Tops go 59 -> 59 -> 46 -> 43 -> 37, so
+   the swap into idle continues a rise that is already three frames old and reads
+   as the last of standing up rather than as a jump cut. His feet do not move at
+   all across it: both f0s plant at row 127.
+
+   step-end, not steps(4), because the four dwells are not equal. f5 is the hit
+   and f6 the absorb, both quick; standing up takes longer than being knocked
+   down. */
+@keyframes sam-land {
+  0%    { transform: translate3d(-640px, 0, 0); }   /* f5  the impact      80ms */
+  33.3% { transform: translate3d(-768px, 0, 0); }   /* f6  absorbing it    80ms */
+  66.7% { transform: translate3d(-128px, 0, 0); }   /* f1  weight coming back  */
+  100%  { transform: translate3d(    0, 0, 0); }    /* f0  stood up = idle f0  */
+}
 @keyframes sam-a3   { from { transform: translate3d(0, 0, 0); }
                       to   { transform: translate3d(-384px, 0, 0); } }
 @keyframes sam-a2   { from { transform: translate3d(0, 0, 0); }
@@ -1902,6 +1976,42 @@ body.term-stowed .sam.p-idle .sam__cel,
   transform-origin: 100% 0;
   box-shadow: 0 -1px 0 var(--red), 0 -12px 22px -6px var(--red-soft);
 }
+
+/* ── riding the fold down ──────────────────────────────────────
+   The fold moves him, and it moves him a long way. .termwin is `position: fixed;
+   bottom: var(--term-edge)`, so a card that loses height keeps its floor and
+   drops its ROOF — and .sam is at `bottom: 100%` of that card. Traced against a
+   real click, the roof falls 468px in the .34s the collapse takes, peaking near
+   4700px/s. Whatever pose he is in, he is in it while being carried the height
+   of the window straight down.
+
+   So the poses after contact are chosen against that trace, not against a beat:
+
+   contact ....... sam-a3 holds attack_3's f3 from 120ms. The follow-through gets
+                   140ms of it, which is the pause a stroke needs to land.
+   p-fall at 260   jump f4, held. This is the one frame in any sheet drawn as a
+                   man in the air on the way DOWN, and the fold is the only place
+                   on the site that needs one. It is not decoration: without it he
+                   held a finished-slash pose through 327px of descent, which
+                   reads as a sprite being dragged by its parent rather than a man
+                   falling with the floor he just cut.
+   p-land at 420   19px of roof travel left. f4 -> f5 puts his feet back on row
+                   127 as the card stops, so the sheet's own return to the ground
+                   IS the impact. Then f6, f1, f0 stand him up (see sam-land).
+   done at 780     120ms upright before the breath resumes.
+
+   The 260 is load-bearing and it is not a round number. f4 draws his feet at row
+   117 where every other frame plants them at 127, so entering it lifts his feet
+   20 device px off the border they were standing on (and his head 10, since the
+   frame is also drawn more compact) — that lift is altitude, it is what makes the
+   frame read as airborne, and it must NOT be cancelled with a rig transform. The lunge
+   postmortem above is the whole argument: a compensating ramp holds a frame at
+   fractional device px, .sam__zoom's scale(2) resamples it, and the pixel art
+   stops being pixel art. The free fix is timing. At 260 the roof is already
+   moving 15-50px per frame, so a 20px lift arrives inside motion that is larger
+   than it is — and what it reads as is the floor leaving his feet, which is
+   exactly what just happened to him. Hand it to him at rest and it is a pop;
+   hand it to him mid-fall and it is the fall. */
 
 /* ── the close: cut into two pieces ────────────────────────────
    A kesa-giri leaves two halves, so the close leaves two halves. There is no
