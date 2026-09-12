@@ -656,13 +656,11 @@
       // Only from inside the window. Esc elsewhere on the page shouldn't
       // dismiss something the visitor may not even be looking at.
       if (!win.contains(ev.target) && !win.contains(doc.activeElement)) return;
-      /* Esc is the ✕ button by another route, so it gets the same sword. The
-         guards are what make that safe rather than clever:
-
-         isMin() — a window folded to its 38px title bar has no body left to
-         sever, so samurai.js's own click path refuses it outright and this has
-         to refuse it for the same reason. A red diagonal across a title bar
-         would be a shrug.
+      /* Esc is the ✕ button by another route, so it gets the same sword — folded
+         or not. It deliberately does NOT check isMin(): samurai.js used to refuse
+         a folded window and this matched it, but the peek bar is cut too now, and
+         two paths to the same dismissal that animate differently is just a bug
+         with a comment on it. samurai.js::foldCut() owns that geometry.
 
          window.Samurai — the whole animation is one deletable <script> tag, and
          that promise is only true if every caller checks. Delete the tag and
@@ -676,7 +674,7 @@
          than queueing another one, which is strike()'s job and it already does
          it. Runway 0 to match the button: there is no dead time to run through
          here the way terminal.js has after a typed `exit`. */
-      if (!isMin() && window.Samurai && window.Samurai.strike &&
+      if (window.Samurai && window.Samurai.strike &&
           window.Samurai.strike('close', 0)) return;
       close();
     }, true);
