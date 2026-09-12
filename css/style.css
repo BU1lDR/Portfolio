@@ -1771,34 +1771,49 @@ body:not(.term-stowed) .termlaunch.is-shown {
 .sam.p-cut-close .sam__cel { width: 640px; left: 5px; background-image: url(../assets/samurai/attack_2.png);
                              animation: sam-a2 150ms steps(5, jump-none) forwards; }
 
-/* The breath. Worth spelling out, because the obvious `steps(5)` is wrong here
-   for a reason that is invisible in the CSS and obvious in the sheet.
+/* The breath. Worth spelling out, because two of the three things in here look
+   like mistakes and the sheet is the only place the reasons are visible.
 
-   idle.png is not five poses. Diffed frame against frame, the whole figure —
-   legs and feet included, residual exactly zero — is drawn at one of two
-   heights: f0/f1/f2 sit 1px low, f3/f4 sit 1px high. Everything else that looks
-   like change is every interior pixel inheriting its neighbour's colour, which
-   is what a 1px translation does to a diff. So the artist drew one breath: rest
-   low, rise 1px, hold, fall back. f1 and f2 differ from f0 only in some chest
-   and banner shading, and f3/f4 are near-duplicates of each other.
+   idle.png is not five poses. Measured, the figure's ground row per frame is
+   127, 127, 127, 126, 126 and its top row is 36, 36, 36, 35, 35 — so f3 and f4
+   are the WHOLE figure, legs and feet included, drawn one pixel higher up the
+   cell. Not a chest lifting: a translation.
 
-   Two consequences. First, nothing here should add vertical motion of its own —
-   the bob is already in the art, and doubling it would read as a hop. Second,
-   the only thing wrong with it was the clock: five uniform frames in 850ms is a
-   breath every 0.85s, about 73 a minute, which is not breathing, it is
-   shivering. A resting human runs 12–20.
+   That is the bob, and the y offsets below cancel it. Left alone it is 1 cell px,
+   which .sam__zoom's scale(2) turns into 2 CSS px on screen, and it moves his
+   FEET — he stands on `bottom: 100%`, i.e. exactly on the window's top border, so
+   every cycle his soles detached from a hard 1px edge and clipped back onto it.
+   Against a straight line, 2px of that is not a breath, it is a twitch. Pushing
+   f3/f4 back down by the 1px they were drawn up by plants him for good: stepping
+   the paused loop through all five dwells and reading the lowest lit row of the
+   rendered sprite gives one row for all five, where before it gave two.
 
-   So: 3.2s a cycle (~19 a minute) with step-end and hand-weighted dwells, since
-   steps(5) can only ever divide the time equally. Low frames get the long, easy
-   dwells and shorten as he gathers; the rise lands at 56%; the high pose is held
-   through to the wrap, which is the fall. */
+   And it costs nothing, which is the part worth measuring before believing.
+   Diffed in full colour against f0 with each frame first put back on f0's ground
+   row, every frame still differs: 127, 143, 152 and 151 pixels, mean delta ~120
+   of 255, and all of it inside rows 52..85 — the chest and the banner. 9.1% of
+   the figure, in the right place. The shading was always doing the actual
+   breathing; the translation was just riding along on top of it and spoiling it.
+
+   1px and not a fraction, deliberately. A ramped or fractional offset would hold
+   the cel at a fractional device px, .sam__zoom's scale(2) would resample it and
+   `image-rendering: pixelated` would show every seam of that — the same trap as
+   the fold's landing frame, see §10b further down. step-end plus a whole pixel
+   means the offset is only ever exactly 0 or exactly 1, so it stays on the grid.
+
+   The other thing that was wrong was the clock. Five uniform frames in 850ms is
+   a breath every 0.85s, about 73 a minute, which is not breathing, it is
+   shivering; a resting human runs 12–20. So 3.2s a cycle (~19 a minute) with
+   step-end and hand-weighted dwells, since steps(5) can only ever divide the
+   time equally. The settled frames get the long, easy dwells and shorten as he
+   gathers; the turn lands at 56%; the last frame is held through to the wrap. */
 @keyframes sam-idle {
-  0%   { transform: translate3d(   0, 0, 0); }   /* f0  low  — settled     768ms */
-  24%  { transform: translate3d(-128px, 0, 0); } /* f1  low  — chest shifts 576ms */
-  42%  { transform: translate3d(-256px, 0, 0); } /* f2  low  — gathering   448ms */
-  56%  { transform: translate3d(-384px, 0, 0); } /* f3  HIGH — the 1px rise 704ms */
-  78%  { transform: translate3d(-512px, 0, 0); } /* f4  high — held        704ms */
-}                                                /* wrap to f0 is the fall */
+  0%   { transform: translate3d(   0,   0, 0); } /* f0  settled            768ms */
+  24%  { transform: translate3d(-128px, 0, 0); } /* f1  chest shifts       576ms */
+  42%  { transform: translate3d(-256px, 0, 0); } /* f2  gathering          448ms */
+  56%  { transform: translate3d(-384px, 1px, 0); } /* f3  drawn 1px high — put back */
+  78%  { transform: translate3d(-512px, 1px, 0); } /* f4  likewise         704ms */
+}                                                /* wrap to f0 is the release */
 @keyframes sam-run  { from { transform: translate3d(0, 0, 0); }
                       to   { transform: translate3d(-1024px, 0, 0); } }
 /* jump frames 2..6 — rise, apex, fall, land, recover */
