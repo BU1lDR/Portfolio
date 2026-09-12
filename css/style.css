@@ -1712,20 +1712,47 @@ body:not(.term-stowed) .termlaunch.is-shown {
    The return to 0 is not a return to where he started: `bottom: 100%` is
    carrying him down with the folding roof at the same time, so easing the
    lunge out over the fold lands him standing on whatever is left. */
-.sam.is-lunge-min   .sam__rig { animation: sam-lunge-min   460ms var(--ease-io) both; }
-.sam.is-lunge-close .sam__rig { animation: sam-lunge-close 500ms var(--ease-io) both; }
+/* Linear at the animation level, because the per-keyframe steps() below are what
+   actually shape these. Two things they are fixing.
+
+   ONE: the drop has to be over by the time the blade art arrives. sam-a3 is
+   160ms across 4 frames, so its contact frame f2 owns 80..120ms; the rig and the
+   cel provably start on the same tick (same startTime), so 80ms of 460 is 17.4%.
+   The old 26% put full extension at 120ms — the exact moment f2 *ends*. For the
+   whole frame that showed the blade meeting the border, the blade was still a
+   dozen-odd device pixels above it. Same for the close: sam-a2 is 150ms across 5
+   frames, so f4 owns 120..150ms, and 120 of 500 is 24%, not 30%.
+
+   TWO: everything he stands on has to be a whole device pixel. .sam__zoom scales
+   by 2 and .sam__cel is image-rendering:pixelated, so a rig offset with a
+   fractional half — 46.273px, which is what an eased 64px drop actually
+   produces — puts the composited layer between device pixels and the compositor
+   resamples him. Measured, on the contact frame with the beam suppressed so only
+   the sprite is in shot: at 46px and at 46.5px (both whole device pixels, since
+   x2) exactly 0 of ~1840 opaque pixels fall outside the sheet's 31-colour
+   palette. At 46.25px and 46.273px it is 35.7%, an eighth of them badly off.
+   Nearest-neighbour upscaling cannot invent a colour; bilinear resampling can,
+   so off-palette pixels are resampling, and it is binary rather than gradual.
+
+   steps(64) over a 64px travel therefore emits whole pixels only — 0,1,2..63 —
+   and 64 quantisation levels across 80ms is finer than the display can show, so
+   this costs no smoothness at all. It buys crispness for free. The tradeoff is
+   losing the ease on the ride back down, which linear covers well enough since
+   he is tracking a roof that is folding under him anyway. */
+.sam.is-lunge-min   .sam__rig { animation: sam-lunge-min   460ms linear both; }
+.sam.is-lunge-close .sam__rig { animation: sam-lunge-close 500ms linear both; }
 .sam.is-runin       .sam__rig { animation: sam-runin var(--sam-run-dur) linear both; }
 
 @keyframes sam-lunge-min {
-  0%   { transform: translate3d(0, 0, 0); }
-  26%  { transform: translate3d(0, 64px, 0); }   /* contact, t=120ms */
-  46%  { transform: translate3d(0, 64px, 0); }   /* follow-through, held */
-  100% { transform: translate3d(0, 0, 0); }      /* rides the roof down */
+  0%     { transform: translate3d(0,  0,   0); animation-timing-function: steps(64, end); }
+  17.4%  { transform: translate3d(0, 64px, 0); animation-timing-function: step-end; }
+  34.8%  { transform: translate3d(0, 64px, 0); animation-timing-function: steps(64, end); }
+  100%   { transform: translate3d(0,  0,   0); }
 }
 @keyframes sam-lunge-close {
-  0%   { transform: translate3d(0, 0, 0); }
-  30%  { transform: translate3d(0, 18px, 0); }   /* contact, t=150ms */
-  100% { transform: translate3d(0, 18px, 0); }   /* holds while the window dies */
+  0%     { transform: translate3d(0,  0,   0); animation-timing-function: steps(18, end); }
+  24%    { transform: translate3d(0, 18px, 0); }  /* holds while the window dies */
+  100%   { transform: translate3d(0, 18px, 0); }
 }
 /* Linear, because ground speed under a run cycle has to be constant or his
    feet skate. 120px in 440ms is ~273px/s, about three body-heights a second. */
