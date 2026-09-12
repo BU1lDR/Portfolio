@@ -178,6 +178,57 @@
 
   function live() { return win.querySelector('.term:not(.term--ghost)'); }
 
+  /* ── cutting the folded bar ───────────────────────────────────
+     The folded window is not a short version of the open one, it is a 240px pill
+     (--term-min-w) where the open card is 600 — and he does not move when it
+     folds, because he is anchored `right: 8px` of .termwin. So his blade keeps
+     landing 247.5px from the RIGHT edge, which on a 240px bar is 7.5px past the
+     LEFT edge: his own --sam-cut-x of 266 puts the cut line at x = -27.5 and it
+     misses the bar completely. Measured, not guessed — and it is why simply
+     lowering the height floor draws nothing at all.
+
+     He cannot be moved to fix it either. To bring the blade to the middle of a
+     240px bar he would have to travel 127px towards the right edge, which puts
+     him off the screen; mirroring him instead lands the cut 25px from the far
+     end. The bar is narrower than he is and that is the whole problem.
+
+     So the beam gets aimed independently here, and the one thing worth aiming at
+     is the single gap in the bar's contents: the dots end at x=74, the 開く label
+     starts at x=98. Cut anywhere else and a piece leaves carrying half a dot or a
+     sliced glyph. The line leans h*tan32 ≈ 24px over the bar's 38px, which is
+     fractionally WIDER than the 24px gap, so it cannot sit inside the gap — it is
+     centred on it instead, entering at the label's left edge and leaving at the
+     dots' right edge. Both pieces keep their contents whole: at the dots' own
+     mid-height the line is at x≈86, clear of both.
+
+     Measured off the live bar rather than written down as 141px, because the dots
+     and the label are placed by padding and do not move with --term-min-w. The
+     clamp is for the day someone reorders the bar and the "gap" comes out silly.
+
+     The cost, stated plainly: the beam is then ~98px right of where his blade
+     actually falls, so the stroke and the steel are no longer one line the way
+     they are on the open card. On a 38px bar crossed in 440ms, with the wash
+     firing on the same frame, that reads as a cut. A 7px sliver off the left edge
+     would not read as anything. */
+  function foldCut(card, w, h) {
+    var dots = card.querySelector('.term__dots');
+    var peek = card.querySelector('.term__peek');
+    var mid = w * 0.36;                       // fallback: no dots, no label
+    if (dots && peek) {
+      var d = dots.getBoundingClientRect(), p = peek.getBoundingClientRect();
+      if (p.left > d.right) mid = (d.right + p.left) / 2 - card.getBoundingClientRect().left;
+    }
+    /* mid is where the line's MIDPOINT should sit, so the top crossing is half a
+       lean to the right of it. Then back out the pin, which is off the right edge
+       and 1.5px shy of the centreline. */
+    var x0 = Math.min(Math.max(mid + h * TAN32 / 2, 30), w - 30);
+    var cutx = Math.round(w - x0 - 1.5);
+    /* Written back so the beam follows the polygons. The invariant above — one
+       description of the line, shared — is the only reason they cannot drift. */
+    win.style.setProperty('--sam-cut-x', cutx + 'px');
+    return cutx;
+  }
+
   function split(c) {
     if (!c.split || ghost) return false;
     var card = live();
@@ -185,10 +236,11 @@
 
     var r = card.getBoundingClientRect();
     var w = r.width, h = r.height;
-    /* A diagonal across a title bar is a shrug, not a cut. The click path
-       refuses a folded window outright; terminal.js's `exit` does not, so the
-       floor is checked here too and the close just plays without the split. */
-    if (h < 120 || w < 200) return false;
+    /* Only a floor against a degenerate box. This used to be `h < 120`, which
+       ruled out the folded peek bar on the grounds that a diagonal across a
+       title bar is a shrug — see "cutting the folded bar" below for why that was
+       wrong and what it takes to make the short cut work. */
+    if (h < 24 || w < 200) return false;
 
     /* .term__cut--v is a 3px bar pinned `right: var(--sam-cut-x)` and rotated
        about its own top centre, so its centreline crosses the card's top edge —
@@ -196,6 +248,7 @@
        the only description of the cut: the beam draws it and the polygons below
        are cut along it, so the two cannot drift apart. */
     var cutx = parseFloat(getComputedStyle(win).getPropertyValue('--sam-cut-x')) || 266;
+    if (h < 120) cutx = foldCut(card, w, h);
     var x0 = w - cutx - 1.5;
     function xAt(y) { return x0 - y * TAN32; }
 
@@ -289,8 +342,11 @@
     var card = live();
     if (card) card.style.removeProperty('clip-path');
     /* Off with the rest of the scaffolding — a distance measured against last
-       time's viewport is worse than no distance at all. */
+       time's viewport is worse than no distance at all, and a folded bar's cut x
+       left on the window would aim the next cut on the open card at the peek
+       label's old gap. Both are re-measured on every strike. */
     win.style.removeProperty('--sam-fall');
+    win.style.removeProperty('--sam-cut-x');
     if (sliced) {
       void win.offsetWidth;                 // commit the hidden state, then
       win.style.removeProperty('transition');  // hand the transition back
@@ -420,12 +476,15 @@
     var btn = t.closest('button');
     var id = btn ? btn.id : '';
 
-    /* Folded. Nothing here is a cut: unfolding is not a dismissal, and closing
-       a window that is already down to a 38px title bar has no body left to
-       sever — a diagonal across a title bar would be a shrug. He leaps up with
-       the window as it unfolds and otherwise stays out of the way. */
-    if (isMin()) {
-      if (id === 'termMin' || (!btn && bar && bar.contains(t))) once('p-leap', 360);
+    /* Folded, and the gesture is an unfold — the amber dot, or the bar itself.
+       Unfolding is not a dismissal, so there is nothing to cut; he leaps up with
+       the window as it grows and otherwise stays out of the way. Closing a folded
+       window IS a dismissal, so it falls through to the strike below and gets the
+       same kesa-giri the open card gets. See foldCut() for what that takes: the
+       bar is narrower than he is, so the beam has to be aimed rather than
+       inherited. This used to bail out here for every folded click. */
+    if (isMin() && (id === 'termMin' || (!btn && bar && bar.contains(t)))) {
+      once('p-leap', 360);
       return;
     }
 
@@ -436,9 +495,9 @@
 
        Esc is the exception and it is deliberate: main.js's Esc handler does call
        strike('close', 0), because Esc is the gesture people use to be rid of the
-       thing, not to move through it, and it is worth the 150ms. It guards on
-       isMin() and on window.Samurai existing for the same reasons this handler
-       does. If that ever changes, change it there — not here. */
+       thing, not to move through it, and it is worth the 150ms. It guards only on
+       window.Samurai existing, and takes the folded bar as well, which is what
+       this handler does too. If that ever changes, change it there — not here. */
     if (ev.detail === 0) return;
 
     if (!strike(id === 'termClose' ? 'close' : 'min', 0)) return;
