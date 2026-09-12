@@ -1366,9 +1366,42 @@ body.term-cold .termlaunch { transition: none; }
   margin: .4em 0;
   flex-wrap: wrap;
 }
+/* The art is a grid of ▀ ▄ █ and spaces, so it only holds together if every cell
+   is the same size. Two separate things were stopping that, both measured:
+
+   1. It does NOT use --f-mono, and that is the whole fix for the skew. Google
+      Fonts serves JetBrains Mono in latin/latin-ext/cyrillic/greek subsets and
+      Block Elements (U+2580-259F) is in none of them, so ▀ ▄ █ silently fall
+      back to a local monospace while the SPACES stay in JetBrains Mono. Measured
+      at 10px: blocks 5.498px, space 6px. Two advances on one line means each row
+      is as wide as its own mix of blocks and gaps, so no two rows share a column
+      grid and nothing can be made to line up by editing the art. Naming one
+      family that supplies both puts them back on one advance. (The old art also
+      had a plain authoring bug — its right pillar was written one column further
+      right below the nuki than above it — but that was separate, and fixing it
+      alone would not have straightened anything.) (document.fonts.check claims
+      JetBrains Mono has the blocks. It is wrong; the advance is the evidence.)
+
+   2. Courier New rather than the generic stack, because the advance also has to
+      land on whole device pixels or the columns antialias into seams. A 0.55em
+      font gives 5.5px at 10px, which is 11 device px at 2x — fine — but half
+      pixels at 1x, where a solid slab measures 6 dim columns out of 62. Courier
+      New is 0.6em, so 10px is exactly 6px and the slab is solid at 1x AND 2x.
+      This costs nothing aesthetically: the art contains no letterforms, only
+      blocks, so which font draws them is invisible.
+
+   A flat 10px, not a clamp, and that follows from point 2. Only sizes where
+   0.6em is a whole number stay sharp — 10, 15, 20 — so the old
+   clamp(7px, 1.5vw, 10px) spent its entire lower range seaming. It was there to
+   keep 25 columns from overflowing a narrow terminal; the art is 21 columns now
+   and 126px fits anything, and .tl-neo wraps the info column underneath below
+   that. Fixed size, always integral, always sharp.
+
+   line-height must stay exactly 1. At 1.15 there is ~1.5px of background between
+   every line, which is 2 dead rows through the middle of anything solid. */
 .tl-neo__art {
   flex-shrink: 0;
-  font: 500 clamp(7px, 1.5vw, 10px)/1.15 var(--f-mono);
+  font: 500 10px/1 'Courier New', ui-monospace, monospace;
   color: var(--red);
   white-space: pre;
 }
