@@ -1827,7 +1827,7 @@ body.term-stowed .sam.p-idle .sam__cel,
 .term__cut--wash { inset: 0; background: var(--red-soft); }
 
 .termwin.is-cut-min   .term__cut--h    { animation: sam-slash-h 220ms var(--ease) forwards; }
-.termwin.is-cut-close .term__cut--v    { animation: sam-slash-v 250ms var(--ease) forwards; }
+.termwin.is-cut-close .term__cut--v    { animation: sam-slash-v 440ms var(--ease) forwards; }
 .termwin.is-cut-close .term__cut--wash { animation: sam-wash   280ms var(--ease) forwards; }
 
 @keyframes sam-slash-h {
@@ -1835,10 +1835,17 @@ body.term-stowed .sam.p-idle .sam__cel,
   55%  { opacity: 1; transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1); }
 }
+/* 440ms rather than 250ms, and the extra 190ms is all tail. The beam is a child
+   of .term, so once the card is split each half carries its own copy of it
+   clipped to its own cut edge — which means a beam that outlives the parting
+   lights both raw edges as they come away, and one that dies at 250ms leaves
+   them dull black at the exact moment they open. The 28%/40% stops reproduce the
+   old 125ms draw and 175ms hold to the millisecond; only the fade is longer, and
+   it now ends with the halves (see term-piece-a). */
 @keyframes sam-slash-v {
   0%   { opacity: 1;   transform: rotate(32deg) scaleY(0); }
-  50%  { opacity: 1;   transform: rotate(32deg) scaleY(1); }
-  70%  { opacity: .85; transform: rotate(32deg) scaleY(1); }
+  28%  { opacity: 1;   transform: rotate(32deg) scaleY(1); }
+  40%  { opacity: .85; transform: rotate(32deg) scaleY(1); }
   100% { opacity: 0;   transform: rotate(32deg) scaleY(1); }
 }
 @keyframes sam-wash { 0% { opacity: 0; } 22% { opacity: 1; } 100% { opacity: 0; } }
@@ -1887,6 +1894,130 @@ body.term-stowed .sam.p-idle .sam__cel,
   transform: translate3d(-16px, 26px, 0) rotate(-2deg);
   transform-origin: 100% 0;
   box-shadow: 0 -1px 0 var(--red), 0 -12px 22px -6px var(--red-soft);
+}
+
+/* ── the close: cut into two pieces ────────────────────────────
+   A kesa-giri leaves two halves, so the close leaves two halves. There is no
+   way to fake that with one box: a single element can be clipped to one side of
+   the line or the other, never to both at once and never to two sides that then
+   move apart. So js/samurai.js photographs the card — cloneNode on .term, ids
+   stripped, inert, values copied across — overlays the copy on the original and
+   clip-paths the two of them to opposite sides of the blade. From then on the
+   original IS the upper-left piece and the copy IS the lower-right one, and
+   this file only has to push them apart.
+
+   The polygons are computed in JS because they need the card's live height:
+   the line enters the top edge under his blade and rakes down-LEFT at 32deg
+   (clockwise takes (0,1) to (-sin32, cos32)), so where it leaves depends on how
+   tall the window is, and --term-h is a clamp on the viewport. Everything else
+   about the cut is here.
+
+   Note what the clone buys beyond the split itself. .term__cut--v is a child of
+   .term, so the copy has a beam too, and `.termwin.is-cut-close .term__cut--v`
+   matches it — the two halves of the beam are clipped to the two halves of the
+   card and tear apart with them. The glowing line does not get halved or
+   duplicated; it is one line that comes apart, for free.
+
+   Timing. 440ms, and the number is a budget rather than a taste: the copy is
+   inserted one frame after contact (~165ms) and samurai.js's finish() tears the
+   whole thing down at 700ms, so anything past ~500ms would still be falling
+   when its scaffolding is removed. 440ms lands the last frame at ~605ms and
+   leaves 95ms — six frames — of slack. Within that:
+     0-26%   together, while sam-slash-v rakes the line down (it hits full
+             length at 125ms — a card that opens before the line is drawn is a
+             card that fell apart on its own)
+     26-45%  the halves part ~9px along the cut's normal, (cos32, sin32) —
+             perpendicular to the line, which is the only direction a blade can
+             push them
+     45-100% gravity, and they fade before they can reach anything below
+
+   transform-origin is set per piece to roughly its own centroid so the two
+   rotations don't compose back into one rigid body tilting. */
+.term--ghost {
+  position: absolute;      /* .term is `relative`; this is later, so it wins */
+  inset: 0;
+  pointer-events: none;
+}
+/* The copy is a photograph, not a second terminal: no blinking caret, no
+   re-entrant transitions, nothing that could tick out of step with the
+   original for the half second both are on screen. The beams are deliberately
+   NOT in this list — they are the one thing that must still animate. */
+.term--ghost .term__bar,  .term--ghost .term__bar *,
+.term--ghost .term__body, .term--ghost .term__body * {
+  animation: none !important;
+  transition: none !important;
+  caret-color: transparent;
+}
+
+/* Holds the card visible while the halves fall, then snaps it out at 440ms —
+   by which point both pieces have animated to opacity 0, so the snap has
+   nothing to show. A zero-duration transition with a delay is what does the
+   holding: the property sits at its old value for the delay and then jumps,
+   which is a hold with no keyframes and no class to remove on a timer.
+
+   0,2,0 outranks the .termwin base rule without !important, and the is-open
+   rule that outranks *it* cannot match — close() has already taken is-open off.
+   transform is pinned to `none` so the whole card does not also slide 14px into
+   its corner and fight the two pieces. */
+.termwin.is-sliced {
+  transform: none;
+  transition: opacity 0s linear 440ms, transform 0s, width 0s,
+              visibility 0s linear 440ms;
+}
+.termwin.is-sliced .term         { animation: term-piece-a 440ms both;
+                                   transform-origin: 22% 78%; }
+.termwin.is-sliced .term--ghost  { animation: term-piece-b 440ms both;
+                                   transform-origin: 78% 22%; }
+
+/* The two halves are opaque until 70% and gone by 100%. That ordering is the
+   whole difference between a cut and a dissolve: fading them while they part
+   makes the card look like it lost confidence, so they stay solid all the way
+   through the fall and only vanish at the end. The lower-right half falls
+   further and turns harder — it is the piece with nothing above it. */
+@keyframes term-piece-a {                                   /* upper-left */
+  0%, 26% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 1;
+            animation-timing-function: cubic-bezier(.05, .85, .25, 1); }
+  45%     { transform: translate3d(-11px, -6.9px, 0) rotate(-1.2deg); opacity: 1;
+            animation-timing-function: cubic-bezier(.35, 0, .8, .45); }
+  70%     { transform: translate3d(-19px, 22px, 0) rotate(-4deg); opacity: 1;
+            animation-timing-function: cubic-bezier(.4, 0, .9, .5); }
+  100%    { transform: translate3d(-32px, 112px, 0) rotate(-9deg); opacity: 0; }
+}
+@keyframes term-piece-b {                                   /* lower-right */
+  0%, 26% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 1;
+            animation-timing-function: cubic-bezier(.05, .85, .25, 1); }
+  45%     { transform: translate3d(11px, 6.9px, 0) rotate(1.2deg); opacity: 1;
+            animation-timing-function: cubic-bezier(.35, 0, .8, .45); }
+  70%     { transform: translate3d(20px, 40px, 0) rotate(4.5deg); opacity: 1;
+            animation-timing-function: cubic-bezier(.4, 0, .9, .5); }
+  100%    { transform: translate3d(38px, 152px, 0) rotate(11deg); opacity: 0; }
+}
+
+/* ...and he goes out with his own handiwork.
+   Without this he does not. He is a child of .termwin, so his opacity is the
+   window's, and the window's opacity is a delayed 0s hop — it holds at 1 for the
+   whole 440ms and then snaps. The two halves fade themselves out on the way
+   down, so by 400ms they are gone and he is the only thing left on screen, at
+   full opacity, for a quarter of a second — and then he blinks out of existence
+   in a single frame. On the filmstrip it is the one remaining seam in the close.
+
+   An animation rather than a transition, and this is the reason: `both` holds
+   opacity 0 until the class comes off and then restores 1 instantly. A
+   transition would run the same fade BACKWARDS when finish() removes is-sliced,
+   so reopening the window a moment later would find him missing and fade him in
+   — the exact class of bug unsplit() suppresses .termwin's own transition for.
+
+   Safe to animate .sam itself: the poses animate .sam__cel and the lunges
+   animate .sam__rig, so nothing else here owns this element's animation. And it
+   is only ever added by the close — the fold rides him down to the peek bar and
+   lands him there, where he has to stay visible. */
+.termwin.is-sliced .sam { animation: sam-vanish 440ms linear both; }
+@keyframes sam-vanish {
+  /* Gone by 92% (405ms) rather than 100%: the parent's snap is at 440ms exactly,
+     and finishing a fade on the same millisecond it happens leaves nothing to
+     absorb a dropped frame. 35ms is two frames of margin. */
+  0%, 55%   { opacity: 1; }
+  92%, 100% { opacity: 0; }
 }
 
 /* The pill acknowledges the kill as it arrives, so the window's replacement
@@ -2885,6 +3016,14 @@ body.term-stowed .sam.p-idle .sam__cel,
   .sam__cel, .sam__rig { animation: none !important; transform: none !important; }
   .sam__flip { transform: scaleX(-1) !important; }   /* not motion — he still faces the page */
   .term__cut { display: none; }
+
+  /* Belt to samurai.js's brace. It checks this query and never strikes here, so
+     neither class can be added and no clone can exist — but the blanket rule
+     above rewrites durations and NOT delays, so if one ever did, .is-sliced's
+     440ms delay would survive it and hold a dead window on screen for most of
+     half a second. Two lines to make that unreachable from either direction. */
+  .term--ghost { display: none; }
+  .termwin.is-sliced { transition-delay: 0s; }
 }
 
 @media print {

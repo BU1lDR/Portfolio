@@ -89,6 +89,7 @@
       land: 0,           // no landing: he holds the finished cut and goes with it
       done: 700,
       needs: ['attack_2'],
+      split: true,       // ...and the window comes apart along the blade
       act: function () { T.close(); }
     }
   };
@@ -129,13 +130,114 @@
     sam.classList.add(name);
   }
 
+  /* ── cutting the window in two ────────────────────────────────
+     A kesa-giri leaves two halves, and one box cannot be clipped to both sides
+     of a line at once. So on contact the card is photographed — cloneNode, ids
+     stripped, inert, live input values copied across — the copy is laid exactly
+     over the original, and the two are clip-pathed to opposite sides of the
+     blade. §10b then pushes them apart. From that moment the original IS the
+     upper-left half and the copy IS the lower-right one.
+
+     The polygons are computed here rather than in CSS because they need the
+     card's live height: the line enters the top edge under his blade and rakes
+     down-LEFT at 32deg, so where it leaves depends on how tall the window is,
+     and --term-h is a clamp on the viewport. */
+  var TAN32 = 0.62487;
+  var ghost = null;
+
+  function poly(pts) {
+    var out = [];
+    for (var i = 0; i < pts.length; i++) {
+      out.push(pts[i][0].toFixed(2) + 'px ' + pts[i][1].toFixed(2) + 'px');
+    }
+    return 'polygon(' + out.join(',') + ')';
+  }
+
+  function live() { return win.querySelector('.term:not(.term--ghost)'); }
+
+  function split(c) {
+    if (!c.split || ghost) return false;
+    var card = live();
+    if (!card) return false;
+
+    var r = card.getBoundingClientRect();
+    var w = r.width, h = r.height;
+    /* A diagonal across a title bar is a shrug, not a cut. The click path
+       refuses a folded window outright; terminal.js's `exit` does not, so the
+       floor is checked here too and the close just plays without the split. */
+    if (h < 120 || w < 200) return false;
+
+    /* .term__cut--v is a 3px bar pinned `right: var(--sam-cut-x)` and rotated
+       about its own top centre, so its centreline enters the top edge at x0. */
+    var cutx = parseFloat(getComputedStyle(win).getPropertyValue('--sam-cut-x')) || 240;
+    var x0 = w - cutx - 1.5;
+    var x1 = x0 - h * TAN32;
+
+    ghost = card.cloneNode(true);
+    ghost.classList.add('term--ghost');
+    ghost.setAttribute('aria-hidden', 'true');
+    ghost.setAttribute('inert', '');
+    /* Nothing in the copy may be findable or focusable. main.js and six preview
+       drivers reach the terminal by id; a second #termInput in the document
+       would hand half of them the photograph instead of the window. `inert`
+       covers the focus half where it is supported, tabIndex where it is not. */
+    ghost.removeAttribute('id');
+    var ided = ghost.querySelectorAll('[id]');
+    for (var i = 0; i < ided.length; i++) ided[i].removeAttribute('id');
+    var hot = ghost.querySelectorAll('a, button, input, textarea, select, [tabindex]');
+    for (var j = 0; j < hot.length; j++) hot[j].tabIndex = -1;
+    /* cloneNode copies the value ATTRIBUTE, not the live property — without
+       this, a half-typed command is missing from the half it was typed into. */
+    var from = card.querySelectorAll('input, textarea');
+    var to = ghost.querySelectorAll('input, textarea');
+    for (var k = 0; k < from.length && k < to.length; k++) to[k].value = from[k].value;
+
+    /* Before .sam, so he keeps painting over the card: the close lunge drops
+       him 36 device px, which puts his blade inside the card's top rows, and a
+       photograph laid over that would swallow the steel. */
+    win.insertBefore(ghost, sam);
+    /* 2px of overshoot on the outer edges — the polygon must not shave a
+       piece's own 1px border off the sides it is supposed to keep. */
+    card.style.clipPath = poly([[-2, -2], [x0, -2], [x1, h + 2], [-2, h + 2]]);
+    ghost.style.clipPath = poly([[x0, -2], [w + 2, -2], [w + 2, h + 2], [x1, h + 2]]);
+    return true;
+  }
+
+  function unsplit() {
+    var sliced = win.classList.contains('is-sliced');
+    /* Removing is-sliced hands opacity back to .termwin's own .3s fade. If the
+       halves have not finished — a second click, the watchdog, a backgrounded
+       tab — that fade would start from a card that is still fully drawn, and
+       restore the window it just destroyed for 300ms. Suppress the transition
+       for the single frame the swap takes. */
+    if (sliced) win.style.transition = 'none';
+    win.classList.remove('is-sliced');
+    if (ghost) {
+      if (ghost.parentNode) ghost.parentNode.removeChild(ghost);
+      ghost = null;
+    }
+    var card = live();
+    if (card) card.style.removeProperty('clip-path');
+    if (sliced) {
+      void win.offsetWidth;                 // commit the hidden state, then
+      win.style.removeProperty('transition');  // hand the transition back
+    }
+  }
+
   /* Idempotent, and reachable from three independent places: the contact
      timer, the watchdog, and abort(). Whichever gets here first dismisses the
      window; the others are no-ops. */
   function commit() {
     if (!pend || fired) return;
     fired = true;
+    /* Clone and clip BEFORE either class goes on, then add both in one go: the
+       copy carries a .term__cut--v of its own and `.termwin.is-cut-close
+       .term__cut--v` matches it, so the two halves of the beam are clipped to
+       the two halves of the card and tear apart with them. That only works if
+       they start on the same frame. */
+    var halves = split(pend);
     win.classList.add(pend.vfx);
+    if (halves) win.classList.add('is-sliced');
     var wasClose = pend === CUT.close;
     pend.act();
     /* The pill arrives ~300ms later to replace the window. Flashing it red as
@@ -154,6 +256,7 @@
     timers.length = 0;
     clearTimeout(watchdog);
     watchdog = 0;
+    unsplit();
     win.classList.remove('is-cut-min', 'is-cut-close');
     sam.style.removeProperty('--sam-run-dur');
     sam.style.removeProperty('--sam-run-x');
@@ -259,6 +362,11 @@
     var t = ev.target;
     if (!t || !t.closest) return;
     if (!t.closest('#termLaunch') && !t.closest('#termOpen')) return;
+    /* Reopening mid-cut has to tidy the cut away first. `is-open` outranks
+       .is-sliced, so a window reopened while its two halves are still falling
+       would come back clipped to one of them and wearing the other. Capture
+       phase means this runs before main.js adds the class. */
+    abort();
     if (T.isOpen()) return;
     once('p-run', 440);
     move('is-runin');
