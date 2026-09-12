@@ -157,17 +157,47 @@ window.PORTFOLIO = {
     { what: 'Fundamentals of C Programming',                         issuer: 'E&ICT Academy, IIT Kanpur',    when: 'Nov 2025' }
   ],
 
-  /* ── neofetch art ───────────────────────────────────────── */
-  /* A torii gate. Keep the lines the same width or it skews.  */
+  /* ── neofetch art ───────────────────────────────────────────────
+     A myōjin torii, drawn to its actual anatomy rather than by feel, top down:
+
+       kasagi    the top lintel. Widest member, and the only one that sweeps up
+                 at the tips — that is the whole silhouette of a myōjin gate and
+                 what distinguishes it from the flat-topped shinmei style.
+       shimaki   the second beam, directly under the kasagi and inset from it.
+       gakuzuka  the short strut at dead centre, from the shimaki down to the
+                 nuki. Only that span. It used to hang BELOW the nuki here,
+                 which is not a member of anything.
+       nuki      the tie beam. It passes THROUGH the pillars and protrudes a
+                 column past each — flush ends would make this a shinmei gate,
+                 and floating clear of the pillars, which is what it used to do,
+                 makes it a rectangle hovering inside a doorframe.
+       hashira   the two pillars. Straight, on purpose: real ones lean inward by
+                 a degree or two, which at this size is under half a column, so
+                 any attempt at it can only land as a 1-column jog — exactly the
+                 kink the old right pillar had.
+       nemaki    the wrapped base, one column wider than the pillar per side.
+
+     Three invariants, all of which the old art broke somewhere:
+       - every line is exactly 21 characters, or the grid skews;
+       - the pillars stay in columns 3-4 and 16-17 for their whole height;
+       - the widths nest, kasagi > shimaki > nuki > pillar span, since that
+         hierarchy is what reads as a gate rather than as scaffolding.
+
+     Half blocks give half-row vertical resolution, which is where the beam
+     thicknesses come from: ▀ is the top half of its row, ▄ the bottom, █ both.
+     They only tile if the line-height is exactly 1 — see .tl-neo__art. */
   art: [
-    '   ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄   ',
-    '  ▀▀█▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█▀▀  ',
-    '    █   ▄▄▄▄▄▄▄▄▄   █    ',
-    '   ▐█▌  ▀▀▀▀█▀▀▀▀   ▐█▌  ',
-    '    █       █        █   ',
-    '    █       ▀        █   ',
-    '    █                █   ',
-    '   ▄█▄              ▄█▄  ',
-    '  ▀▀▀▀▀            ▀▀▀▀▀ '
+    '▄▄                 ▄▄',
+    '█████████████████████',
+    ' ▀▀██▀▀▀▀▀█▀▀▀▀▀██▀▀ ',
+    '   ██     █     ██   ',
+    '  ▀██▀▀▀▀▀▀▀▀▀▀▀██▀  ',
+    '   ██           ██   ',
+    '   ██           ██   ',
+    '   ██           ██   ',
+    '   ██           ██   ',
+    '   ██           ██   ',
+    '   ██           ██   ',
+    '  ▄██▄         ▄██▄  '
   ]
 };
