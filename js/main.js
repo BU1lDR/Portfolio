@@ -564,6 +564,11 @@
          bug than one that turns up somewhere unexpected. The observer stows it
          again at the next crossing. */
       stow(false);
+      /* Whatever the scroll position had decided, the visitor has now decided
+         otherwise — so the page gives up its claim on the window's size and
+         won't unfold it again on the next crossing as if it were its own work.
+         See the fold block near the end of this module. */
+      autoFolded = false;
       sync();
       releaseWelcome();
       focusPrompt();
@@ -584,6 +589,15 @@
       if (hadFocus && launch) requestAnimationFrame(function () { launch.focus(); });
     }
 
+    /* `quiet` means "the page did this, not the visitor" — see the fold block
+       further down. A scroll-driven fold or unfold must not pull the caret
+       across the screen or raise a keyboard, so quiet skips focusPrompt(). The
+       focus *rescue* in collapse() is not optional either way: folding hides
+       .term__body with `visibility`, and a focus ring left inside it is blurred
+       by the engine, which sends the next Tab back to the top of the document.
+       Public callers pass nothing and get the loud version, which is right —
+       every one of them is a click or a typed command. Only expand() needs the
+       flag: folding never wants focus, it only ever gives it back. */
     function collapse() {
       if (!isOpen() || isMin()) return;
       if (win.contains(doc.activeElement) && minB) minB.focus();
@@ -591,11 +605,12 @@
       sync();
     }
 
-    function expand() {
+    function expand(quiet) {
       win.classList.remove('is-min');
+      if (!quiet) autoFolded = false;          // see the note in open()
       sync();
       releaseWelcome();
-      focusPrompt();
+      if (!quiet) focusPrompt();
     }
 
     if (closeB) closeB.addEventListener('click', close);
@@ -678,6 +693,75 @@
        clause dropped, and dropping it can only ever hold the answer at true. */
     function past(rect) { return rect.top <= window.innerHeight * STOW_AT; }
 
+    /* ── folded once you've left the terminal section ─────────────
+       Stowing solved the hero. The rest of the page is the other half of the
+       same problem: a 600×500 window parked in the corner of #contact is
+       sitting on the contact form, and #path, and the ID card, whatever the
+       stylesheet reserves for it — reserving 654px of every section for a
+       window that is only that wide in one of them costs more page than the
+       layout can pay (see §18).
+
+       So the window is full size in the section that is about it, and folded
+       to its 240px title bar everywhere below. That is what --term-rail is
+       sized for. Still open, still unclosed, session and scrollback intact —
+       one click on the bar brings it back, and the rail means it has room to
+       come back into.
+
+       "At the terminal section" is measured off the section's *content* box —
+       its .wrap — and not off the section itself. The section carries --sp-sec
+       of block padding, 152px at desktop, so by the time its own bottom edge
+       leaves the screen the next section's heading is already a third of the
+       way down and has been sitting under a full-size window the whole time.
+       Watching the content instead puts the fold exactly on the seam: the hint
+       line goes off the top, the window folds, #about's heading arrives to a
+       clear page. Generous enough that the chips that drive the window are
+       never folded away while you're still looking at them.
+
+       autoFolded is the difference between "the page folded this" and "the
+       visitor folded this". Only a fold we performed gets undone on the way
+       back up — expand it by hand at #work and it stays expanded until you
+       leave the section boundary again, which is a scroll you meant. */
+    var autoFolded = false;
+    var homeBody = home && home.querySelector('.wrap');
+
+    /* The width at which the terminal section can afford to reserve the whole
+       600px rather than the folded 240px — §18 in the stylesheet keys the same
+       number. Below it the window stays folded even in its own section, because
+       a 654px rail at 1024px leaves a 290px column and the eight command chips
+       don't fit in it. Folded there means the chips are never underneath the
+       window they operate, which is the right way round to fail. */
+    var roomy = window.matchMedia('(min-width: 1281px)');
+
+    function onScreen(rect) { return rect.bottom > 0 && rect.top < window.innerHeight; }
+
+    function fold(here) {
+      /* Below 861px the window is a full-width strip docked to the bottom edge
+         and it already arrives folded — there is no rail to fold into and
+         nothing here to do. */
+      if (narrow.matches) return;
+      /* Full size in exactly one place, and only where the page has room to
+         reserve for it. Everything else — every other section, and every width
+         below 1281px including the terminal section itself — is folded. */
+      if (here && roomy.matches) {
+        if (autoFolded) { autoFolded = false; expand(true); }
+      } else if (isOpen() && !isMin()) {
+        autoFolded = true;
+        collapse();
+      }
+    }
+
+    /* Resizing across either breakpoint lands you in the next regime holding
+       the previous one's shape. Re-deciding on change is enough: the crossing
+       is the only moment the answer can change, same argument as the observers
+       below. */
+    var reFold = function () {
+      fold(homeBody ? onScreen(homeBody.getBoundingClientRect()) : true);
+    };
+    [narrow, roomy].forEach(function (mq) {
+      if (mq.addEventListener) mq.addEventListener('change', reFold);
+      else if (mq.addListener) mq.addListener(reFold);         // Safari < 14
+    });
+
     if (home && 'IntersectionObserver' in window) {
       /* Measured synchronously first. The observer's opening callback lands a
          frame or two later, and on a second visit in the same session the boot
@@ -695,18 +779,35 @@
 
          The reflow is what makes one frame enough: style is resolved while
          term-cold still applies, so by the time the class comes off there is no
-         longer a change left to interpolate. */
-      if (!past(home.getBoundingClientRect())) {
-        doc.body.classList.add('term-cold');
-        stow(true);
-        void win.offsetWidth;
-        requestAnimationFrame(function () { doc.body.classList.remove('term-cold'); });
-      }
+         longer a change left to interpolate.
+
+         The fold below has exactly the same problem and the same answer, which
+         is why the cold class now wraps both: land on #contact from a shared
+         link and the shipped full-size window would fold itself over .34s
+         while you watch. So the initial reading of *both* signals happens
+         cold, whichever way each one lands. */
+      doc.body.classList.add('term-cold');
+      if (!past(home.getBoundingClientRect())) stow(true);
+      if (homeBody) fold(onScreen(homeBody.getBoundingClientRect()));
+      void win.offsetWidth;
+      requestAnimationFrame(function () { doc.body.classList.remove('term-cold'); });
 
       new IntersectionObserver(function (entries) {
         stow(!past(entries[entries.length - 1].boundingClientRect));
       }, { rootMargin: '0px 0px -' + Math.round((1 - STOW_AT) * 100) + '% 0px' })
         .observe(home);
+
+      /* A second observer rather than another answer off the first one: they
+         watch different elements. Stowing is about where the section's top edge
+         is relative to a line 62% down the screen, folding is about whether the
+         section's content is on screen at all — and no rootMargin on one target
+         produces both crossings. Full root here, threshold 0: the crossing is
+         the content's last pixel leaving the top, which is exactly the seam. */
+      if (homeBody) {
+        new IntersectionObserver(function (entries) {
+          fold(entries[entries.length - 1].isIntersecting);
+        }).observe(homeBody);
+      }
     }
 
     /* On a phone the window docks to the bottom edge, and a 46vh panel over a
