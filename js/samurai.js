@@ -147,9 +147,10 @@
      upper-left half and the copy IS the lower-right one.
 
      The polygons are computed here rather than in CSS because they need the
-     card's live height: the line enters the top edge under his blade and rakes
-     down-LEFT at 32deg, so where it leaves depends on how tall the window is,
-     and --term-h is a clamp on the viewport. */
+     card's live height: the line enters the top edge on his blade's own path —
+     §10b's --sam-cut-x — and rakes down-LEFT at 32deg, so where it leaves
+     depends on how tall the window is, and --term-h is a clamp on the
+     viewport. Tall enough and it leaves through the side instead. */
   var TAN32 = 0.62487;
   var ghost = null;
 
@@ -176,10 +177,13 @@
     if (h < 120 || w < 200) return false;
 
     /* .term__cut--v is a 3px bar pinned `right: var(--sam-cut-x)` and rotated
-       about its own top centre, so its centreline enters the top edge at x0. */
-    var cutx = parseFloat(getComputedStyle(win).getPropertyValue('--sam-cut-x')) || 240;
+       about its own top centre, so its centreline crosses the card's top edge —
+       y=0 — at x0 and rakes down-left from there. xAt() is that line, and it is
+       the only description of the cut: the beam draws it and the polygons below
+       are cut along it, so the two cannot drift apart. */
+    var cutx = parseFloat(getComputedStyle(win).getPropertyValue('--sam-cut-x')) || 266;
     var x0 = w - cutx - 1.5;
-    var x1 = x0 - h * TAN32;
+    function xAt(y) { return x0 - y * TAN32; }
 
     ghost = card.cloneNode(true);
     ghost.classList.add('term--ghost');
@@ -207,9 +211,32 @@
        over that. Him on top is also the order that survives the next pose. */
     win.insertBefore(ghost, sam);
     /* 2px of overshoot on the outer edges — the polygon must not shave a
-       piece's own 1px border off the sides it is supposed to keep. */
-    card.style.clipPath = poly([[-2, -2], [x0, -2], [x1, h + 2], [-2, h + 2]]);
-    ghost.style.clipPath = poly([[x0, -2], [w + 2, -2], [w + 2, h + 2], [x1, h + 2]]);
+       piece's own 1px border off the sides it is supposed to keep. Which means
+       the seam's own two vertices have to be read off the line at those
+       overshot heights, xAt(L) and xAt(B), and not at 0 and h: run the line
+       over h and draw it across h+4 and it comes out at 31.8deg, 2.5px away
+       from the beam by the bottom of the card. The beam is then no longer on the
+       edge it opened, so the piece it has drifted off has an unlit cut edge
+       coming away while the other has a double-bright one. */
+    var L = -2, B = h + 2;
+    var xTop = xAt(L), xBot = xAt(B);
+    if (xBot > L) {
+      /* It leaves through the bottom edge. Two quads, and the shared pair of
+         vertices is what makes the halves part along one seam. */
+      card.style.clipPath = poly([[L, L], [xTop, L], [xBot, B], [L, B]]);
+      ghost.style.clipPath = poly([[xTop, L], [w + 2, L], [w + 2, B], [xBot, B]]);
+    } else {
+      /* In a tall window it runs out through the LEFT edge first and the upper
+         piece is a triangle. Emitting the quad regardless would put a vertex
+         outside the box, and the path would then cross itself on the way back
+         to the corner — at 536px, the tallest --term-h allows, by under a pixel,
+         which nobody will ever see on a piece that is falling and fading.
+         Handled anyway, because the alternative is a clip-path that folds over
+         itself waiting for someone to widen the angle. */
+      var yl = L + (xTop - L) / (xTop - xBot) * (B - L);
+      card.style.clipPath = poly([[L, L], [xTop, L], [L, yl]]);
+      ghost.style.clipPath = poly([[xTop, L], [w + 2, L], [w + 2, B], [L, B], [L, yl]]);
+    }
 
     /* How far "all the way down" is, measured rather than guessed. The halves
        have to leave the screen, not fade out over it, and three things decide
