@@ -1972,9 +1972,19 @@ body.term-stowed .sam.p-idle .sam__cel,
    0,2,0 outranks the .termwin base rule without !important, and the is-open
    rule that outranks *it* cannot match — close() has already taken is-open off.
    transform is pinned to `none` so the whole card does not also slide 14px into
-   its corner and fight the two pieces. */
+   its corner and fight the two pieces.
+
+   pointer-events for the same reason a demolished building gets a fence. The box
+   does not move — the transforms are on the two halves, and the rule above pins
+   .termwin itself to `none` — so for a full second after the window is destroyed
+   there is a 600x506 invisible corpse sitting in the corner, and .termwin does
+   not otherwise declare the property, so it computes `auto`. Measured: a click at
+   its centre during the fall lands on .termwin. With this line it reaches the
+   section underneath, which is where it was aimed. (Not the launcher pill, which
+   shares this z-index and wins on DOM order — it was never in danger.) */
 .termwin.is-sliced {
   transform: none;
+  pointer-events: none;
   transition: opacity 0s linear 920ms, transform 0s, width 0s,
               visibility 0s linear 920ms;
 }
