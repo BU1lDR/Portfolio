@@ -1840,8 +1840,9 @@ body.term-stowed .sam.p-idle .sam__cel,
    clipped to its own cut edge — which means a beam that outlives the parting
    lights both raw edges as they come away, and one that dies at 250ms leaves
    them dull black at the exact moment they open. The 28%/40% stops reproduce the
-   old 125ms draw and 175ms hold to the millisecond; only the fade is longer, and
-   it now ends with the halves (see term-piece-a). */
+   old 125ms draw and 175ms hold to the millisecond; only the fade is longer. It
+   is out by 440ms and the halves keep falling until 860ms, which is the right way
+   round: the beam is what opened them, not what carries them down. */
 @keyframes sam-slash-v {
   0%   { opacity: 1;   transform: rotate(32deg) scaleY(0); }
   28%  { opacity: 1;   transform: rotate(32deg) scaleY(1); }
@@ -1918,18 +1919,23 @@ body.term-stowed .sam.p-idle .sam__cel,
    card and tear apart with them. The glowing line does not get halved or
    duplicated; it is one line that comes apart, for free.
 
-   Timing. 440ms, and the number is a budget rather than a taste: the copy is
+   Timing. 860ms, and the number is a budget rather than a taste: the copy is
    inserted one frame after contact (~165ms) and samurai.js's finish() tears the
-   whole thing down at 700ms, so anything past ~500ms would still be falling
-   when its scaffolding is removed. 440ms lands the last frame at ~605ms and
-   leaves 95ms — six frames — of slack. Within that:
-     0-26%   together, while sam-slash-v rakes the line down (it hits full
-             length at 125ms — a card that opens before the line is drawn is a
-             card that fell apart on its own)
-     26-45%  the halves part ~9px along the cut's normal, (cos32, sin32) —
-             perpendicular to the line, which is the only direction a blade can
-             push them
-     45-100% gravity, and they fade before they can reach anything below
+   whole thing down at 1140ms, so anything past ~975ms would still be falling
+   when its scaffolding is removed. 860ms lands the last frame at ~1025ms and
+   leaves 115ms — seven frames — of slack. Within that:
+     0-13.3%   together, while sam-slash-v rakes the line down (it hits full
+               length at 123ms — a card that opens before the line is drawn is
+               a card that fell apart on its own)
+     13.3-23%  the halves part ~11px along the cut's normal, (cos32, sin32) —
+               perpendicular to the line, which is the only direction a blade
+               can push them
+     23-100%   they fall off the bottom of the screen and only then stop being
+               drawn (see term-piece-a)
+
+   Those first two stops are the same wall-clock milliseconds they have always
+   been — 114ms and 198ms — because the parting is an impulse, and an impulse
+   does not get slower because the fall after it got longer. Only the fall grew.
 
    transform-origin is set per piece to roughly its own centroid so the two
    rotations don't compose back into one rigid body tilting. */
@@ -1949,11 +1955,19 @@ body.term-stowed .sam.p-idle .sam__cel,
   caret-color: transparent;
 }
 
-/* Holds the card visible while the halves fall, then snaps it out at 440ms —
-   by which point both pieces have animated to opacity 0, so the snap has
-   nothing to show. A zero-duration transition with a delay is what does the
-   holding: the property sits at its old value for the delay and then jumps,
-   which is a hold with no keyframes and no class to remove on a timer.
+/* Holds the card visible for the whole fall, then snaps it out — by which point
+   both halves are below the bottom edge of the screen, so the snap has nothing
+   to show. A zero-duration transition with a delay is what does the holding: the
+   property sits at its old value for the delay and then jumps, which is a hold
+   with no keyframes and no class to remove on a timer.
+
+   920ms, deliberately 60ms longer than the 860ms the halves animate for. They go
+   over the edge at ~93% of their own animation — the last 7% is overshoot, and
+   the parabola is at its fastest there, so matching the two numbers exactly left
+   only about three frames between "gone" and "snapped". The extra 60ms is spent
+   holding a window whose contents are already off the bottom of the screen at
+   their fill value: nothing moves, nothing is visible, and a run of dropped
+   frames can no longer put the snap in front of a piece that is still in shot.
 
    0,2,0 outranks the .termwin base rule without !important, and the is-open
    rule that outranks *it* cannot match — close() has already taken is-open off.
@@ -1961,45 +1975,75 @@ body.term-stowed .sam.p-idle .sam__cel,
    its corner and fight the two pieces. */
 .termwin.is-sliced {
   transform: none;
-  transition: opacity 0s linear 440ms, transform 0s, width 0s,
-              visibility 0s linear 440ms;
+  transition: opacity 0s linear 920ms, transform 0s, width 0s,
+              visibility 0s linear 920ms;
 }
-.termwin.is-sliced .term         { animation: term-piece-a 440ms both;
+.termwin.is-sliced .term         { animation: term-piece-a 860ms both;
                                    transform-origin: 22% 78%; }
-.termwin.is-sliced .term--ghost  { animation: term-piece-b 440ms both;
+.termwin.is-sliced .term--ghost  { animation: term-piece-b 860ms both;
                                    transform-origin: 78% 22%; }
 
-/* The two halves are opaque until 70% and gone by 100%. That ordering is the
-   whole difference between a cut and a dissolve: fading them while they part
-   makes the card look like it lost confidence, so they stay solid all the way
-   through the fall and only vanish at the end. The lower-right half falls
-   further and turns harder — it is the piece with nothing above it. */
+/* Neither half fades, and that is the point. They used to go translucent at 70%
+   and be gone by 100% having fallen 112px and 152px — which is to say they
+   dissolved in mid-air, inside the window's own footprint, while there was still
+   screen below them to fall through. Now they hold opacity 1 for every frame
+   they exist and simply leave: down past the bottom edge of the viewport, where
+   being snapped out costs nothing to look at. .termwin is position:fixed, so
+   nothing they do below the fold can extend the document or raise a scrollbar.
+
+   How far "off the bottom" is depends on where the card is standing and how tall
+   the viewport let it be, so samurai.js measures it on contact and hands it over
+   as --sam-fall: the card's own distance to the bottom of the screen, plus room
+   for the corner the rotation lifts, plus overshoot so the halves are already
+   gone rather than arriving exactly as the window snaps. The px fallback is so
+   this file still means something read on its own — split() always sets the
+   property, and it sets it before either class lands.
+
+   The fall is constant acceleration, not an impression of it.
+   cubic-bezier(.333, 0, .667, .333) IS y = t²: x-controls at 1/3 and 2/3 make
+   the curve's parameter advance linearly with time, and 0 and 1/3 are then
+   exactly the y-controls whose cubic collapses to a square. The piece falls at a
+   constant acceleration because that is what the curve computes.
+
+   Cut in two at 61.5% for one reason: rotation shares a keyframe's timing
+   function with translation, so on one parabolic segment a half would hang
+   almost level through the first two thirds of its drop and then whip round at
+   the end. 61.5% is the fall's exact halfway point in time, which on a parabola
+   is a quarter of the way down — so putting a stop there lets the tumble advance
+   on wall-clock while the drop keeps accelerating. cubic-bezier(.333, .222,
+   .667, .556) is the remainder of the SAME parabola renormalised onto [0,1], so
+   the join is continuous in position and in speed; the eye cannot find it.
+
+   The lower-right half drifts further out and turns harder — it is the piece
+   with nothing above it. */
 @keyframes term-piece-a {                                   /* upper-left */
-  0%, 26% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 1;
-            animation-timing-function: cubic-bezier(.05, .85, .25, 1); }
-  45%     { transform: translate3d(-11px, -6.9px, 0) rotate(-1.2deg); opacity: 1;
-            animation-timing-function: cubic-bezier(.35, 0, .8, .45); }
-  70%     { transform: translate3d(-19px, 22px, 0) rotate(-4deg); opacity: 1;
-            animation-timing-function: cubic-bezier(.4, 0, .9, .5); }
-  100%    { transform: translate3d(-32px, 112px, 0) rotate(-9deg); opacity: 0; }
+  0%, 13.3% { transform: translate3d(0, 0, 0) rotate(0deg);
+              animation-timing-function: cubic-bezier(.05, .85, .25, 1); }
+  23%       { transform: translate3d(-11px, -6.9px, 0) rotate(-1.2deg);
+              animation-timing-function: cubic-bezier(.333, 0, .667, .333); }
+  61.5%     { transform: translate3d(-37.5px, calc(var(--sam-fall, 700px) * .25), 0)
+                         rotate(-7.5deg);
+              animation-timing-function: cubic-bezier(.333, .222, .667, .556); }
+  100%      { transform: translate3d(-64px, var(--sam-fall, 700px), 0) rotate(-14deg); }
 }
 @keyframes term-piece-b {                                   /* lower-right */
-  0%, 26% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 1;
-            animation-timing-function: cubic-bezier(.05, .85, .25, 1); }
-  45%     { transform: translate3d(11px, 6.9px, 0) rotate(1.2deg); opacity: 1;
-            animation-timing-function: cubic-bezier(.35, 0, .8, .45); }
-  70%     { transform: translate3d(20px, 40px, 0) rotate(4.5deg); opacity: 1;
-            animation-timing-function: cubic-bezier(.4, 0, .9, .5); }
-  100%    { transform: translate3d(38px, 152px, 0) rotate(11deg); opacity: 0; }
+  0%, 13.3% { transform: translate3d(0, 0, 0) rotate(0deg);
+              animation-timing-function: cubic-bezier(.05, .85, .25, 1); }
+  23%       { transform: translate3d(11px, 6.9px, 0) rotate(1.2deg);
+              animation-timing-function: cubic-bezier(.333, 0, .667, .333); }
+  61.5%     { transform: translate3d(32.5px, calc(var(--sam-fall, 700px) * .25), 0)
+                         rotate(7.5deg);
+              animation-timing-function: cubic-bezier(.333, .222, .667, .556); }
+  100%      { transform: translate3d(54px, var(--sam-fall, 700px), 0) rotate(14deg); }
 }
 
-/* ...and he goes out with his own handiwork.
-   Without this he does not. He is a child of .termwin, so his opacity is the
-   window's, and the window's opacity is a delayed 0s hop — it holds at 1 for the
-   whole 440ms and then snaps. The two halves fade themselves out on the way
-   down, so by 400ms they are gone and he is the only thing left on screen, at
-   full opacity, for a quarter of a second — and then he blinks out of existence
-   in a single frame. On the filmstrip it is the one remaining seam in the close.
+/* ...and he goes out ahead of his own handiwork.
+   Without this he does not go at all. He is a child of .termwin, so his opacity
+   is the window's, and the window's opacity is a delayed 0s hop — it holds at 1
+   for the whole 920ms and then snaps. Which means he would stand there at full
+   opacity for the entire fall and then blink out of existence in a single frame,
+   on the same millisecond as a window that is by then empty. On the filmstrip it
+   was the one remaining seam in the close.
 
    An animation rather than a transition, and this is the reason: `both` holds
    opacity 0 until the class comes off and then restores 1 instantly. A
@@ -2011,11 +2055,17 @@ body.term-stowed .sam.p-idle .sam__cel,
    animate .sam__rig, so nothing else here owns this element's animation. And it
    is only ever added by the close — the fold rides him down to the peek bar and
    lands him there, where he has to stay visible. */
+/* 440ms of its own, deliberately NOT the 860ms the halves get. He is not
+   supposed to stand and watch: he cuts, and by the time the wreckage is a
+   quarter of the way down he is not there any more. Pinning the duration here
+   rather than letting it match the pieces is what keeps that true — the
+   percentages below are fractions of this animation, so inheriting a longer one
+   would silently stretch his exit across the whole fall. */
 .termwin.is-sliced .sam { animation: sam-vanish 440ms linear both; }
 @keyframes sam-vanish {
-  /* Gone by 92% (405ms) rather than 100%: the parent's snap is at 440ms exactly,
-     and finishing a fade on the same millisecond it happens leaves nothing to
-     absorb a dropped frame. 35ms is two frames of margin. */
+  /* Solid until 242ms — through contact and the parting, the frames he is
+     actually needed for — then gone by 405ms, which is 255ms after the blade
+     lands and 515ms before the window snaps. Nothing here is racing anything. */
   0%, 55%   { opacity: 1; }
   92%, 100% { opacity: 0; }
 }
@@ -3020,8 +3070,8 @@ body.term-stowed .sam.p-idle .sam__cel,
   /* Belt to samurai.js's brace. It checks this query and never strikes here, so
      neither class can be added and no clone can exist — but the blanket rule
      above rewrites durations and NOT delays, so if one ever did, .is-sliced's
-     440ms delay would survive it and hold a dead window on screen for most of
-     half a second. Two lines to make that unreachable from either direction. */
+     920ms delay would survive it and hold a dead window on screen for the better
+     part of a second. Two lines to make that unreachable from either direction. */
   .term--ghost { display: none; }
   .termwin.is-sliced { transition-delay: 0s; }
 }

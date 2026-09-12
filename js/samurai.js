@@ -87,7 +87,13 @@
       pose: 'p-cut-close', move: 'is-lunge-close', vfx: 'is-cut-close',
       lead: 150,
       land: 0,           // no landing: he holds the finished cut and goes with it
-      done: 700,
+      /* 1140 rather than 700 because the halves now fall off the bottom of the
+         screen instead of fading out over it, and 860ms of falling that starts at
+         contact is not finished until 1010 — after which §10b holds the emptied
+         window for another 60ms and snaps it at 1070. finish() is what takes the
+         clone and the clip-paths away, so anything earlier than that tears the
+         wreckage out of mid-air. 70ms of slack past the snap. */
+      done: 1140,
       needs: ['attack_2'],
       split: true,       // ...and the window comes apart along the blade
       act: function () { T.close(); }
@@ -200,6 +206,25 @@
        piece's own 1px border off the sides it is supposed to keep. */
     card.style.clipPath = poly([[-2, -2], [x0, -2], [x1, h + 2], [-2, h + 2]]);
     ghost.style.clipPath = poly([[x0, -2], [w + 2, -2], [w + 2, h + 2], [x1, h + 2]]);
+
+    /* How far "all the way down" is, measured rather than guessed. The halves
+       have to leave the screen, not fade out over it, and three things decide
+       what that costs:
+         - the card's own distance to the bottom of the fold. .termwin is fixed
+           with its bottom edge --term-edge clear of it, so this is very nearly
+           the card's height — and --term-h is a clamp on the viewport, so it is
+           different on every screen. One hard-coded number would over-throw a
+           short window and under-throw a tall one.
+         - the corner the tumble lifts above the piece's own box: the farthest
+           corner is ~0.78 of the width from the transform-origin, turning up to
+           14deg, so 0.78 * w * sin14 ~= 0.19w of the piece is still on screen
+           when its untransformed box has cleared.
+         - 80px of overshoot, so both halves are already past the edge when the
+           window snaps out at 860ms instead of arriving exactly as it does.
+       §10b's term-piece-a/b fall to this. It is set on the window rather than
+       the pieces because custom properties inherit and there are two of them. */
+    win.style.setProperty('--sam-fall',
+      Math.round(window.innerHeight - r.top + w * 0.19 + 80) + 'px');
     return true;
   }
 
@@ -218,6 +243,9 @@
     }
     var card = live();
     if (card) card.style.removeProperty('clip-path');
+    /* Off with the rest of the scaffolding — a distance measured against last
+       time's viewport is worse than no distance at all. */
+    win.style.removeProperty('--sam-fall');
     if (sliced) {
       void win.offsetWidth;                 // commit the hidden state, then
       win.style.removeProperty('transition');  // hand the transition back
