@@ -80,6 +80,7 @@
       lead: 120,         // contact — the fold commits here
       land: 200,         // ...then the Jump tail, riding the roof down
       done: 620,
+      needs: ['attack_3', 'jump'],
       act: function () { T.collapse(); }
     },
     close: {
@@ -87,9 +88,23 @@
       lead: 150,
       land: 0,           // no landing: he holds the finished cut and goes with it
       done: 700,
+      needs: ['attack_2'],
       act: function () { T.close(); }
     }
   };
+
+  /* Which sheet each pose paints from, so a pose is never entered before its
+     bytes exist. `needs` above covers the whole choreography, not just its first
+     frame: the fold plays attack_3 and *then* the Jump tail, and a half-warmed
+     cache that can draw the swing but not the landing is still a hole. */
+  var SHEET = {
+    'p-idle': 'idle', 'p-run': 'run', 'p-leap': 'jump', 'p-land': 'jump',
+    'p-cut-min': 'attack_3', 'p-cut-close': 'attack_2'
+  };
+  function drawable(list) {
+    for (var i = 0; i < list.length; i++) if (have[list[i]] !== true) return false;
+    return true;
+  }
 
   /* Every reason not to perform. Reduced motion and the two size cut-offs
      mirror §10b's media queries exactly — if CSS has hidden him, JS must not
@@ -162,6 +177,7 @@
     var c = CUT[kind];
     if (!c) return false;
     if (off() || !T.isOpen()) return false;
+    if (!drawable(c.needs)) return false;   // cold cache — let it close plainly
 
     if (pend) { abort(); c.act(); return true; }
 
@@ -170,7 +186,7 @@
        typed. Spending it on a run-up costs nothing and is the difference
        between "he swung" and "he ran and slashed". */
     var run = 0;
-    if (runway > c.lead + 80) {
+    if (runway > c.lead + 80 && drawable(['run'])) {
       run = runway - c.lead;
       sam.style.setProperty('--sam-run-dur', run + 'ms');
       /* Constant ground speed whatever the runway, or his feet skate: ~280px/s,
@@ -191,6 +207,7 @@
 
   function once(name, ms) {
     if (off() || pend) return;
+    if (!drawable([SHEET[name]])) return;
     pose(name);
     at(ms, function () { if (!pend) { move(null); pose('p-idle'); } });
   }
@@ -264,21 +281,45 @@
 
      idle.png is loaded by CSS anyway, so its failure is the honest signal that
      the folder is missing: without it there is no visible sprite, and an
-     invisible sprite must never fire a red slash across a live window. */
+     invisible sprite must never fire a red slash across a live window.
+
+     decode() rather than a bare .src, because .src only promises the bytes are
+     coming — the first paint that needs the sheet still has to decode it, and
+     that decode lands on the frame you are trying to show.
+
+     But warming cannot be *relied* on, and the measurement is what taught me
+     that. Holding attack_3.png back by 2.5s and clicking the fold dot put the
+     cut 95ms in — inside the contact frame — with the classes right, the
+     background-image right, and the porthole empty. No amount of decode() fixes
+     that one: the bytes had not arrived. He simply vanishes for the single frame
+     the whole animation exists to show.
+
+     So readiness is tracked rather than assumed, and strike() refuses a sheet it
+     cannot draw. Losing the ceremony on a cold click is invisible — the window
+     just closes the way it did before he existed. Slashing a live window with an
+     empty porthole is not. */
+  var have = {};
   var warmed = false;
   function warm() {
     if (warmed) return;
     warmed = true;
-    var probe = new Image();
-    probe.onerror = function () {
-      dead = true;
-      if (sam.parentNode) sam.parentNode.removeChild(sam);
+    var sheets = ['idle', 'run', 'jump', 'attack_2', 'attack_3'];
+    for (var i = 0; i < sheets.length; i++) load(sheets[i], i === 0);
+  }
+  function load(name, critical) {
+    var img = new Image();
+    img.onerror = function () { if (critical) kill(); };
+    img.onload = function () {
+      /* No decode() in Safari <15; onload there is as good as it gets. */
+      if (!img.decode) { have[name] = true; return; }
+      img.decode().then(function () { have[name] = true; },
+                        function () { if (critical) kill(); });
     };
-    probe.src = 'assets/samurai/idle.png';
-    var rest = ['run', 'jump', 'attack_2', 'attack_3'];
-    for (var i = 0; i < rest.length; i++) {
-      new Image().src = 'assets/samurai/' + rest[i] + '.png';
-    }
+    img.src = 'assets/samurai/' + name + '.png';
+  }
+  function kill() {
+    dead = true;
+    if (sam.parentNode) sam.parentNode.removeChild(sam);
   }
   addEventListener('boot:done', warm, { once: true });
   setTimeout(warm, 4000);        // belt: boot:done may already have fired
