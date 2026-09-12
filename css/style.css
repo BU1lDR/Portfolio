@@ -46,6 +46,18 @@
   --sp-sec: clamp(5rem, 3rem + 8vw, 9.5rem);
   --wrap: 1180px;
   --gut: clamp(1.15rem, .6rem + 3vw, 3rem);
+
+  /* The floating shell's footprint, declared once because four separate things
+     have to agree on it: the window's width, the width it folds down to, the
+     corner offset, and the strip of page that stays empty so that neither the
+     window nor the folded bar ever lands on a paragraph. See §09b for the
+     window and §18 for the rail — change --term-w here and both follow. */
+  --term-w: 600px;
+  --term-min-w: 240px;
+  --term-edge: clamp(.8rem, 1.7vw, 1.9rem);
+  --term-rail: calc(var(--term-min-w) + var(--term-edge) + 1.5rem);
+  --term-rail-full: calc(var(--term-w) + var(--term-edge) + 1.5rem);
+
   --r: 4px;
   --r-lg: 10px;
 
@@ -1045,12 +1057,12 @@ body.cursor-down .cursor-ring { transform: scale(.82); }
      without scrolling — that's what makes it feel like a shell rather than a
      chat bubble. Height is viewport-relative with a floor, so a short laptop
      screen still gets a usable window and a tall one doesn't get a monolith. */
-  --term-h: clamp(300px, 44vh, 470px);
+  --term-h: clamp(320px, 50vh, 480px);
   position: fixed;
-  right: clamp(.8rem, 1.7vw, 1.9rem);
-  bottom: clamp(.8rem, 1.7vw, 1.9rem);
+  right: var(--term-edge);
+  bottom: var(--term-edge);
   z-index: 96;
-  width: min(540px, calc(100vw - 1.6rem));
+  width: min(var(--term-w), calc(100vw - 1.6rem));
   transform-origin: 100% 100%;
 
   /* Closed is the resting state in CSS; index.html ships `is-open` on the
@@ -1064,8 +1076,12 @@ body.cursor-down .cursor-ring { transform: scale(.82); }
   opacity: 0;
   visibility: hidden;
   transform: translateY(14px) scale(.97);
+  /* `width` is in here because folding narrows the window as well as flattening
+     it (see the is-min rule below), and a right-anchored width transition reads
+     as the thing sliding back into its corner. One element, one property, and
+     only on a click — not the kind of layout animation that costs anything. */
   transition: opacity .3s var(--ease), transform .34s var(--ease-io),
-              visibility 0s linear .34s;
+              width .34s var(--ease-io), visibility 0s linear .34s;
 }
 
 /* ── stowed above the terminal section ─────────────────────────
@@ -1092,7 +1108,8 @@ body:not(.term-stowed) .termwin.is-open {
   opacity: 1;
   visibility: visible;
   transform: none;
-  transition: opacity .3s var(--ease), transform .34s var(--ease-io), visibility 0s;
+  transition: opacity .3s var(--ease), transform .34s var(--ease-io),
+              width .34s var(--ease-io), visibility 0s;
 }
 
 /* Cold start: the very first stow is a starting condition, not something the
@@ -1107,7 +1124,13 @@ body:not(.term-stowed) .termwin.is-open {
    later stow animates normally. No !important needed: 0,2,1 beats the .termwin
    base rule, and the is-open rules that outrank it can't match while the window
    is stowed anyway. */
+   .term__body is in the list because the same frame may also decide the window
+   should arrive *folded* — land on #contact from a shared link and the shipped
+   full-size window would otherwise fold itself over .34s while you watch. The
+   height transition that drives the fold lives on .term__body, not on .termwin,
+   so silencing .termwin alone would only silence half of it. */
 body.term-cold .termwin,
+body.term-cold .termwin .term__body,
 body.term-cold .termlaunch { transition: none; }
 
 .term {
@@ -1209,6 +1232,21 @@ body.term-cold .termlaunch { transition: none; }
   visibility: hidden;
   transition: height .34s var(--ease-io), opacity .24s var(--ease),
               visibility 0s linear .34s;
+}
+
+/* Folded, there is nothing left to show but the title bar — so it stops
+   claiming a window's worth of width as well as a window's worth of height.
+   240px is the narrowest the bar still reads at: three dots, the fold hint,
+   and the padding, with the path dropped. The path goes rather than
+   ellipsizing, because at this width it truncates to "a…" and the dots
+   already say what this is.
+
+   This is the load-bearing rule for §18. Reserving a permanent 600px of page
+   for a window that is only that wide inside its own section would cost more
+   than the layout can pay at laptop widths; reserving 240px does not. */
+@media (min-width: 861px) {
+  .termwin.is-min { width: var(--term-min-w); }
+  .termwin.is-min .term__path { display: none; }
 }
 
 .term__body {
@@ -2200,10 +2238,55 @@ body:not(.term-stowed) .termlaunch.is-shown {
 
 /* ── 18 responsive ───────────────────────────────────────────── */
 
-@media (max-width: 1024px) {
+/* ── the shell's rail ──────────────────────────────────────────
+   The window is pinned to the bottom-right corner and never moves, so rather
+   than argue with it the page keeps that corner empty: every section and the
+   footer reserve --term-rail on the right.
+
+   Permanently, and that is the whole point. Reserving it only while the window
+   was up would reflow the entire column on every open, fold and close — a page
+   of text jumping sideways under the cursor, twice per click. A rail that is
+   always there is a rail nobody notices.
+
+   Sized for the folded bar (240px), not the open window (600px), because
+   folded is what the window is everywhere except its own section — module 09
+   in js/main.js does that part. The two numbers meet in §09b.
+
+   The hero is deliberately absent from this list: it isn't a .sec, its copy
+   lives in .hero__body, and the shell is stowed above the terminal section
+   anyway — so the torii keeps the full width it was composed for. */
+@media (min-width: 861px) {
+  .sec,
+  .foot { padding-right: var(--term-rail); }
+}
+
+/* Its own section is the one place the window is full size without being
+   asked, so that one reserves the whole 600px instead of the folded 240px.
+
+   Only from 1281px up, and module 09 in js/main.js reads the same number:
+   below it, 654px of rail leaves a 290px column, which is not enough page for
+   the heading and the eight command chips — so down there the window doesn't
+   expand on arrival at all. It stays folded and a chip, or the Open button,
+   or the bar itself brings it up. Which is better than the alternative either
+   way round: the controls that drive the window are never underneath it. */
+@media (min-width: 1281px) {
+  .sec--terminal { padding-right: var(--term-rail-full); }
+}
+
+/* The rail costs ~290px, so the width at which a two-column section stops
+   fitting arrives that much earlier than the viewport number suggests: a
+   1280px screen now has a ~990px track, which is what a 1024px screen used to
+   give. Hence 1280 rather than 1024 — the breakpoint follows the track, not
+   the window. */
+@media (max-width: 1280px) {
   .about,
   .contact { grid-template-columns: 1fr; }
   .about__card { max-width: 380px; }
+}
+
+/* Not moved with the two above: the rails flank the hero, and the hero has no
+   rail to make room for. */
+@media (max-width: 1024px) {
   .vrail { display: none; }
 }
 
@@ -2217,8 +2300,10 @@ body:not(.term-stowed) .termlaunch.is-shown {
 /* Same viewport, different problem: a short screen is where the contact
    section stops fitting. Only worth doing while the form and the side column
    are still side by side — once they stack (≤1024px) the section is taller
-   than any laptop viewport and scrolling is the honest answer. */
-@media (min-width: 1025px) and (max-height: 900px) {
+   than any laptop viewport and scrolling is the honest answer. 1281 rather
+   than 1025 for the same reason the stacking breakpoint moved — see the rail
+   note at the top of this section. */
+@media (min-width: 1281px) and (max-height: 900px) {
   .sec--contact { padding-top: clamp(2.6rem, 3vw, 3.4rem); }
   .sec--contact .sec__head { margin-bottom: 1.7rem; }
   .sec--contact .field textarea { min-height: 5em; }
