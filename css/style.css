@@ -44,6 +44,12 @@
 
   /* rhythm */
   --sp-sec: clamp(5rem, 3rem + 8vw, 9.5rem);
+  /* How far below the nav a jumped-to section starts. --sp-sec is the gap you
+     want between two sections while SCROLLING past them; it is far too much
+     above the heading when you have just clicked the nav and the section is the
+     only thing you asked to see. So a landing gets its own, smaller number and
+     .sec spends the difference. See .sec's scroll-margin-top. */
+  --sp-anchor: clamp(2.5rem, 4vw, 4.5rem);
   --wrap: 1180px;
   --gut: clamp(1.15rem, .6rem + 3vw, 3rem);
 
@@ -108,10 +114,16 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
-  /* Anchor targets stop level with the bottom of the fixed nav. No extra
-     breathing room on top of that: every section carries its own top padding,
-     so the gap is already generous — and the contact section needs every
-     pixel it can get to land its submit button above the fold. */
+  /* Anchor targets stop level with the bottom of the fixed nav — that is all
+     this line does, and all it should do: it is the one number that is true for
+     every target on the page, because the nav covers the same strip whatever you
+     jumped to. No breathing room on top of it here.
+
+     The breathing room is a per-section question, so it is answered per section:
+     see .sec's scroll-margin-top, which pulls a landing back up through the top
+     padding the section only wants when you are scrolling past it. Adding a
+     margin HERE instead would push every target down by the same amount,
+     including the ones — contact, the hero — that already sit where they should. */
   scroll-padding-top: var(--nav-h);
 }
 
@@ -976,7 +988,28 @@ body.cursor-down .cursor-ring { transform: scale(.82); }
 
 .sec {
   position: relative;
-  padding-block: var(--sp-sec);
+  /* One number per section, because two things read it: the padding below, and
+     the anchor landing under that. A section that wants a different lead-in
+     overrides --sec-pt and both follow — .sec--contact used to override
+     padding-top alone, which moved the layout and left the landing behind. */
+  --sec-pt: var(--sp-sec);
+  padding-block: var(--sec-pt) var(--sp-sec);
+
+  /* Land the CONTENT under the nav, not the section's top edge. html's
+     scroll-padding-top already stops the edge level with the nav; on its own
+     that left the heading a third of the way down a 900px viewport with ~190px
+     of empty padding above it, so clicking "About" looked like it had
+     overshot — the section was there, but the part with words on it was not.
+     Pulling back by the padding it does not need puts the heading where the
+     nav's own gap would put it.
+
+     Negative on purpose: scroll-margin is a <length>, so unlike scroll-padding
+     it may go below zero, and this is the one place that is the point rather
+     than a trick. min() caps it at 0 so the rule can only ever GIVE BACK a
+     section's own excess lead-in and never push one further down the screen —
+     which is what keeps contact, whose padding is already smaller than
+     --sp-anchor, landing exactly where it lands today. */
+  scroll-margin-top: min(0px, calc(var(--sp-anchor) - var(--sec-pt)));
 }
 .sec--alt { background: var(--bg-2); }
 .sec--alt::before,
@@ -3075,8 +3108,12 @@ body.term-stowed .sam.p-idle .sam__cel,
    --sp-sec lead-in above the heading, a laptop viewport ran out before the
    Send button — a form whose submit you can't see reads as broken. So the
    dead space above the heading is cut and the message box is shorter, which
-   is enough to land the whole exchange in one screenful. */
-.sec--contact { padding-top: clamp(3.5rem, 2rem + 4vw, 5.5rem); }
+   is enough to land the whole exchange in one screenful.
+
+   Cut through --sec-pt rather than padding-top so the anchor offset stays in
+   step with it. This is already smaller than --sp-anchor, so the min() in .sec
+   leaves the landing at zero and contact keeps the exact position it has now. */
+.sec--contact { --sec-pt: clamp(3.5rem, 2rem + 4vw, 5.5rem); }
 .sec--contact .sec__head { margin-bottom: clamp(1.9rem, 3vw, 2.8rem); }
 .sec--contact .field textarea { min-height: 6em; }
 
@@ -3308,7 +3345,7 @@ body.term-stowed .sam.p-idle .sam__cel,
    than 1025 for the same reason the stacking breakpoint moved — see the rail
    note at the top of this section. */
 @media (min-width: 1281px) and (max-height: 900px) {
-  .sec--contact { padding-top: clamp(2.6rem, 3vw, 3.4rem); }
+  .sec--contact { --sec-pt: clamp(2.6rem, 3vw, 3.4rem); }
   .sec--contact .sec__head { margin-bottom: 1.7rem; }
   .sec--contact .field textarea { min-height: 5em; }
   .sec--contact .form > * + * { margin-top: .8rem; }
