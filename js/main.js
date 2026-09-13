@@ -431,8 +431,26 @@
       ev.preventDefault();
       if (!validate()) { say('Fix the highlighted fields and try again.', 'err'); return; }
 
-      // Bot trap tripped — pretend everything is fine and drop it.
-      if (($('#fHp') || {}).value) { say('Thanks — message sent.', 'ok'); form.reset(); return; }
+      /* Bot trap tripped — pretend everything is fine and drop it. The lie to the
+         form is the point and does not change; what is new is that the shell says
+         so out loud. The trap has been sitting here since the form was written and
+         nothing ever reported it, which meant the one interesting thing this page
+         can observe about its own traffic was thrown away silently.
+
+         Nothing is logged and nothing is sent: this is a note to whoever is
+         looking, not telemetry. A human filling a `display: none` field has
+         either got a very odd autofill or is poking at the form on purpose, and
+         either way they have earned the line. */
+      if (($('#fHp') || {}).value) {
+        say('Thanks — message sent.', 'ok');
+        form.reset();
+        egg('trap');
+        if (window.Terminal) {
+          window.Terminal.say('<span class="tl-red">trap:</span> hidden field filled — caught one. ' +
+                              '<span class="tl-dim">message dropped, nothing sent.</span>');
+        }
+        return;
+      }
 
       // No Formspree ID yet: hand off to the user's mail client instead of
       // silently doing nothing.
@@ -889,6 +907,34 @@
     });
   });
 
+  /* ══ 11 easter eggs ════════════════════════════════════════ */
+
+  /* The page half of the hunt. The shell's half lives in js/terminal.js and the
+     samurai's in js/samurai.js; js/eggs.js is the scoreboard all three report
+     into and the only file that knows how many there are.
+
+     TWO RULES HOLD EVERYWHERE IN HERE.
+
+     One: every call into the counter goes through egg() below, which is guarded,
+     so deleting eggs.js from index.html turns the scoreboard off and leaves every
+     egg working. Nothing in this section may depend on it existing.
+
+     Two: nothing here may cost anything when it is not firing. That rules out the
+     obvious implementations — no rAF loops, no listeners on mousemove, no
+     observers. What is left is a handful of keydown and pointer handlers that do
+     an integer comparison and return, which is the price of the whole section.
+
+     And they all keep out of text fields. Someone typing "aryan" into the contact
+     form is filling in their name, not casting a spell. */
+  function egg(id) { return !!(window.Eggs && window.Eggs.found(id)); }
+
+  function typing(ev) {
+    var t = ev.target;
+    if (!t) return false;
+    var n = t.tagName;
+    return n === 'INPUT' || n === 'TEXTAREA' || n === 'SELECT' || t.isContentEditable;
+  }
+
   // Konami code → matrix rain. Because of course.
   (function konami() {
     var seq = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown',
@@ -896,14 +942,277 @@
     var at = 0;
     doc.addEventListener('keydown', function (ev) {
       // don't swallow arrow keys while someone is typing
-      var t = ev.target.tagName;
-      if (t === 'INPUT' || t === 'TEXTAREA') return;
+      if (typing(ev)) return;
 
       at = (ev.key === seq[at] || ev.key.toLowerCase() === seq[at]) ? at + 1 : 0;
       if (at === seq.length) {
         at = 0;
+        egg('konami');
         if (window.MatrixFX) window.MatrixFX.toggle();
       }
     });
   })();
+
+  /* ── say the name ──────────────────────────────────────────────
+     Type `aryan` anywhere that is not a text field and the hero glitches hard,
+     then the portrait inside the letters resolves for two seconds. See "say the
+     name" in §05 of the stylesheet for the two properties that do the work.
+
+     A rolling buffer rather than an index, because an index has to decide what to
+     do about a wrong key: reset to 0 loses `aaryan`, and reset to 1 loses more
+     interesting cases. Keeping the last five characters and comparing has no such
+     decision in it. Five characters is also the entire memory cost. */
+  (function name() {
+    var want = 'aryan';
+    var buf = '';
+    var hero = $('.hero__title .glitch') || $('.glitch');
+    doc.addEventListener('keydown', function (ev) {
+      if (typing(ev) || ev.metaKey || ev.ctrlKey || ev.altKey) return;
+      if (!ev.key || ev.key.length !== 1) return;
+      buf = (buf + ev.key.toLowerCase()).slice(-want.length);
+      if (buf !== want) return;
+      buf = '';
+      egg('name');
+      if (!hero || reduce) return;
+      /* Not scrolled into view on purpose. Yanking the page to the top because
+         somebody typed five letters is the site taking over, and anyone who has
+         just typed his name at the hero is looking at the hero already. */
+      hero.classList.add('is-glitching', 'is-named');
+      setTimeout(function () { hero.classList.remove('is-glitching'); }, 440);
+      setTimeout(function () { hero.classList.remove('is-named'); }, 2200);
+    });
+  })();
+
+  /* ── nothing to see ───────────────────────────────────────────
+     Ctrl+A. The footer's transparent line is revealed by ::selection with no help
+     from here — this only notices and scores it.
+
+     Both the shortcut and a real drag-selection count, which is why this listens
+     for `selectionchange` as well and checks whether the ghost line is inside the
+     range. Cheap: selectionchange only fires while somebody is actually
+     selecting, and the body of it is one containsNode call. */
+  (function selection() {
+    var ghost = $('.ghost');
+    doc.addEventListener('keydown', function (ev) {
+      if (typing(ev)) return;
+      if ((ev.ctrlKey || ev.metaKey) && (ev.key === 'a' || ev.key === 'A')) egg('selection');
+    });
+    if (!ghost || !doc.addEventListener) return;
+    doc.addEventListener('selectionchange', function () {
+      var s = window.getSelection && window.getSelection();
+      if (!s || s.isCollapsed || !s.containsNode) return;
+      if (s.containsNode(ghost, true)) egg('selection');
+    });
+  })();
+
+  /* ── counting up ──────────────────────────────────────────────
+     Click the kanji numeral above a heading and it counts 零壱弐参肆伍陸 and
+     settles back on its own. Seven swaps at 90ms, then the original glyph.
+
+     Whatever the numeral was is read off the element at click time and put back
+     at the end, so this cannot be wrong about which section it is on and does not
+     need a table of six answers. The is-counting class only exists to warm the
+     colour to red; the stylesheet transitions it, so there is no timing here.
+
+     Guarded against being clicked again mid-count, which would otherwise leave
+     the second run's restore writing whatever the first run happened to be
+     showing at the time. */
+  (function kanji() {
+    var CYCLE = ['零', '壱', '弐', '参', '肆', '伍', '陸'];
+    $$('.sec__num').forEach(function (num) {
+      var glyph = num.querySelector('i');
+      if (!glyph) return;
+      var running = false;
+      num.addEventListener('click', function (ev) {
+        /* The <i> only. The eyebrow's rule and its Arabic digits are not a
+           target, and §11's cursor:pointer is on the <i> for the same reason. */
+        if (ev.target !== glyph || running) return;
+        running = true;
+        egg('kanji');
+        var was = glyph.textContent;
+        num.classList.add('is-counting');
+        var i = 0;
+        (function step() {
+          if (i < CYCLE.length) {
+            glyph.textContent = CYCLE[i++];
+            setTimeout(step, reduce ? 0 : 90);
+            return;
+          }
+          glyph.textContent = was;
+          num.classList.remove('is-counting');
+          running = false;
+        })();
+      });
+    });
+  })();
+
+  /* ── the tube warms up ────────────────────────────────────────
+     Triple-click the background. `detail` on a click event is the browser's own
+     multi-click counter, so this needs no timing logic of its own and matches
+     whatever the platform considers a triple click.
+
+     "The background" means not on anything. Anchors, buttons, form fields and the
+     terminal are all excluded — a triple click inside a paragraph is somebody
+     selecting it, and a triple click on the shell is somebody selecting a line of
+     output. That leaves the section padding and the page margins, which is where
+     you click when you are prodding at a page to see what it does. */
+  (function crt() {
+    var busy = false;
+    doc.addEventListener('click', function (ev) {
+      if (ev.detail < 3 || busy) return;
+      var t = ev.target;
+      if (!t || !t.closest) return;
+      if (t.closest('a, button, input, textarea, select, label, .termwin, .termlaunch, .nav')) return;
+      busy = true;
+      egg('crt');
+      if (reduce) { busy = false; return; }
+      doc.documentElement.classList.add('is-crt');
+      setTimeout(function () {
+        doc.documentElement.classList.remove('is-crt');
+        /* Held past the class coming off, for the length of the stylesheet's own
+           .4s ramp down. Re-triggering during the fade would add the class back
+           mid-transition and the crank would appear to stutter rather than
+           restart. */
+        setTimeout(function () { busy = false; }, 450);
+      }, 5000);
+    });
+  })();
+
+  /* ── four corners ─────────────────────────────────────────────
+     The Konami code for a phone: tap the four corners clockwise from the top
+     left, and the same rain falls. This exists because every other key-driven egg
+     on this page is unreachable on a touch device, and a hunt with a counter that
+     cannot be finished on the machine most people will read this on is a hunt with
+     a bug in it.
+
+     A corner is a 15%-of-the-shorter-side square, floored at 64px and capped at
+     140px: proportional so it is the same gesture on a phone and a monitor,
+     floored so it is still hittable with a thumb, capped so it does not become a
+     quarter of a small laptop screen.
+
+     Six seconds between taps or the sequence resets — long enough to be
+     deliberate, short enough that four unrelated taps over a minute of reading do
+     not accumulate into it by accident. */
+  (function corners() {
+    var at = 0;
+    var last = 0;
+    doc.addEventListener('pointerdown', function (ev) {
+      var w = window.innerWidth, h = window.innerHeight;
+      var size = Math.max(64, Math.min(140, Math.min(w, h) * 0.15));
+      var left = ev.clientX <= size, right = ev.clientX >= w - size;
+      var top = ev.clientY <= size, bottom = ev.clientY >= h - size;
+      /* Clockwise from the top left. Index into this, so the check is one
+         comparison and the order is readable rather than a switch. */
+      var hit = [top && left, top && right, bottom && right, bottom && left];
+      var now = ev.timeStamp || 0;
+      if (now - last > 6000) at = 0;
+      if (!hit[at]) {
+        /* A tap on the FIRST corner restarts rather than resets — otherwise
+           tapping top-left twice puts you back to zero instead of one, and that
+           is the mistake everybody makes when they lose count. */
+        at = hit[0] ? 1 : 0;
+        last = now;
+        return;
+      }
+      at++;
+      last = now;
+      if (at < 4) return;
+      at = 0;
+      egg('corners');
+      if (window.MatrixFX) window.MatrixFX.toggle();
+    }, { passive: true });
+  })();
+
+  /* ── held down ────────────────────────────────────────────────
+     Press and hold the terminal button for 700ms and it opens with a command you
+     have not tried yet already at the prompt, waiting for Enter. eggs.js::hint()
+     picks it, because eggs.js is where the list lives; see the note on `cmd`
+     there for the three eggs that are deliberately never offered.
+
+     700ms is past every platform's long-press threshold and well short of anyone
+     who is simply slow on the mouse. The hold is cancelled by pointerup,
+     pointercancel, pointerleave and scrolling — a press that turns into a drag or
+     a scroll is not a press.
+
+     THE ORDINARY CLICK MUST STILL WORK, which is the only fiddly part. The button
+     already has a click handler that opens the window; on a long press this opens
+     it early and then has to stop that handler from running as well, or the second
+     open would steal focus back and wipe the prefill. suppress + a capture
+     listener does it, and it is scoped to the one event immediately after the
+     hold. */
+  (function longpress() {
+    var HOLD = 700;
+    ['#termLaunch', '#termOpen'].forEach(function (sel) {
+      var btn = $(sel);
+      if (!btn) return;
+      var timer = 0;
+      var suppress = false;
+
+      var cancel = function () { clearTimeout(timer); timer = 0; };
+
+      btn.addEventListener('pointerdown', function () {
+        cancel();
+        timer = setTimeout(function () {
+          timer = 0;
+          suppress = true;
+          egg('longpress');
+          if (window.TermWindow) window.TermWindow.open();
+          var cmd = window.Eggs ? window.Eggs.hint() : 'eggs';
+          /* After the open, not before: open() focuses the input itself, and a
+             prefill written first would be focused over. 60ms is one frame plus
+             slack, which is all the class change needs. */
+          setTimeout(function () {
+            if (window.Terminal && window.Terminal.prefill) window.Terminal.prefill(cmd);
+            if (window.Terminal && window.Terminal.say) {
+              window.Terminal.say('<span class="tl-dim">held down — try this one. press Enter.</span>');
+            }
+          }, 60);
+        }, HOLD);
+      });
+
+      ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (e) {
+        btn.addEventListener(e, cancel);
+      });
+      addEventListener('scroll', cancel, { passive: true });
+
+      btn.addEventListener('click', function (ev) {
+        if (!suppress) return;
+        suppress = false;
+        ev.preventDefault();
+        ev.stopPropagation();
+      }, true);
+    });
+  })();
+
+  /* ── read the source ──────────────────────────────────────────
+     The console half of the view-source breadcrumb; index.html carries the other
+     half in a comment at the top of the file. Between them they name `unmask`,
+     which appears nowhere in the UI, is excluded from tab-completion and from
+     did-you-mean, and is therefore findable exactly one way: by looking.
+
+     Deferred to a macrotask so it lands after everything else this file logs, and
+     wrapped because a console with %c support is not guaranteed — a browser that
+     ignores the directives prints the format string with a couple of stray %c in
+     it, which is ugly, and a browser without console.log at all would throw. */
+  setTimeout(function () {
+    if (!window.console || !console.log) return;
+    try {
+      var left = window.Eggs ? window.Eggs.left() : 0;
+      var total = window.Eggs ? window.Eggs.total() : 0;
+      console.log(
+        '%c零と壱より生まれる%c\n' +
+        'You opened the console. That is the kind of thing I hire for.\n\n' +
+        '  Open the terminal on this page and run %cunmask%c — it is not in help,\n' +
+        '  it is not in tab-completion, and this is the only place it is written down.\n' +
+        (total ? '  Then run %ceggs%c. ' + (left ? left + ' of ' + total + ' still hidden.' : 'You have all ' + total + '.') + '\n' : '%c%c') +
+        '\n  aryanverma102007@gmail.com · /.well-known/security.txt',
+        'color:#ff3b53;font:600 15px/1.6 ui-monospace,monospace;letter-spacing:.18em',
+        'color:#8b93a7;font:13px/1.7 ui-monospace,monospace',
+        'color:#4ade80;font:600 13px/1.7 ui-monospace,monospace',
+        'color:#8b93a7;font:13px/1.7 ui-monospace,monospace',
+        'color:#4ade80;font:600 13px/1.7 ui-monospace,monospace',
+        'color:#8b93a7;font:13px/1.7 ui-monospace,monospace'
+      );
+    } catch (e) {}
+  }, 0);
 })();
