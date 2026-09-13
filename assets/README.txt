@@ -126,28 +126,43 @@ the eleven that are real credentials.
 
 samurai/ — the guard on the terminal window
 
-Five sprite sheets, 128x128 cells, 17KB for the lot. Art by
+Seven sprite sheets, 128x128 cells, 35KB for the lot. Art by
 CraftPix ("Samurai Pixel Art Sprite Sheets", the free pack) and
 used under their file licence: https://craftpix.net/file-licenses/
 Credited in the footer as well as here, because a licence that
 costs nothing still costs an attribution.
 
   idle.png       640x128   5 frames   at his post, breathing
-  run.png       1024x128   8 frames   entrances and the run-up
+  run.png       1024x128   8 frames   entrances, run-up, `spar`
   jump.png       896x128   7 frames   f2-f6 leap, f4-f6 land
   attack_2.png   640x128   5 frames   overhead kesa-giri -> close
   attack_3.png   512x128   4 frames   horizontal cut -> minimise
+  protect.png    256x128   2 frames   guard, when you poke him
+  hurt.png       256x128   2 frames   the fourth poke
+
+The last two arrived with the easter eggs and are the only two
+standing poses in here, which made them the only two that could
+not be registered the way the other five were: the hip band that
+lines up the action sheets gives them two different answers
+despite identical legs. Both sit at left: 7px, off the legs and
+feet bands instead. The derivation is written out in style.css
+§10b next to the rules that use it.
+
+hurt.png is 16KB of the 35 — an unoptimised encode from the
+source pack, not a bigger sheet. Left as it came, because 14KB is
+not worth a lossy step through another tool on art that is
+someone else's.
 
 Lowercased on the way in, because GitHub Pages is case-sensitive
 and the source pack ships Title Case — a mismatch that works
 locally on Windows and 404s only once it's published.
 
 The source pack has ten poses for each of three characters. Only
-these five, from Samurai_Commander alone, are in this repo. The
-rest stay out on purpose: Walk, Protect, Hurt, Dead and Attack_1
-are never referenced, and shipping the other two characters, the
-PSDs, or the pack's coupon would put ~40MB of unused binary into
-a repo that is otherwise a few hundred KB of text. If you want a
+these seven, from Samurai_Commander alone, are in this repo. The
+rest stay out on purpose: Walk, Dead and Attack_1 are never
+referenced, and shipping the other two characters, the PSDs, or
+the pack's coupon would put ~40MB of unused binary into a repo
+that is otherwise a few hundred KB of text. If you want a
 different pose later, take it from the original download rather
 than expecting to find it here.
 
