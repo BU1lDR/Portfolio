@@ -348,6 +348,22 @@ ul, ol { list-style: none; }
   100% { transform: translate(0); clip-path: inset(0 0 0 0); }
 }
 
+/* Say the name. Type `aryan` anywhere that is not a text field and the surge
+   above fires, and then instead of settling back to a 58% ghost the portrait
+   RESOLVES: full opacity and the blown-out treatment dropped, so for two seconds
+   the face inside the letters is just a photograph.
+
+   No new mechanism and no new keyframes — the two properties this changes are
+   exactly the two .glitch__photo already transitions, so both the resolve and the
+   two-second fade back are the transition that was there all along. Which is
+   also why this rule carries no animation of its own: the spike is is-glitching's
+   job, and stacking a second animation on the same element would have them fight
+   over `transform`. */
+.glitch.is-named .glitch__photo {
+  opacity: 1;
+  filter: grayscale(.14) contrast(1.14) brightness(1.04);
+}
+
 
 /* ── 04 ambience ─────────────────────────────────────────────── */
 
@@ -391,6 +407,64 @@ ul, ol { list-style: none; }
   opacity: var(--vig-o);
   background: radial-gradient(ellipse at center,
     transparent 42%, rgba(0, 0, 0, .5) 100%);
+}
+
+/* ── the tube warms up ─────────────────────────────────────────
+   Triple-click the background and the ambience above stops being ambience for
+   five seconds: scanlines and grain surge, the vignette closes down, and the
+   scanline layer slips sideways the way a mistuned CRT does.
+
+   It works by overriding the three tokens on <html>, which is the only reason it
+   is three lines instead of thirty — every layer already reads its opacity from a
+   variable, so the effect is a change of value and not a change of mechanism.
+   The transition is declared on the layers themselves rather than here so that
+   the way back down is eased too; a crank that ramps up over 400ms and then snaps
+   off reads as a bug.
+
+   WHAT IS NOT TRANSFORMED: the page. A real horizontal roll takes the whole
+   image with it, and the honest version of that here would mean putting a
+   transform on a wrapper around live body text — which would make it a
+   containing block, and .termwin is fixed. Moving text sideways under someone's
+   eyes for five seconds is also just unpleasant. So the slip is on the scanline
+   layer alone: the interference moves, the content does not. It reads as a tube
+   with a fault, which is what was wanted, and it cannot break the layout.
+
+   steps(2) on a 200ms cycle rather than something smooth, because a CRT does not
+   ease. Two whole pixels, so the repeating gradient never lands on a half pixel
+   and shimmers. */
+.fx-scan, .fx-grain, .fx-vignette { transition: opacity .4s var(--ease); }
+
+html.is-crt {
+  --scan-o:  .17;
+  --grain-o: .11;
+  --vig-o:   1;
+}
+html.is-crt .fx-scan { animation: crt-slip 200ms steps(2) infinite; }
+@keyframes crt-slip {
+  0%   { transform: translate3d(  0, 0, 0); }
+  50%  { transform: translate3d(-2px, 0, 0); }
+  100% { transform: translate3d( 1px, 0, 0); }
+}
+
+/* The roll band, on the vignette rather than on the scanlines, because at
+   --scan-o .17 a band drawn in that layer would be five times too faint to see —
+   whereas --vig-o is 1 while the crank is on, so a band there paints at its
+   declared strength. Starts above the viewport and travels well past the bottom;
+   the layer is inset:0 and fixed, so nothing it does can extend the page. */
+html.is-crt .fx-vignette::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -22%;
+  height: 20%;
+  background: linear-gradient(to bottom, transparent,
+              rgba(214, 235, 255, .10) 42%, rgba(226, 240, 255, .20) 52%, transparent);
+  animation: crt-roll 1.4s linear infinite;
+}
+@keyframes crt-roll {
+  from { transform: translate3d(0,    0, 0); }
+  to   { transform: translate3d(0, 640%, 0); }
 }
 
 /* matrix rain — hidden until the terminal `matrix` command */
@@ -1051,7 +1125,17 @@ body.cursor-down .cursor-ring { transform: scale(.82); }
   font-style: normal;
   color: var(--txt-3);
   letter-spacing: 0;
+  /* Counting up (see js/main.js) swaps this glyph seven times in half a second.
+     A width transition would fight the swap, but a colour one rides along with
+     it — so the numeral warms to red as it counts and cools back afterwards
+     without anything having to time the fade. */
+  transition: color .28s var(--ease);
+  cursor: pointer;
 }
+/* Only the numerals are clickable, and only they get the cursor — the eyebrow's
+   rule and its Arabic digits are not a target. Nothing else marks it out: an
+   underline or a hover colour would answer the question the egg is asking. */
+.sec__num.is-counting i { color: var(--red); }
 .sec__title {
   display: flex;
   flex-wrap: wrap;
@@ -1592,6 +1676,34 @@ body:not(.term-stowed) .termlaunch.is-shown {
 }
 
 
+/* ── nothing to see ────────────────────────────────────────────
+   A line in the footer painted in nothing, which only exists while it is
+   selected. Ctrl+A finds it; so does dragging across the footer, and so does the
+   reader-mode or plain-text copy of the page, which is the version of this joke
+   that costs nothing to anybody.
+
+   `color: transparent` and not `display: none`, `visibility: hidden`,
+   `font-size: 0` or a clip: all of those remove it from selection as well as
+   from view, which would leave nothing for ::selection to reveal. Transparent
+   text is still text — it lays out, it selects, it copies, and a screen reader
+   reads it, which is fine because it is a real sentence and not a trick.
+
+   It reserves its own line in the footer. That is the cost and it is the point:
+   the blank gap under "Built by hand" is the only clue there is. */
+.ghost {
+  display: block;
+  margin-top: .5rem;
+  color: transparent;
+  font: 500 var(--t-xs)/1.5 var(--f-mono);
+  letter-spacing: .04em;
+}
+/* Both spellings. ::selection is standard and shipped everywhere current, but
+   Firefox only unprefixed it in 62 and the prefixed rule is one line — and
+   unlike most vendor pairs these cannot be combined into one selector list,
+   because an unknown pseudo-element invalidates the whole rule it appears in. */
+.ghost::selection      { color: var(--red); background: rgba(255, 59, 83, .14); }
+.ghost::-moz-selection { color: var(--red); background: rgba(255, 59, 83, .14); }
+
 /* ── 10b the samurai ─────────────────────────────────────────── */
 
 /* A pixel-art samurai stands on the window's top border, breathing, and cuts
@@ -2083,6 +2195,203 @@ body:not(.term-stowed) .termlaunch.is-shown {
 .termwin:not(.is-open) .sam.p-idle .sam__cel,
 body.term-stowed .sam.p-idle .sam__cel,
 .sam.is-still .sam__cel { animation-play-state: paused; }
+
+/* ── poking him ────────────────────────────────────────────────
+   Two more sheets, and the only two of the pack's five leftovers worth shipping:
+   Protect is a raised guard and Hurt is a flinch, which between them are the
+   whole vocabulary of "stop that". Walk duplicates the run, Attack_1 duplicates
+   the two cuts, and Dead is a different joke and a worse one.
+
+   REGISTRATION, AND WHY IT IS 7 ON BOTH. The `left` numbers above come from the
+   hip band, which is the steadiest anchor on a figure that is mid-stride or
+   mid-swing. It is the wrong anchor here, and the sheets say so themselves:
+   measured, protect and hurt have byte-identical lower bodies — mean x of the
+   lit pixels in y110..127 is 52.82 on both, because CraftPix reused the standing
+   legs — and yet their hip bands differ by 6 cell px, since one raises a guard
+   and the other recoils the torso. Two sheets with the same legs cannot want two
+   different registrations, so the hips are reading lean, not position.
+
+   Anchored on the legs instead: round(60.27 - 52.82) = 7 for both, and the feet
+   band y118..127 independently agrees (round(60.25 - 53.36) = 7). Residual is
+   -0.45 cell px on the legs and +0.11 on the feet — under one device pixel
+   either way, against -6.9 and +5.1 device px for the hip-band answers. Ground
+   row is 127 on every frame of both sheets, the same as idle's f0, so there is no
+   vertical jog to cancel either.
+
+   Both invariants re-checked at 7 rather than assumed: post-shift extent is
+   x40..92 for protect and x25..79 for hurt against a 128px porthole (35 and 48
+   columns spare), and reach to page text is 212.4px and 242.4px against a
+   288.5px rail (76.1 and 46.1px spare). Comfortable on both counts, which is
+   what you would expect from a standing pose — it is the swings that are tight.
+
+   One keyframe block for the pair: two frames is 0 to -128px whatever the sheet,
+   and jump-none holds the second frame for the rest of the run rather than
+   wrapping to an empty strip. Durations differ because a guard snaps up and a
+   flinch takes the hit slightly slower. */
+.sam.p-guard .sam__cel { width: 256px; left: 7px; background-image: url(../assets/samurai/protect.png);
+                         animation: sam-2f 180ms steps(2, jump-none) forwards; }
+.sam.p-hurt  .sam__cel { width: 256px; left: 7px; background-image: url(../assets/samurai/hurt.png);
+                         animation: sam-2f 240ms steps(2, jump-none) forwards; }
+@keyframes sam-2f { from { transform: translate3d(    0, 0, 0); }
+                    to   { transform: translate3d(-128px, 0, 0); } }
+
+/* The hit area. .sam is pointer-events:none and stays that way — see index.html
+   for why the whole 256px box must not become clickable — so this is the one
+   node that opts back in, and it is sized to the pixels rather than to the box.
+   idle's painted union is cell x27..82, y35..127, which through .sam__zoom's 2x
+   is 54px in, 70px down, 112 wide, and flush to the bottom because his feet are
+   on the cell's last row.
+
+   No hover state and no focus ring, deliberately: a visible affordance would
+   turn "I wonder if he is clickable" into "there is a button here", and the
+   entire joke is the first one. cursor:pointer is the whole hint, and it only
+   appears once you are already on him. Consistent with the rest of the page —
+   the custom cursor is scoped to [data-tilt] and does not apply here.
+
+   Nothing is needed to disable this when the window is shut or stowed: closed
+   resolves to `visibility: hidden` on .termwin, and a hidden subtree is not
+   hit-testable at all. poke()'s own state checks are a belt on that. */
+.sam__hit {
+  position: absolute;
+  left: 54px;
+  top: 70px;
+  width: 112px;
+  bottom: 0;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* ── off duty ──────────────────────────────────────────────────
+   Ninety idle seconds and the breath drops to a third speed — 3.2s a cycle is
+   ~19 breaths a minute, 9.6s is ~6, which is a man asleep on his feet rather
+   than a man on watch. Duration only: same sheet, same five dwells, same
+   step-end, so the plant that "the breath" above spends thirty lines protecting
+   is untouched. Nothing else in this file has to know.
+
+   The すー is a pseudo-element and not a node, which is the entire reason to do
+   it this way: one class on and one class off is the whole mechanism, there is
+   nothing for a lost timer to leave behind, and js/samurai.js needs no teardown
+   path for it. It inherits .sam's drop-shadows, which is what keeps 12px of grey
+   text legible over body copy.
+
+   WHERE it goes was measured off a 3x capture rather than derived, because the
+   mirror makes the sheet's own columns misleading and because the sashimono is in
+   the way. Inside the 256px box: his helmet occupies x125..148 y117..127, and the
+   pole and banner are up and to his right at x143..180 y72..100 — he faces left,
+   so the banner is the thing behind him. 92/100 puts the sigh just off his face,
+   clear of the helmet by 7px, and the drift (-12, -24) carries it further up-left
+   and away from the banner rather than across it. Anything higher — the 40px this
+   started at — floats in empty space above the flag and reads as page furniture
+   instead of as something coming out of him. */
+.sam.is-doze.p-idle .sam__cel { animation-duration: 9600ms; }
+.sam.is-doze::after {
+  content: 'すー';
+  position: absolute;
+  left: 92px;
+  top: 100px;
+  font: 500 .78rem/1 var(--f-jp);
+  letter-spacing: .1em;
+  color: var(--txt-3);
+  animation: sam-doze 3200ms var(--ease) infinite;
+}
+@keyframes sam-doze {
+  0%   { opacity: 0; transform: translate3d(  0,   6px, 0); }
+  28%  { opacity: .8; }
+  100% { opacity: 0; transform: translate3d(-12px, -24px, 0); }
+}
+
+/* ── straight across (`sl`) ────────────────────────────────────
+   The ls typo, answered with the man who is already standing there. He runs the
+   length of the window and off the far side, and comes back to standing.
+
+   --sam-cross-x is in CELL px, like --sam-run-x above and for the same reason:
+   the rig lives inside .sam__zoom, so anything set here is doubled on screen.
+   js/samurai.js halves the device distance before setting it — the one piece of
+   arithmetic that has to happen in JS, because the distance depends on the live
+   width of the card and CSS cannot ask for that.
+
+   Negative, because the rig is above .sam__flip and therefore in unmirrored
+   screen space: negative x is leftward, which is the direction he faces. Linear,
+   because a run cycle over a non-constant ground speed skates. `both`, so he is
+   held off the far edge for the frame between the animation ending and the class
+   coming off — without it he teleports back to the corner one frame early. */
+.sam.is-cross .sam__rig { animation: sam-cross var(--sam-cross-dur, 1600ms) linear both; }
+@keyframes sam-cross {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(calc(var(--sam-cross-x, 0px) * -1), 0, 0); }
+}
+
+/* ── the spar ──────────────────────────────────────────────────
+   `spar` sends him across the whole viewport and splits every heading he passes.
+
+   A SECOND SPRITE IN A FIXED OVERLAY, and never the real one. Everything above
+   rests on .sam being a child of .termwin at `bottom: 100%` — that one line is
+   what puts his feet on a folding roof with no measurement, no resize handler and
+   no JS. Moving him out of that parent for the length of a joke, and then
+   putting him back, would mean reproducing the contract by hand in the one place
+   it is least worth reproducing. So js/samurai.js builds the same five nested
+   nodes inside this overlay, every pose rule above applies to it unchanged
+   because they are all keyed on .sam, and then it throws the whole thing away.
+
+   The real .sam does not move, does not change class, and cannot be left in a
+   strange state if this is interrupted halfway through.
+
+   Descendant selector rather than a bare .sam--free, so the two overrides beat
+   .sam's own right/bottom on specificity rather than on source order. overflow
+   hidden because he exits leftward past x=0 and <body> is only overflow-x
+   hidden — a fixed overlay that could extend the page would raise a scrollbar
+   mid-animation, which is the one side effect this must not have.
+
+   bottom: 34% puts his feet two thirds of the way down the viewport, which is
+   where a heading band usually sits. z-index 97 is one above .termwin's 96: he
+   is the thing in motion, so he passes in front of the window he came from. */
+.sam-spar {
+  position: fixed;
+  inset: 0;
+  z-index: 97;
+  overflow: hidden;
+  pointer-events: none;
+}
+.sam-spar .sam--free {
+  right: -288px;      /* his own box, plus slack, off the right edge */
+  bottom: 34%;
+}
+
+/* Each heading, as his blade reaches it: clipped to the upper-left side of a
+   raked line, with a clone of it clipped to the lower-right and both nudged
+   apart. Same 32deg family as .term__cut--v, because it is the same stroke.
+
+   The clip-paths are STATIC and only the offsets animate. A clip-path that
+   animates is a clip-path that can be interrupted mid-value and left there, and
+   this one is on a live line of body text; a class that either applies whole or
+   not at all is the version that cannot leave a heading half-visible. Which is
+   also why the split is a clone rather than DOM surgery on the heading itself:
+   see split() in js/samurai.js, which does the same thing to the terminal card
+   for the same reason.
+
+   Only .sec__title, not .sec__num. The promise was that headings split as he
+   passes, and cleaving the numeral above each one as well doubles the clones for
+   an effect nobody is looking at during a 4px nudge. */
+.sec__title.is-cleaved {
+  clip-path: polygon(0 0, 100% 0, 100% 55%, 0 100%);
+  animation: sec-cleave-a 520ms var(--ease) both;
+}
+.sam-spar__half {
+  position: absolute;
+  margin: 0;
+  clip-path: polygon(0 100%, 100% 55%, 100% 100%);
+  animation: sec-cleave-b 520ms var(--ease) both;
+}
+@keyframes sec-cleave-a {
+  0%   { transform: translate3d(0, 0, 0); }
+  16%  { transform: translate3d(-4px, -4px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+@keyframes sec-cleave-b {
+  0%   { transform: translate3d(0, 0, 0); }
+  16%  { transform: translate3d(4px, 4px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
 
 /* ── the cuts ──────────────────────────────────────────────────
    Both are absolutely positioned inside .term, so its existing overflow:hidden
