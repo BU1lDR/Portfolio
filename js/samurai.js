@@ -61,9 +61,14 @@
 
   var POSES = ['p-idle', 'p-run', 'p-leap', 'p-fall', 'p-land',
                'p-cut-min', 'p-cut-close', 'p-exit', 'p-guard', 'p-hurt'];
-  /* Three moves now: he comes in, after the close he goes back out, and `sl`
-     sends him straight across. §10b's "why he no longer drops" is the story of
-     the lunge he used to have, and its "and then he leaves" is the exit's. */
+  /* Two moves the real sprite ever takes: he comes in, and after the close he
+     goes back out. §10b's "why he no longer drops" is the story of the lunge he
+     used to have, and its "and then he leaves" is the exit's.
+
+     is-cross stays in the list without being applied to him any more. `sl` and
+     `spar` both put it on a throwaway clone now, and this array is what move(null)
+     strips — so leaving it here costs one string and means the day something does
+     hand it to the real sprite, it can still be taken off him. */
   var MOVES = ['is-runin', 'is-exit', 'is-cross'];
 
   var dead = false;            // sheets failed to load — never fire a cut
@@ -413,6 +418,13 @@
     clearTimeout(watchdog);
     watchdog = 0;
     unsplit();
+    /* A crossing in flight, if there is one. finish() is the one function that
+       puts everything back, and after it runs there must be nothing left on the
+       page that this file put there — an `sl` interrupted by a real dismissal
+       would otherwise leave a stone path across the viewport and the sprite it
+       was laid for switched off. Hoisted, so this reads before cross() defines
+       it; null whenever nothing is in flight. */
+    if (roadTidy) roadTidy();
     win.classList.remove('is-cut-min', 'is-cut-close');
     sam.style.removeProperty('--sam-run-dur');
     sam.style.removeProperty('--sam-run-x');
@@ -658,10 +670,12 @@
        strike() already knows how to cut. Stowed does not count — CSS has taken
        him off the screen and a click cannot honestly have landed on him. */
     if (off() || pend || !T.isOpen() || T.isStowed()) return;
-    /* Mid-`sl` the rig has carried him away from the hit area, so a click there
-       is a click on nothing — and re-posing him to a guard halfway across the
-       window would abandon the run with no way back to it. */
-    if (sam.classList.contains('is-cross')) return;
+    /* Mid-`sl` the real sprite is switched off and the one on screen is a clone in
+       an overlay, so there is nothing here to poke and nothing that would answer.
+       is-away already makes the hit area untestable — visibility:hidden takes
+       descendants with it — so this is belt as well as braces, and it is the flag
+       rather than a class because the flag is what cross() actually owns. */
+    if (crossing) return;
     /* Nothing to react WITH on a cold cache — and a click that visibly does
        nothing is better than a click that blanks the porthole. */
     if (!drawable(['protect'])) return;
@@ -741,21 +755,32 @@
   });
   wake();
 
-  /* ── straight across (`sl`) ───────────────────────────────────
+  /* ── straight across, on a path (`sl`) ────────────────────────
      The ls typo. On a real box you get a steam locomotive; here you get the man
-     who is already standing there, running the length of the window and off the
-     left-hand side.
+     who is already standing there — and a 参道 laid across the page ahead of him
+     to run down, with 鳥居 to run through.
 
-     He is a child of .termwin, so "across the window" is just a translateX in
-     his own coordinate space and the distance is the card's width plus his own
-     box — no fixed overlay, no measurement of the viewport, and he is clipped by
-     nothing on the way because .termwin does not clip. Returns false rather than
-     doing nothing quietly, because terminal.js prints a different line then.
+     THIS USED TO MOVE THE REAL SPRITE and that is what was wrong with it. He is a
+     child of .termwin, so a translateX in his own coordinate space was the whole
+     implementation and it cost nothing — but it also meant the run ended with him
+     parked off the left of the window and `move(null)` snapping him back onto his
+     post in a single frame. A teleport, at the end of every performance.
+
+     A path across the entire page cannot be a child of the window either, so both
+     problems have the same answer, and it is the one spar() already uses: build a
+     throwaway sprite in a fixed overlay, stand the real one down for the length of
+     it, and afterwards let him run back onto the roof with the same is-runin the
+     window's own entrance uses. Nothing teleports because nothing is moved and
+     put back — the thing that moved is deleted, and the thing that came back was
+     never anywhere else. §10b's "the path he crosses on" has the CSS.
+
+     Returns false rather than doing nothing quietly, because terminal.js prints a
+     different line then.
 
      SPEED is one constant, shared with spar() below, and it is the same ~280px/s
      the run-in uses: a run cycle looks wrong at any other ground speed and his
-     feet skate. It is written in device px per ms because that is the unit the
-     card's measured width comes in. */
+     feet skate. It is written in device px per ms because that is the unit a
+     measured rect comes in. */
   var SPEED = 0.28;
 
   /* Device px to the CELL px the rig wants. The rig is inside .sam__zoom, which
@@ -765,37 +790,120 @@
      measurement and CSS cannot ask for one. */
   function cells(devicePx) { return Math.round(devicePx / 2); }
 
+  /* Where his painted pixels start, measured in from the left of his 256px box.
+     NOT a guess and not the sheet's own column numbers: idle paints cell x27..82,
+     .sam__flip mirrors the strip so that becomes cell 46..101, and .sam__zoom
+     doubles it — 92 device px. Anything that needs to know where he actually is,
+     rather than where his box is, needs this. */
+  var TIP = 92;
+
+  /* The gates, as fractions of the crossing rather than pixel positions, so three
+     of them are spaced the same way on a 900px window and a 2560px one. Not at 0
+     or 1: a gate on top of where he starts is a gate you never see him enter, and
+     one at the far end goes up as he is already leaving the screen. */
+  var GATES = [0.18, 0.48, 0.79];
+
+  var crossing = false;
+  /* The teardown for whatever overlay is in flight, so finish() can put the page
+     back without knowing what built it. See the call there. */
+  var roadTidy = null;
+
   function cross() {
     /* isVisible(): open, unfolded, unstowed. You cannot type `sl` into a folded
        window anyway, but terminal.js is not the only possible caller and the
        fallback line it prints is a better outcome than a run across a peek bar
        two hundred pixels wide. */
-    if (off() || pend || !T.isVisible()) return false;
-    if (sam.classList.contains('is-cross')) return false;
+    if (off() || pend || crossing || !T.isVisible()) return false;
     if (!drawable(['run'])) return false;
-    var card = live();
-    if (!card) return false;
+    var r = sam.getBoundingClientRect();
+    if (!r.width) return false;
     egg('sl');
     wake();
-    /* The card's width plus 220 so his painted pixels are properly off the far
-       side before he stops, rather than half-clipped by nothing in particular. */
-    var travel = Math.round(card.getBoundingClientRect().width) + 220;
+    crossing = true;
+
+    /* From where he is standing to properly off the left edge: his leading
+       painted edge has to clear x=0, plus 80 of slack, because half a samurai
+       parked at the edge is worse than no samurai. */
+    var travel = Math.round(r.left + TIP) + 80;
     var dur = Math.round(travel / SPEED);
-    sam.style.setProperty('--sam-cross-x', cells(travel) + 'px');
-    sam.style.setProperty('--sam-cross-dur', dur + 'ms');
-    pose('p-run');
-    /* --sam-run-dur is deliberately NOT set: 440ms is the resting value in §10b
-       and it is already the right cadence for this ground speed. strike() sets it
-       to a runway length and finish() removes it again, so by the time anything
-       can call this it is back to the default. */
-    move('is-cross');
-    at(dur, function () {
-      if (pend) return;                          // a real dismissal took over
-      move(null);
-      pose('p-idle');
-      sam.style.removeProperty('--sam-cross-x');
-      sam.style.removeProperty('--sam-cross-dur');
+
+    var road = doc.createElement('div');
+    road.className = 'sam-road';
+    road.setAttribute('aria-hidden', 'true');
+
+    /* ONE MEASUREMENT, TWO USERS. The path sits at r.bottom — his feet — and the
+       runner is placed at r.left/r.top, so the ground cannot end up under his
+       soles or over his head however the window has been resized or scrolled. */
+    /* Order is the stacking: haze behind everything, then the stones, then the
+       gates standing up through both, then him, last and in front. */
+    var html = '<div class="sam-road__at" style="top:' + Math.round(r.bottom) + 'px">' +
+               '<div class="sam-road__haze"></div>' +
+               '<div class="sam-road__band"></div>';
+
+    /* Each gate is fully up before he reaches it. Same arithmetic the spar uses
+       for the headings — distance still to travel, over ground speed — taken from
+       his leading edge rather than his box, and with 700ms of lead because the
+       rise itself takes 420: at the 260 this started on, the gate was still
+       fading in as he ran through it, so it read as growing around him rather
+       than as something already standing there. */
+    for (var i = 0; i < GATES.length; i++) {
+      var away = travel * GATES[i];
+      html += '<div class="sam-road__torii" style="left:' +
+                Math.round(r.left + TIP - away) + 'px;--d:' +
+                Math.max(0, Math.round(away / SPEED) - 700) + 'ms">' +
+              '<i></i><b></b></div>';
+    }
+    html += '</div>';
+
+    /* The same five nested nodes .sam uses, so every pose rule in §10b applies to
+       this unchanged, and built by hand rather than cloned from .sam because .sam
+       carries state — a pose, possibly is-doze — that must not come along. */
+    html += '<div class="sam sam--road p-run" style="left:' + Math.round(r.left) +
+              'px;top:' + Math.round(r.top) + 'px;--sam-cross-x:' + cells(travel) +
+              'px;--sam-cross-dur:' + dur + 'ms">' +
+              '<div class="sam__zoom"><div class="sam__rig"><div class="sam__stage">' +
+                '<div class="sam__flip"><div class="sam__cel"></div></div>' +
+              '</div></div></div>' +
+            '</div>';
+
+    road.innerHTML = html;
+    /* The wipe runs at 1.4x his ground speed so the stones are always arriving in
+       front of his feet. Ahead of him, not under him — a path that keeps exact
+       pace with a runner is a path he appears to be dragging. */
+    road.style.setProperty('--sam-road-dur', Math.round(dur / 1.4) + 'ms');
+    doc.body.appendChild(road);
+    /* Only now, so there is never a frame with neither of them on screen: the
+       runner is already in the document and already at the real one's coordinates
+       when the real one goes. */
+    sam.classList.add('is-away');
+    road.querySelector('.sam--road').classList.add('is-cross');
+
+    var tidy = function () {
+      if (road.parentNode) road.parentNode.removeChild(road);
+      sam.classList.remove('is-away');
+      crossing = false;
+      roadTidy = null;
+    };
+    roadTidy = tidy;
+
+    /* The path goes before he is fully off, so it is already fading as he leaves
+       rather than blinking out after him. */
+    at(Math.max(0, dur - 260), function () { road.classList.add('is-going'); });
+
+    at(dur + 200, function () {
+      tidy();
+      /* And back onto the roof the way he first came onto it — same sheet, same
+         440ms, same is-runin. once() refuses while a strike is pending, which is
+         correct: a dismissal that started mid-crossing owns him now. */
+      once('p-run', 440);
+      move('is-runin');
     });
+    /* Outside `timers`, and this is the line that matters. at() pushes into that
+       array and finish() clears all of it, so a real dismissal landing mid-run
+       would otherwise leave the overlay on the page and the real sprite
+       invisible. finish() calls roadTidy for the normal case; this catches the
+       rest. Both are idempotent. */
+    setTimeout(tidy, dur + 1600);
     return true;
   }
 
