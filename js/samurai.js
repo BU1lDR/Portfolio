@@ -383,14 +383,27 @@
     if (halves) win.classList.add('is-sliced');
     var wasClose = pend === CUT.close;
     pend.act();
-    /* The pill arrives ~300ms later to replace the window. Flashing it red as
-       it lands makes it read as the window's replacement rather than as an
-       unrelated button that happened to appear. */
+    /* The pill replaces the window, and it waits for the corner to be empty
+       before it says so: §10b's "the pill waits its turn" holds its paint for
+       920ms, which is .termwin.is-sliced's own hold, so it starts rising on the
+       frame the window stops being drawn. Flashing it red as it lands is what
+       makes it read as the window's replacement rather than an unrelated button
+       that happened to appear — so the flash goes where the landing is. It used
+       to fire at 300, which was the middle of the fall: a red border spent
+       behind two tumbling halves with nobody looking at it.
+
+       Cleared on the way IN rather than removed on a timer on the way out. At
+       contact+920 the flash now outlives this strike's own teardown at `done`
+       (contact+990), so a removal scheduled through at() would be cleared before
+       it ever ran — and a leftover class costs the NEXT close its flash, because
+       adding a class that is already there does not restart an animation.
+       Removing it here is order-independent instead: whatever the last cut left
+       behind, this one starts clean. Leaving it on afterwards is free — sam-pill
+       has no fill-mode, so the moment it has played the pill is back to being
+       styled by its own rule, hover included. */
     if (wasClose && launch) {
-      at(300, function () {
-        launch.classList.add('is-cut');
-        at(320, function () { launch.classList.remove('is-cut'); });
-      });
+      launch.classList.remove('is-cut');
+      at(920, function () { launch.classList.add('is-cut'); });
     }
   }
 
