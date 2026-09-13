@@ -60,11 +60,11 @@
   var squat = matchMedia('(max-height: 599px)');
 
   var POSES = ['p-idle', 'p-run', 'p-leap', 'p-fall', 'p-land',
-               'p-cut-min', 'p-cut-close', 'p-exit'];
-  /* Two moves: he comes in, and after the close he goes back out. He used to
-     have a lunge per cut as well; §10b's "why he no longer drops" is the whole
-     story, and its "and then he leaves" is the exit's. */
-  var MOVES = ['is-runin', 'is-exit'];
+               'p-cut-min', 'p-cut-close', 'p-exit', 'p-guard', 'p-hurt'];
+  /* Three moves now: he comes in, after the close he goes back out, and `sl`
+     sends him straight across. §10b's "why he no longer drops" is the story of
+     the lunge he used to have, and its "and then he leaves" is the exit's. */
+  var MOVES = ['is-runin', 'is-exit', 'is-cross'];
 
   var dead = false;            // sheets failed to load — never fire a cut
   var pend = null;             // the strike in flight, or null
@@ -136,7 +136,7 @@
     'p-idle': 'idle', 'p-run': 'run', 'p-leap': 'jump',
     'p-fall': 'jump', 'p-land': 'jump',
     'p-cut-min': 'attack_3', 'p-cut-close': 'attack_2',
-    'p-exit': 'jump'
+    'p-exit': 'jump', 'p-guard': 'protect', 'p-hurt': 'hurt'
   };
   function drawable(list) {
     for (var i = 0; i < list.length; i++) if (have[list[i]] !== true) return false;
@@ -416,10 +416,16 @@
     win.classList.remove('is-cut-min', 'is-cut-close');
     sam.style.removeProperty('--sam-run-dur');
     sam.style.removeProperty('--sam-run-x');
+    sam.style.removeProperty('--sam-cross-x');
+    sam.style.removeProperty('--sam-cross-dur');
     move(null);
     pose('p-idle');
     pend = null;
     fired = false;
+    /* Last, because wake() refuses to re-arm while a strike is pending, and
+       `pend` only clears on the line above. This is what guarantees he is never
+       left asleep on a window that has just been cut out from under him. */
+    wake();
   }
 
   /* Stop the ceremony but never the dismissal. */
@@ -597,7 +603,11 @@
   function warm() {
     if (warmed) return;
     warmed = true;
-    var sheets = ['idle', 'run', 'jump', 'attack_2', 'attack_3'];
+    /* protect and hurt are last and are NOT critical: they only serve the poke,
+       and a poke that does nothing because the sheet never arrived is a joke
+       nobody was owed. idle stays the only critical one — without it there is no
+       sprite worth leaving on the page. */
+    var sheets = ['idle', 'run', 'jump', 'attack_2', 'attack_3', 'protect', 'hurt'];
     for (var i = 0; i < sheets.length; i++) load(sheets[i], i === 0);
   }
   function load(name, critical) {
@@ -618,10 +628,320 @@
   addEventListener('boot:done', warm, { once: true });
   setTimeout(warm, 4000);        // belt: boot:done may already have fired
 
+  function egg(id) { return !!(window.Eggs && window.Eggs.found(id)); }
+
+  /* ── poking the guard ─────────────────────────────────────────
+     He has stood on that roof doing nothing for the whole session, so the first
+     thing a certain kind of visitor tries is whether he is clickable. He is now.
+
+     Escalation, not a single reaction, because a single reaction is a thing you
+     see once. Guard, guard, guard, then hurt, then he has had enough and cuts
+     the window down with you still holding the mouse. The count resets after
+     four seconds of being left alone — the joke is a flurry of pokes, not a
+     tally you accumulate over ten minutes and then trip by accident.
+
+     WHY A HIT AREA AND NOT `pointer-events: auto` ON .sam. His box is 256x256
+     and the figure is a 110x190 sliver of it; the rest is transparent. Turning
+     the box on would park an invisible 256px click-eater over the corner —
+     exactly the bug §10b's "the pill waits its turn" exists to prevent one
+     element along. The reserved rail means no page text is behind him, so a hit
+     area over the FIGURE is safe, but the empty 60% of the box is not free to
+     take. Measured from the sheets: the figure spans cell x10..120 across every
+     frame of every pose and his feet are on row 127, so at scale(2) and
+     `bottom: 100%` the pixels live in the lower ~190px of the box. */
+  var pokes = 0;
+  var pokeReset = 0;
+
+  function poke() {
+    /* isOpen() rather than isVisible(), because the folded peek bar counts: he
+       stands on that too, and closing a folded window is a dismissal that
+       strike() already knows how to cut. Stowed does not count — CSS has taken
+       him off the screen and a click cannot honestly have landed on him. */
+    if (off() || pend || !T.isOpen() || T.isStowed()) return;
+    /* Mid-`sl` the rig has carried him away from the hit area, so a click there
+       is a click on nothing — and re-posing him to a guard halfway across the
+       window would abandon the run with no way back to it. */
+    if (sam.classList.contains('is-cross')) return;
+    /* Nothing to react WITH on a cold cache — and a click that visibly does
+       nothing is better than a click that blanks the porthole. */
+    if (!drawable(['protect'])) return;
+    egg('poke');
+    wake();
+    clearTimeout(pokeReset);
+    pokeReset = setTimeout(function () { pokes = 0; }, 4000);
+    pokes++;
+
+    if (pokes < 4) { once('p-guard', 620); return; }
+    if (pokes === 4 && drawable(['hurt'])) { once('p-hurt', 700); return; }
+
+    /* Fifth. He is done being clicked at. Routed through strike() so it is the
+       same kesa-giri, the same commit-on-contact and the same watchdog as ✕ —
+       there is no second code path for closing this window and there is not
+       about to be. */
+    pokes = 0;
+    if (!strike('close', 260)) return;
+    egg('patience');
+  }
+
+  /* The listener goes on .termwin rather than on the hit area, so it survives
+     the sprite being re-posed, and it is NOT capture — the dots handler above is
+     capture and must keep winning if these ever overlap, which they do not. */
+  win.addEventListener('click', function (ev) {
+    if (!ev.target || !ev.target.closest) return;
+    if (!ev.target.closest('.sam__hit')) return;
+    poke();
+  });
+
+  /* ── off duty ─────────────────────────────────────────────────
+     Ninety seconds of an open window and no input at all, and he stops standing
+     to attention: the breath drops to a third speed and a すー floats off him.
+
+     There is no sleeping sheet in the pack — Walk, Protect, Hurt, Dead and
+     Attack_1 are what was left, and Dead reads as dead, which is a different
+     joke and a worse one. So this is idle.png at a third speed plus a すー on a
+     pseudo-element, which is honestly what dozing looks like from across a room.
+     No DOM node and no teardown: one class on and off is the whole mechanism.
+
+     Every real input cancels it, including scrolling, because someone reading
+     the page is not idle. visibilitychange is deliberately NOT one of them: a
+     backgrounded tab is the most idle a tab gets. */
+  var DOZE_AFTER = 90000;
+  var dozeTimer = 0;
+  var dozing = false;
+
+  function wake() {
+    if (dozing) {
+      dozing = false;
+      sam.classList.remove('is-doze');
+    }
+    clearTimeout(dozeTimer);
+    if (off() || pend) return;
+    dozeTimer = setTimeout(doze, DOZE_AFTER);
+  }
+
+  function doze() {
+    /* isVisible() is open && not folded && not stowed — the only state in which
+       he is actually on screen standing about. Re-arm rather than give up: the
+       ninety seconds ran out while the window happened to be shut, and one such
+       moment must not end the behaviour for the session. */
+    if (off() || pend || dozing || !T.isVisible()) {
+      dozeTimer = setTimeout(doze, DOZE_AFTER);
+      return;
+    }
+    dozing = true;
+    sam.classList.add('is-doze');
+    egg('doze');
+  }
+
+  ['pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach(function (e) {
+    /* Passive: none of these are cancelled here, and a non-passive scroll or
+       wheel listener on the document is the single easiest way to make a page
+       feel heavy. */
+    doc.addEventListener(e, wake, { passive: true, capture: true });
+  });
+  wake();
+
+  /* ── straight across (`sl`) ───────────────────────────────────
+     The ls typo. On a real box you get a steam locomotive; here you get the man
+     who is already standing there, running the length of the window and off the
+     left-hand side.
+
+     He is a child of .termwin, so "across the window" is just a translateX in
+     his own coordinate space and the distance is the card's width plus his own
+     box — no fixed overlay, no measurement of the viewport, and he is clipped by
+     nothing on the way because .termwin does not clip. Returns false rather than
+     doing nothing quietly, because terminal.js prints a different line then.
+
+     SPEED is one constant, shared with spar() below, and it is the same ~280px/s
+     the run-in uses: a run cycle looks wrong at any other ground speed and his
+     feet skate. It is written in device px per ms because that is the unit the
+     card's measured width comes in. */
+  var SPEED = 0.28;
+
+  /* Device px to the CELL px the rig wants. The rig is inside .sam__zoom, which
+     is scale(2), so anything set from here lands twice as far as it reads —
+     exactly the trap --sam-run-x's comment warns about, and the only reason this
+     conversion has to happen in JS at all is that the distance depends on a live
+     measurement and CSS cannot ask for one. */
+  function cells(devicePx) { return Math.round(devicePx / 2); }
+
+  function cross() {
+    /* isVisible(): open, unfolded, unstowed. You cannot type `sl` into a folded
+       window anyway, but terminal.js is not the only possible caller and the
+       fallback line it prints is a better outcome than a run across a peek bar
+       two hundred pixels wide. */
+    if (off() || pend || !T.isVisible()) return false;
+    if (sam.classList.contains('is-cross')) return false;
+    if (!drawable(['run'])) return false;
+    var card = live();
+    if (!card) return false;
+    egg('sl');
+    wake();
+    /* The card's width plus 220 so his painted pixels are properly off the far
+       side before he stops, rather than half-clipped by nothing in particular. */
+    var travel = Math.round(card.getBoundingClientRect().width) + 220;
+    var dur = Math.round(travel / SPEED);
+    sam.style.setProperty('--sam-cross-x', cells(travel) + 'px');
+    sam.style.setProperty('--sam-cross-dur', dur + 'ms');
+    pose('p-run');
+    /* --sam-run-dur is deliberately NOT set: 440ms is the resting value in §10b
+       and it is already the right cadence for this ground speed. strike() sets it
+       to a runway length and finish() removes it again, so by the time anything
+       can call this it is back to the default. */
+    move('is-cross');
+    at(dur, function () {
+      if (pend) return;                          // a real dismissal took over
+      move(null);
+      pose('p-idle');
+      sam.style.removeProperty('--sam-cross-x');
+      sam.style.removeProperty('--sam-cross-dur');
+    });
+    return true;
+  }
+
+  /* ── the spar ─────────────────────────────────────────────────
+     The one thing he does that leaves the window. He crosses the whole viewport
+     right to left and every section heading he passes comes apart along a
+     diagonal and knits back together behind him.
+
+     A SECOND SPRITE, not this one. Moving .sam out of .termwin would break the
+     roof contract that the entire file rests on — his feet track the folding
+     window because he is a child of it at `bottom: 100%`, with no measurement
+     and no resize handler — and putting him back afterwards would mean
+     reproducing that by hand for the length of one joke. So the spar builds a
+     throwaway clone in a fixed overlay, animates that, and removes it. .sam
+     never moves, never changes class, and cannot be left in a strange state if
+     this throws halfway through.
+
+     THE HEADINGS. A box cannot be clipped to both sides of a line at once, so
+     each one is split the way split() splits the terminal card: the original is
+     clipped to the upper-left of the rake, a clone is clipped to the lower-right,
+     and the two are nudged apart. The clone goes in THIS overlay rather than
+     beside the heading, which is what makes the arithmetic trivial — the overlay
+     is position:fixed, so a getBoundingClientRect() is already the coordinates
+     the clone needs, with no parent-offset walk and nothing to get wrong inside
+     an arbitrary layout.
+
+     Every clip-path involved is static, applied by a class and removed by
+     removing it. An animated clip-path on a live line of body text is a value
+     that can be interrupted mid-flight and left there; a class either applies
+     whole or not at all. §10b owns both halves and both offsets. */
+  var sparring = false;
+
+  /* .sec__title is styled entirely on its own class — no ancestor selectors — so
+     a clone renders identically anywhere, PROVIDED it is given back the two
+     things it loses by being reparented: its used width, because the heading is
+     a wrapping flex container and its line breaks depend on it, and its computed
+     colour, which it inherits from the section rather than declaring. */
+  function cleave(el, r) {
+    var clone = el.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.setAttribute('aria-hidden', 'true');
+    clone.className = el.className + ' sam-spar__half';
+    clone.style.left = r.left + 'px';
+    clone.style.top = r.top + 'px';
+    clone.style.width = r.width + 'px';
+    clone.style.color = getComputedStyle(el).color;
+    el.classList.add('is-cleaved');
+    return clone;
+  }
+
+  function spar() {
+    if (off() || pend || sparring || !T.isVisible()) return false;
+    if (!drawable(['run'])) return false;
+    egg('spar');
+    wake();
+    sparring = true;
+
+    var stage = doc.createElement('div');
+    stage.className = 'sam-spar';
+    stage.setAttribute('aria-hidden', 'true');
+    /* The same four nested nodes .sam uses — zoom, rig, stage, flip, cel — so
+       §10b's pose rules apply to it unchanged. Built by hand rather than cloning
+       .sam because .sam carries state (is-doze, whatever pose it is in) that
+       must not come along. */
+    stage.innerHTML =
+      '<div class="sam sam--free p-run">' +
+        '<div class="sam__zoom"><div class="sam__rig"><div class="sam__stage">' +
+          '<div class="sam__flip"><div class="sam__cel"></div></div>' +
+        '</div></div></div>' +
+      '</div>';
+    doc.body.appendChild(stage);
+    var free = stage.firstChild;
+
+    /* .sam--free starts at right: -288px, so his blade is one box-width off the
+       screen and has the full viewport plus that box to cross. Same ground speed
+       as every other run, so the cycle needs no retiming; cells() because the rig
+       is inside the 2x zoom. */
+    var travel = window.innerWidth + 320;
+    var dur = Math.round(travel / SPEED);
+    free.style.setProperty('--sam-cross-x', cells(travel) + 'px');
+    free.style.setProperty('--sam-cross-dur', dur + 'ms');
+    free.classList.add('is-cross');
+
+    /* Which headings, and when. Read ONCE, up front — a rect per frame of a
+       full-width run is a forced layout per frame, and a heading does not move
+       during one.
+
+       On screen only: cleaving a heading four sections down is a class added to
+       something nobody can see and then taken off again. Note the X test is the
+       only one — he passes at a fixed height and a heading well above or below
+       him still splits. That is deliberate rather than sloppy: a blade sweeping
+       the page reads as cutting what is in the sweep, and gating on his exact
+       vertical band would mean the command does visibly nothing whenever you
+       happen to be scrolled between two headings. */
+    var marks = [];
+    var heads = doc.querySelectorAll('.sec__title');
+    for (var i = 0; i < heads.length; i++) {
+      var r = heads[i].getBoundingClientRect();
+      if (r.bottom < 0 || r.top > window.innerHeight || !r.width) continue;
+      marks.push({ el: heads[i], r: r, x: r.right });
+    }
+    /* He starts off the right edge, so the wait before a heading is how far his
+       blade still has to travel to reach its near side. */
+    var startX = window.innerWidth + 160;
+    marks.forEach(function (m) {
+      at(Math.max(0, Math.round((startX - m.x) / SPEED)), function () {
+        if (m.done) return;
+        m.clone = cleave(m.el, m.r);
+        stage.appendChild(m.clone);
+        at(520, function () { heal(m); });
+      });
+    });
+
+    function heal(m) {
+      m.done = true;
+      m.el.classList.remove('is-cleaved');
+      if (m.clone && m.clone.parentNode) m.clone.parentNode.removeChild(m.clone);
+      m.clone = null;
+    }
+
+    /* Teardown twice over, and not from paranoia: at() pushes into the shared
+       `timers` array, so a real dismissal calling finish() mid-spar clears every
+       timer above — including the ones that would have put the headings back.
+       The plain setTimeout is outside that array and cannot be cleared, so the
+       page always comes back together even when the animation does not finish.
+       Removing the overlay is idempotent and healing an already-healed heading is
+       a no-op, so it costs nothing when both run. */
+    var tidy = function () {
+      if (stage.parentNode) stage.parentNode.removeChild(stage);
+      for (var j = 0; j < marks.length; j++) heal(marks[j]);
+      sparring = false;
+    };
+    at(dur + 120, tidy);
+    setTimeout(tidy, dur + 1400);
+    return true;
+  }
+
   /* terminal.js asks for the typed dismissals, and main.js's open() calls abort
      so that reopening the window mid-strike does not reopen it around a clone
      and two clip-paths — the fall lasts most of a second now, and the pill that
      can trigger that reopen turns up 450ms into it. Nothing else is exposed —
      the poses are not a public toy. */
-  window.Samurai = { strike: strike, abort: abort };
+  /* strike and abort are the dismissal contract terminal.js and main.js have
+     always used. cross and spar are the two eggs, and they follow the same rule:
+     they return a boolean, and false means "I did not perform — say something
+     yourself". That is why `sl` and `spar` still print a line on a phone, under
+     reduced motion, or on a cold cache, instead of appearing to be broken. */
+  window.Samurai = { strike: strike, abort: abort, cross: cross, spar: spar };
 })();
