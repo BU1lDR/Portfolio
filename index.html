@@ -1,4 +1,39 @@
 <!DOCTYPE html>
+<!--
+                              ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+                          ▁▁▁█████████████████▁▁▁
+                              ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+                            ▁▁███████████████▁▁
+                                █         █
+                                █         █
+                                █         █
+                                █         █
+                                █         █
+                               ▟█▙       ▟█▙
+
+                              零と壱より生まれる
+
+     You are reading the source. Most people do not, which is the entire
+     reason this is here.
+
+     There is a shell on this page — the ❯_ TERMINAL button, bottom right.
+     Type `unmask` into it. That word is not in `help`, it is not in
+     tab-completion, it is excluded from did-you-mean, and this comment and
+     the console are the only two places it is written down. It drops the
+     aesthetic and tells you plainly who I am and what I am looking for.
+
+     Then type `eggs`. There are two dozen things hidden on this page and
+     that command keeps score.
+
+     Everything here is hand-written: no framework, no build step, no
+     dependencies. If you want to know how any of it works, the CSS and the
+     JS are commented at roughly the length of an argument, because in most
+     of these files the reasoning is the part worth keeping.
+
+     I am a first-year IT undergrad looking for a cybersecurity internship.
+     aryanverma102007@gmail.com — and /.well-known/security.txt, if that is
+     more your idea of a front door.
+-->
 <html lang="en" class="no-js">
 <head>
 <meta charset="utf-8">
@@ -46,7 +81,7 @@
      which looks exactly like a broken button. Bump the number in all five
      references — this one and the four scripts at the end of <body> —
      whenever you change css/ or js/. -->
-<link rel="stylesheet" href="css/style.css?v=5">
+<link rel="stylesheet" href="css/style.css?v=6">
 
 <!-- The boot overlay shows this ~0.7s in, so it must not be discovered
      late by the parser. 15 KB — it is on the critical path by design. -->
@@ -250,6 +285,19 @@
         </div>
       </div>
     </div>
+    <!-- The one clickable thing on him: poke him and he guards, keep going and
+         he stops being polite about it. It is a plain div, not a button, on
+         purpose — it lives inside aria-hidden and must not become a focus stop
+         that announces nothing, and a joke is not worth a dead tab stop.
+
+         It is sized to his PAINTED pixels (idle spans cell x27..82, y35..127, so
+         54px/70px in and 112x186 at 2x) and not to .sam, because .sam is 256x256
+         and two thirds of that is transparent. Turning the whole box on would
+         park an invisible click-eater over the corner of the page. It sits
+         outside .sam__zoom so the rig can carry him off during `sl` without
+         dragging the hit area along; see poke() for what happens if you click
+         while he is mid-run. -->
+    <div class="sam__hit"></div>
   </div>
 </aside>
 
@@ -861,19 +909,29 @@
            commercial use without credit; it gets credited anyway. -->
       Samurai by <a href="https://craftpix.net/file-licenses/" target="_blank" rel="noopener noreferrer">CraftPix<i>↗</i></a>
       <a href="https://github.com/BU1lDR/Portfolio" target="_blank" rel="noopener noreferrer">Source<i>↗</i></a>
+      <!-- Painted in nothing until you select it. Not hidden — hidden text
+           cannot be selected, and being selectable is the entire mechanism.
+           See "nothing to see" in css/style.css. -->
+      <span class="ghost">影は光があるところにしか立てない — a shadow can only stand where there is light. you found one. try `eggs`.</span>
     </p>
   </div>
 </footer>
 
 <!-- Keep ?v= in step with the stylesheet's, up in <head>. -->
-<script src="js/data.js?v=5"></script>
-<script src="js/scene.js?v=5" defer></script>
-<script src="js/terminal.js?v=5" defer></script>
-<script src="js/main.js?v=5" defer></script>
+<!-- First, and not deferred, because terminal.js and main.js both call into it
+     while they are setting themselves up. It has no dependencies of its own —
+     not even data.js — so first is a position it can actually hold. Deleting
+     this one line turns the scoreboard off and leaves all two dozen eggs
+     working: every call site is guarded. -->
+<script src="js/eggs.js?v=6"></script>
+<script src="js/data.js?v=6"></script>
+<script src="js/scene.js?v=6" defer></script>
+<script src="js/terminal.js?v=6" defer></script>
+<script src="js/main.js?v=6" defer></script>
 <!-- After main.js, not before: samurai.js checks for window.TermWindow and
      stands down if it is missing, which is only a meaningful test once module 09
      has defined it. Deleting this one line is the samurai's kill switch — he
      stays on the roof, breathing, from CSS alone. -->
-<script src="js/samurai.js?v=5" defer></script>
+<script src="js/samurai.js?v=6" defer></script>
 </body>
 </html>
