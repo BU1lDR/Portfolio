@@ -1770,6 +1770,12 @@ body:not(.term-stowed) .termlaunch.is-shown {
                              animation: sam-a3 160ms steps(4, jump-none) forwards; }
 .sam.p-cut-close .sam__cel { width: 640px; left: 5px; background-image: url(../assets/samurai/attack_2.png);
                              animation: sam-a2 150ms steps(5, jump-none) forwards; }
+/* Leaving. The same jump.png the fold's tail uses, but frames 0..4 instead of
+   2..6 — the gather and the flight, and no landing, because there is nothing off
+   the right-hand edge of the screen to land on. step-end for the reason sam-land
+   uses it: the five dwells are not equal. */
+.sam.p-exit  .sam__cel { width:  896px; left:  9px; background-image: url(../assets/samurai/jump.png);
+                         animation: sam-exit-cel 620ms step-end forwards; }
 
 /* The breath. Worth spelling out, because two of the three things in here look
    like mistakes and the sheet is the only place the reasons are visible.
@@ -1852,6 +1858,27 @@ body:not(.term-stowed) .termlaunch.is-shown {
 @keyframes sam-a2   { from { transform: translate3d(0, 0, 0); }
                       to   { transform: translate3d(-512px, 0, 0); } }
 
+/* The exit, frame by frame. jump.png's own drawing does a third of the lifting
+   here: its ground rows are 127, 127, 125, 113, 117 for f0..f4, so by f3 the
+   sprite has already picked his feet up 14 cell px before the rig has moved him
+   anywhere. That is measured, and it is why the arc below is only 20 cell px
+   tall — the two add up, and a 20px arc under a sheet that lifts 14 of its own
+   reads as one jump of 34.
+
+   The frame changes sit on the events of the arc rather than spread evenly. f0
+   is the turn. f1 is the gather. f2 is the extension, and it is where the rig
+   starts to move, so he leaves the roof on the frame his feet leave the ground.
+   f3 is the tuck and holds through the rise; f4 puts his legs back out and takes
+   over at 69%, which is the apex — the frame swap and the top of the arc are the
+   same moment on purpose. */
+@keyframes sam-exit-cel {
+  0%     { transform: translate3d(     0, 0, 0); }  /* f0  he turns          60ms */
+  9.68%  { transform: translate3d(-128px, 0, 0); }  /* f1  gather            60ms */
+  19.35% { transform: translate3d(-256px, 0, 0); }  /* f2  extension — off   70ms */
+  30.65% { transform: translate3d(-384px, 0, 0); }  /* f3  tuck, rising     250ms */
+  69.35% { transform: translate3d(-512px, 0, 0); }  /* f4  legs out, apex   190ms */
+}
+
 /* ── the run-in, and why he no longer drops ────────────────────
    He used to step down into the cut, and it is worth writing down why he does
    not any more, because the geometry that argued for it is real. Both sheets
@@ -1894,6 +1921,122 @@ body:not(.term-stowed) .termlaunch.is-shown {
 @keyframes sam-runin {
   from { transform: translate3d(var(--sam-run-x), 0, 0); }
   to   { transform: translate3d(0, 0, 0); }
+}
+
+/* ── and then he leaves ────────────────────────────────────────
+   He used to dissolve. `.termwin.is-sliced .sam` ramped his opacity to 0 over
+   440ms while the two halves of the window fell — better than blinking out with
+   the window, which is what it was written to fix, but still the one exit this
+   figure cannot do. He is 31 colours, a 1px banner pole and hard pixel edges;
+   going translucent turns all of it to mush for 160ms and there is no reading of
+   a fading man that says he is leaving. §11 is now a pointer to here.
+
+   So he leaves on his feet, out the way he came in: the run-in above brings him
+   on from the right, and the right is where he goes back to.
+
+   THE TURN. Every CraftPix sheet faces right and .sam__flip mirrors him so he
+   faces the page — so leaving to the right means facing right, and the exit takes
+   the mirror off. That costs a sideways hop, because the flip is about the
+   stage's centre and the registration `left` composes with it. Measured off the
+   sheets: his hip band sits at cell x 71.0 on attack_2's held last frame and 52.4
+   on jump's f0, which through 128-(5+c) mirrored and 9+c not puts him at stage
+   x 52.0 before the turn and 61.4 after it. Un-mirroring on its own would
+   therefore jog him 9.4 cell px — 19 device px — to the right on the very frame
+   he turns, which is the frame the eye is on. The arc starts at -9.5 to cancel
+   it, and -9.5 rather than -9.4 because .sam__zoom doubles it and a whole device
+   pixel is the only offset `image-rendering: pixelated` holds without
+   resampling.
+
+   That prediction was then checked against the composited page, and the check is
+   worth keeping because it revises where the number comes from. exit-leap.js
+   measures the jog on three row bands: legs +9.50 cell px, hips +11.13, torso
+   +15.16. The bands disagree because the two frames either side of the turn are
+   different drawings — attack_2's last frame is a finished overhead cut, leaning,
+   with the sword out at full extension, and jump's f0 is an upright gather — so
+   the torso really is further right afterwards and no single offset can align all
+   three. The legs are the band that matters: no steel in them, and they are what
+   reads as "he is standing there". -9.5 leaves 0.32 cell px on the legs, under
+   one device pixel. Anyone re-deriving this from the hips will get 11 and think
+   it is off by 1.6; it is not, it is aligned on the right band. */
+
+/* THE ARC. A parabola, sampled. x is linear in time because nothing slows a jump
+   down horizontally; y peaks 20 cell px up at 62% of the flight and is still
+   12.5 up when he crosses the edge, so he reads as leaping away rather than as
+   falling off the side — except on short screens, where the query below flattens
+   it and the sheet's own lift carries the jump. Six stops and `linear` rather than two stops and an
+   easing pair: one transform cannot carry a different timing function per axis,
+   and sampled this densely the straight lines between samples are under half a
+   cell px off the curve.
+
+   HOW FAR. 182 cell px = 364 device px, against a requirement of 241 at the
+   widest viewport. His leftmost painted pixel on the airborne frames is cell
+   x 28, so with `left: 9` and the 2x zoom it sits 190px inside .sam's right-hand
+   edge — measured 36.0 cell px in from that edge on the live page, against the
+   36 the sheet predicts — and that edge is 8px plus --term-edge from the
+   viewport's. --term-edge is a clamp that runs 12.8..30.4px, pinned to its
+   ceiling on anything wider than 1788px, so the worst case is fixed and
+   measurable: 222px from his painted edge to the viewport's, plus the 19 he
+   starts to the left of, is 241.
+
+   The other 123px are not slack for the geometry, they are slack for the clock,
+   and this is the part that had to be measured rather than reasoned about. The
+   deadline below is 100ms wide; frame gaps during the fall — two 600x450 clones
+   animating at once — were seen at 49..70ms on the machine this was built on, and
+   a phone will do worse. Travelling further means crossing the edge EARLIER in
+   the flight: at 182 he is across at 72.7% of it rather than 84%, which turns
+   100ms of margin into 269 and takes the whole question off the table. Unlike
+   --sam-fall none of this is computed per screen, because out there overshoot is
+   free — he is off the edge, <body> is overflow-x: hidden, and .termwin is fixed,
+   so nothing he does can extend the document or raise a scrollbar. exit-leap.js
+   asserts that last part rather than trusting it.
+
+   The one thing the shadow taught: it does not need paying for. `drop-shadow`
+   here is two near-black shadows, a contact shadow against the lit window — over
+   the page's own near-black background it is invisible, so his painted edge and
+   his apparent edge are the same pixel. The +12px the first draft of this reserved
+   for it was reserving nothing.
+
+   WHEN. 200ms after contact, scheduled by CUT.close.tail. The halves part on the
+   impulse at 114 and 198ms, so he holds the finished cut through the parting and
+   turns as they start to drop. The flight is 620ms, so it ends 820ms after
+   contact — and is-sliced's delayed opacity hop takes the window, and him with
+   it, at 920. He is a child of it; that is the deadline, and it is the reason the
+   travel above is over-provisioned rather than fitted. Measured across three
+   viewports he is across the edge 651..751ms after contact. */
+.sam.is-exit .sam__rig  { --sam-lift: 20px; animation: sam-exit 620ms linear both; }
+.sam.is-exit .sam__flip { transform: scaleX(1); }
+
+/* Off the right is the exit; off the TOP is his head being sheared by the
+   viewport, and the arc is the only thing that can cause it — he rests 256px
+   above the window's roof and the window's roof is wherever --term-h and the page
+   put it. Measured headroom above .sam: 258px at 1920x1080, 114 at 1440x900, 66
+   at 1280x800, 45 at 900x740, 25 at 880x700. So a 40px apex is fine on anything
+   tall and cuts his hat off below about 740, which is squarely inside the range
+   he is allowed on (§10a hides him at 599, not 739).
+
+   Flat rather than scaled, and one breakpoint rather than a ladder, for the same
+   reason §10a gives for its own flat query: a band of heights that clip him "only
+   a little" is worse than a clean either/or, and this way the number that has to
+   stay true is a single measured one. What is left when the lift goes is not a
+   slide — jump.png draws him 14 cell px higher on f3/f4 all by itself, and that
+   lift is INSIDE .sam__stage's 128px porthole, so it cannot be clipped by
+   anything. He still visibly rises 28 CSS px; he just does not carry the porthole
+   up with him. */
+@media (max-height: 779px) { .sam.is-exit .sam__rig { --sam-lift: 0px; } }
+
+/* The x stops are the -9.5 start plus 0, 36.5, 73, 113, 145.5, 182 of travel.
+   -9.5 is exact because it is HELD for 120ms against a static window and has to
+   land on the pixel grid; the rest are mid-flight and half a cell px there is
+   nothing anyone can see. y is written as fractions of --sam-lift rather than as
+   the five numbers it resolves to, so that the query above can retune the arc by
+   changing one value instead of restating the whole keyframe block. */
+@keyframes sam-exit {
+  0%, 19.35% { transform: translate3d(  -9.5px, 0, 0); }        /* planted, turned */
+  35.48%     { transform: translate3d(    27px, calc(var(--sam-lift) * -0.540), 0); }
+  51.61%     { transform: translate3d(  63.5px, calc(var(--sam-lift) * -0.875), 0); }
+  69.35%     { transform: translate3d( 103.5px, calc(var(--sam-lift) * -1),     0); }  /* apex */
+  83.87%     { transform: translate3d(   136px, calc(var(--sam-lift) * -0.915), 0); }
+  100%       { transform: translate3d( 172.5px, calc(var(--sam-lift) * -0.625), 0); }  /* well clear */
 }
 
 /* Breathing costs a composited frame six times a second, forever, on every
@@ -2211,38 +2354,19 @@ body.term-stowed .sam.p-idle .sam__cel,
   100%      { transform: translate3d(54px, var(--sam-fall, 700px), 0) rotate(14deg); }
 }
 
-/* ...and he goes out ahead of his own handiwork.
-   Without this he does not go at all. He is a child of .termwin, so his opacity
-   is the window's, and the window's opacity is a delayed 0s hop — it holds at 1
-   for the whole 920ms and then snaps. Which means he would stand there at full
-   opacity for the entire fall and then blink out of existence in a single frame,
-   on the same millisecond as a window that is by then empty. On the filmstrip it
-   was the one remaining seam in the close.
+/* ...and he goes out ahead of his own handiwork, on his feet.
+   There used to be a rule here — `.termwin.is-sliced .sam`, an opacity ramp — and
+   it existed because he is a child of .termwin, so without something he inherits
+   the window's delayed 0s hop: full opacity for the whole 920ms fall and then out
+   of existence in one frame, on the same millisecond as a window that is by then
+   empty. Fading him was the fix for that. Leaving is a better one, and §10b's
+   "and then he leaves" is the whole argument plus the geometry.
 
-   An animation rather than a transition, and this is the reason: `both` holds
-   opacity 0 until the class comes off and then restores 1 instantly. A
-   transition would run the same fade BACKWARDS when finish() removes is-sliced,
-   so reopening the window a moment later would find him missing and fade him in
-   — the exact class of bug unsplit() suppresses .termwin's own transition for.
-
-   Safe to animate .sam itself: the poses animate .sam__cel and the run-in
-   animates .sam__rig, so nothing else here owns this element's animation. And it
-   is only ever added by the close — the fold rides him down to the peek bar and
-   lands him there, where he has to stay visible. */
-/* 440ms of its own, deliberately NOT the 860ms the halves get. He is not
-   supposed to stand and watch: he cuts, and by the time the wreckage is a
-   quarter of the way down he is not there any more. Pinning the duration here
-   rather than letting it match the pieces is what keeps that true — the
-   percentages below are fractions of this animation, so inheriting a longer one
-   would silently stretch his exit across the whole fall. */
-.termwin.is-sliced .sam { animation: sam-vanish 440ms linear both; }
-@keyframes sam-vanish {
-  /* Solid until 242ms — through contact and the parting, the frames he is
-     actually needed for — then gone by 405ms, which is 255ms after the blade
-     lands and 515ms before the window snaps. Nothing here is racing anything. */
-  0%, 55%   { opacity: 1; }
-  92%, 100% { opacity: 0; }
-}
+   Nothing here replaces it, and that is the point worth writing down: the exit is
+   a translate on .sam__rig, so there is no opacity for finish() to have to
+   restore and no transition anywhere near .sam that could run backwards and fade
+   him IN when the window is reopened mid-fall. One less thing holding a value it
+   has to give back. */
 
 /* The pill acknowledges the kill as it arrives, so the window's replacement
    reads as a consequence rather than a coincidence. */
