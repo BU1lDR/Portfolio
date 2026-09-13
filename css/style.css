@@ -2321,6 +2321,264 @@ body.term-stowed .sam.p-idle .sam__cel,
   to   { transform: translate3d(calc(var(--sam-cross-x, 0px) * -1), 0, 0); }
 }
 
+/* ── the path he crosses on (`sl`) ─────────────────────────────
+   A 参道 — the stone approach to a shrine — laid across the viewport ahead of
+   his feet, with 鳥居 to run through. It lasts about four seconds.
+
+   WHY THE PATH FORCED THE RUN TO BE REBUILT. `sl` used to translate the REAL
+   sprite leftward inside .termwin and then drop him back on his post the instant
+   the animation ended — a hard teleport, and the reason it never looked like
+   anything. A path across the whole page cannot be a child of the window, so the
+   crossing now works the way the spar below does: a throwaway sprite in a fixed
+   overlay, the real .sam hidden for the length of it, and afterwards he runs
+   back onto the roof with the same is-runin the window's own entrance uses. The
+   teleport is gone by construction rather than by being animated around.
+
+   ONE OVERLAY FOR BOTH, so the ground and the man cannot disagree about where
+   the ground is: .sam-road__at is placed at the real sprite's measured foot line
+   and the runner is placed from the same rect. DOM order does the stacking —
+   haze, band, gates, then him last — so he passes in front of the stones and
+   through the gates rather than behind them.
+
+   THE VERMILION IS NOT A COINCIDENCE. --red is #ff3b53 and :root already
+   comments it as 朱; 朱 is the colour torii are painted. The accent this site was
+   built on was the right paint before there was anything to paint.
+
+   His foot line is wherever the terminal roof is, not "ground level" for the
+   page, and that is on purpose: the path is conjured for him, not page
+   furniture. Pinning it to the bottom of the viewport instead would need him to
+   descend to it first, which is a second animation to buy nothing.
+
+   Z-INDEX 95, one BELOW .termwin — the opposite of .sam-spar, and the reason is
+   the whole reason this reads as a path rather than as a bar across the UI. His
+   foot line IS the window's roof, so a band hanging 38px below it lands exactly
+   on the card's title bar. Above the window it painted a stone strip over the
+   chrome; below it, the card occludes the band where they cross and the path
+   simply passes behind the window. He is above the page and behind the terminal,
+   which is also the truthful order: the path and the man are scenery, the window
+   is the interface. .sam itself sits entirely above the card at `bottom: 100%`,
+   so nothing occludes the runner at the handoff. */
+.sam-road {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  overflow: hidden;            /* he exits past x=0 and must not raise a bar */
+  pointer-events: none;
+  transition: opacity .42s linear;
+}
+.sam-road.is-going { opacity: 0; }
+
+/* Zero-height, so everything on the path is positioned against the one line
+   that matters and the band is the only thing with a thickness. */
+.sam-road__at {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+}
+
+/* Laid right to left, ahead of him: js/samurai.js sets --sam-road-dur shorter
+   than his run so the stones are always arriving in front of his feet rather
+   than under them. A clip-path wipe rather than an animated width because the
+   width is what the gradients are sized against — animating it would re-resolve
+   every one of them per frame, where a clip only ever hides what is already
+   painted.
+
+   38px, not the 54 this started at. A deep band stops reading as a path and
+   starts reading as a slab laid over the page — and since it hangs from his feet
+   it is hanging over whatever the terminal is sitting in front of. Shallow enough
+   to be a path seen nearly edge-on is both the better drawing and the smaller
+   imposition. */
+.sam-road__band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 38px;
+  clip-path: inset(0 0 0 100%);
+  animation: sam-road-lay var(--sam-road-dur, 1200ms) linear both;
+  background:
+    /* the joints between flagstones: a bright edge and a dark one together, so
+       each stone has a lit side and a shaded side and reads as a block rather
+       than as a hairline. Raked 6deg off vertical so the band reads as a path
+       going away rather than as a wall seen face on. */
+    repeating-linear-gradient(96deg,
+      rgba(226, 240, 255, .16) 0 1px,
+      rgba(0, 0, 0, .5) 1px 3px,
+      transparent 3px 46px),
+    /* one darker course along the bottom, which is all the depth 38px can carry
+       before it stops being a surface */
+    linear-gradient(to bottom,
+      #1b1f29 0 52%, #0c0f16 52% 84%, rgba(5, 6, 10, 0) 100%);
+}
+
+/* The surface itself — thin, bright, and warm at the end he started from. The
+   stones are cold; this is the one line his feet actually meet.
+
+   The warmth FADES IN rather than starting at full --red, because a static
+   gradient cannot follow the moving wipe front and the accent therefore ends up
+   parked at the right edge of the page for the rest of the run. At 3% of full
+   accent it was a bright red dash in the strip of page the terminal card does not
+   cover — an artifact, not a highlight. Held to half strength and given the whole
+   right third to arrive in, it reads as the path being warmer where he came
+   from, which is the thing it was for. */
+.sam-road__band::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(to left,
+    rgba(255, 59, 83, .5), rgba(226, 240, 255, .8) 34%, rgba(226, 240, 255, .3));
+  box-shadow: 0 0 12px 0 rgba(255, 59, 83, .22);
+}
+
+@keyframes sam-road-lay {
+  from { clip-path: inset(0 0 0 100%); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+
+/* ── 鳥居 ──────────────────────────────────────────────────────
+   HE HAS TO FIT UNDER IT, which the first version of this got backwards. A torii
+   is monumental — the whole gesture of one is that you pass beneath it — and at
+   96px tall it stood chest-high on a sprite whose painted pixels reach 186px
+   above his feet. He towered over the gate and stepped past it rather than
+   through it, which is the one thing a gate must not let you do.
+
+   So every dimension is a fraction of --h and --h is 210px: taller than his 186,
+   with the 貫 above his head. The proportions are a 明神 torii's — pillars 5% of
+   the height, the 笠木 overhanging to the full width, the 貫 two tenths of the way
+   down — and the clear opening between the pillars works out at .7 x 210 = 147px
+   against his 110px of painted width. He runs through the middle of it with room
+   either side.
+
+   Six boxes: two pillars off the container's own pseudo-elements, the 笠木 and
+   島木 (the paired top beams that make it a 明神 rather than a plank on two posts)
+   plus the 額束 strut off the <i>, and the 貫 off the <b>. `left` is the gate's
+   CENTRE — the negative margin does that — because js/samurai.js knows where he
+   will be, not where a box edge should go.
+
+   The pillars lean 1.2deg inward. That is 転び, and it is the cheapest detail
+   here by a wide margin: without it this is two rectangles and a lintel, and
+   with it it is a torii.
+
+   AND NOT IN --red. At the full accent on full opacity three of these were the
+   loudest thing on the page by a distance — they stopped being scenery he runs
+   through and became three enormous UI chevrons with body copy showing between
+   the pillars. Painted wood at night is a darker, duller vermilion than a
+   hyperlink is, so the colour is knocked back and the rise settles at .62 rather
+   than at 1. He stays the brightest thing in his own animation, which is the
+   whole point of it. */
+.sam-road__torii {
+  --h: 210px;
+  position: absolute;
+  bottom: 0;
+  width: var(--h);
+  height: var(--h);
+  margin-left: calc(var(--h) / -2);
+  color: #c22d42;
+  opacity: 0;
+  animation: sam-road-rise 420ms var(--ease) both;
+  animation-delay: var(--d, 0ms);
+}
+.sam-road__torii::before,
+.sam-road__torii::after {
+  content: '';
+  position: absolute;
+  top: calc(var(--h) * .055);
+  bottom: 0;
+  width: calc(var(--h) * .05);
+  background: currentColor;
+  transform-origin: 50% 100%;
+}
+.sam-road__torii::before { left: calc(var(--h) * .1);  transform: rotate(1.2deg); }
+.sam-road__torii::after  { right: calc(var(--h) * .1); transform: rotate(-1.2deg); }
+
+/* 笠木 — the top beam, overhanging both pillars, with its ends lifted. A real one
+   curves; a clip-path with the mid-span dropped a couple of percent is the flat
+   version of that curve and is indistinguishable at this size. */
+.sam-road__torii i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: calc(var(--h) * .055);
+  background: currentColor;
+  clip-path: polygon(0 0, 9% 42%, 91% 42%, 100% 0, 100% 100%, 0 100%);
+}
+/* 島木 under it, slightly inset — the pair is the 明神 signature — and 額束, the
+   short strut standing on the 貫 under the centre of the beams. */
+.sam-road__torii i::before {
+  content: '';
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  top: 100%;
+  height: calc(var(--h) * .028);
+  background: currentColor;
+}
+.sam-road__torii i::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: calc(var(--h) * .035);
+  height: calc(var(--h) * .11);
+  margin-left: calc(var(--h) * -.0175);
+  background: currentColor;
+}
+/* 貫 — through the pillars rather than sat on top of them, three tenths down. */
+.sam-road__torii b {
+  position: absolute;
+  left: calc(var(--h) * .06);
+  right: calc(var(--h) * .06);
+  top: calc(var(--h) * .2);
+  height: calc(var(--h) * .035);
+  background: currentColor;
+}
+
+/* Each gate is already there by the time he reaches it — js/samurai.js sets --d
+   from the same arithmetic the spar uses for the headings, minus a lead. */
+@keyframes sam-road-rise {
+  from { opacity: 0; transform: translate3d(0, 16px, 0); }
+  to   { opacity: .62; transform: translate3d(0, 0, 0); }
+}
+
+/* Haze along the path, and it is doing more work than it looks like. Without it
+   the stones and the gates sit on top of live body copy with nothing between
+   them, and the whole thing reads as an overlay that has gone wrong rather than
+   as a scene: you see paragraph text through the middle of a torii. A short
+   gradient rising off the path line puts air behind them.
+
+   Its own element with its own copy of the wipe, because the band's clip-path
+   clips the band's children — anything extending above that 38px box is clipped
+   away entirely, so this cannot be a pseudo-element of it. Identical duration and
+   both appended in the same frame, so the two fronts travel together. */
+.sam-road__haze {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 104px;
+  clip-path: inset(0 0 0 100%);
+  animation: sam-road-lay var(--sam-road-dur, 1200ms) linear both;
+  background: linear-gradient(to top,
+    rgba(5, 6, 10, .62), rgba(5, 6, 10, .28) 46%, rgba(5, 6, 10, 0));
+}
+
+/* The runner. Placed by measurement, so .sam's own corner anchoring has to be
+   switched off — and it has to be switched off by something at least as specific
+   as .sam itself, hence the descendant selector rather than a bare class. */
+.sam-road .sam--road {
+  right: auto;
+  bottom: auto;
+}
+
+/* And the real one, stood down for the length of it. visibility rather than
+   display, because display:none on an ancestor drops the .sam__hit out of hit
+   testing AND would restart the breath loop from frame 0 on the way back;
+   visibility does the first and not the second. */
+.sam.is-away { visibility: hidden; }
+
 /* ── the spar ──────────────────────────────────────────────────
    `spar` sends him across the whole viewport and splits every heading he passes.
 
