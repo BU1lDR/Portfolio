@@ -1511,7 +1511,10 @@ body.term-cold .termlaunch { transition: none; }
               visibility 0s linear .3s;
 }
 /* Shown on the same tick as the class — close() hands focus straight to this
-   button, and it has to be focusable by then.
+   button, and it has to be focusable by then. That constraint is the whole
+   reason a cut delays this rule's PAINT rather than the class: see "the pill
+   waits its turn" in §10b, which holds opacity and transform for the length of
+   the fall and deliberately leaves visibility alone.
 
    Stowed with the window, for the same reason: a pill is small, but it would
    be the one thing left sitting on the gate. Same gating trick — see the note
@@ -2368,8 +2371,83 @@ body.term-stowed .sam.p-idle .sam__cel,
    him IN when the window is reopened mid-fall. One less thing holding a value it
    has to give back. */
 
+/* ── the pill waits its turn ────────────────────────────────────
+   It takes the corner the window vacated, and it used to take it while the
+   window was still in it. commit() adds is-sliced and then calls close() in one
+   synchronous block, so sync() handed the pill `is-shown` on the contact frame
+   and it was fully opaque 242ms later with the better part of a second of
+   wreckage still to fall. Measured: the lower-right half was over this pill's
+   own box until contact+841 on a full window and contact+615 on the folded bar,
+   and both halves were still on screen at contact+911.
+
+   On the peek bar it is worse than an overlap, which is where it got noticed:
+   the folded bar is 240x38 in exactly this corner, so the pill materialised
+   INSIDE the box being cut apart and the lower-right half then tumbled over the
+   top of it on the way down.
+
+   The class cannot wait — close() moves focus here on the next frame and you
+   cannot focus a visibility:hidden element. The PAINT can. So the delay goes on
+   opacity and transform and visibility keeps its 0s: for 920ms the pill is a
+   focusable, activatable, correctly-labelled button that simply is not drawn
+   yet, and Enter on it in that window reopens the terminal, which is what
+   pressing an invisible reopen button ought to do.
+
+   920ms is not a new number. It is the delay on .termwin.is-sliced's own
+   opacity hop, and both classes land in the same tick, so the two transitions
+   start on the same style flush and the pill begins to rise on the exact frame
+   the window stops being drawn. Two boxes, one corner, and no frame with both
+   of them in it — which is what the header over .termlaunch has always claimed
+   and is now true during a cut as well.
+
+   pointer-events, for the reason .termwin.is-sliced has it: opacity 0 stops
+   nothing, so without this line the hold parks an invisible, fully clickable
+   reopen button over the corner for the whole fall and a click aimed at the
+   section underneath reopens the terminal instead. Keyboard activation is
+   unaffected by pointer-events, so the one caller who can tell the button is
+   there is the one who can still press it.
+
+   Sibling combinator rather than a class of its own because the condition is
+   literally "while the window is in pieces", and #termLaunch is the next
+   element after #termWin. It also means the wait cannot outlive the cut: no
+   is-sliced, no delay, so a plain close(), a reduced-motion close and a
+   samurai-less page all put the pill straight up. 0,4,0 beats the is-shown
+   rule's 0,3,1, so none of it needs !important — and a running transition keeps
+   the delay it started with, which is why finish() taking is-sliced off at
+   contact+990, mid-delay, does not cut the wait short. */
+.termwin.is-sliced ~ .termlaunch.is-shown {
+  pointer-events: none;
+  transition: opacity .26s var(--ease) 920ms, transform .3s var(--ease) 920ms,
+              color .2s var(--ease), border-color .2s var(--ease),
+              visibility 0s;
+}
+/* Unless it is holding a focus ring. A keyboard close — Esc — hands this button
+   focus, and a focus ring on something nobody can see is a control nobody can
+   find, so that caller gets the pill immediately and wears the overlap. A mouse
+   click does not match :focus-visible even though it does move focus here, so it
+   still gets the handoff.
+
+   It DROPS opacity and transform from the list instead of zeroing their delay,
+   and that is the whole trick. The rule above is one frame early: is-shown lands
+   in commit()'s tick and close() moves focus on the NEXT frame, so by the time
+   anything matches :focus-visible the held transition is already running — and a
+   running transition keeps the delay it started with, which is the same spec
+   sentence that stops finish() from cutting the wait short. Retiming it does
+   nothing; `transition-delay: 0s` here measured as applied, with the pill still
+   at opacity 0 seven hundred milliseconds later. Taking a property out of
+   transition-property cancels its running transition instead, and a cancelled
+   transition leaves the property at the value it was heading for — is-shown's
+   opacity 1 and transform none. So the keyboard's pill does not fade in, it is
+   simply there, one frame after contact. For a control already wearing a focus
+   ring that is the better of the two anyway. */
+.termwin.is-sliced ~ .termlaunch.is-shown:focus-visible {
+  pointer-events: auto;
+  transition: color .2s var(--ease), border-color .2s var(--ease), visibility 0s;
+}
+
 /* The pill acknowledges the kill as it arrives, so the window's replacement
-   reads as a consequence rather than a coincidence. */
+   reads as a consequence rather than a coincidence. samurai.js fires this at
+   contact+920 to land it on the arrival above; it used to fire at contact+300,
+   which spent it in the middle of the fall behind two tumbling halves. */
 .termlaunch.is-cut { animation: sam-pill 260ms var(--ease); }
 @keyframes sam-pill {
   0%, 100% { border-color: var(--line-2); }
@@ -3369,9 +3447,12 @@ body.term-stowed .sam.p-idle .sam__cel,
      neither class can be added and no clone can exist — but the blanket rule
      above rewrites durations and NOT delays, so if one ever did, .is-sliced's
      920ms delay would survive it and hold a dead window on screen for the better
-     part of a second. Two lines to make that unreachable from either direction. */
+     part of a second. Three lines to make that unreachable from every direction:
+     the third is the pill's matching 920ms wait, which would otherwise leave the
+     corner empty for a second after a close that was supposed to be instant. */
   .term--ghost { display: none; }
   .termwin.is-sliced { transition-delay: 0s; }
+  .termwin.is-sliced ~ .termlaunch.is-shown { transition-delay: 0s; }
 }
 
 @media print {
