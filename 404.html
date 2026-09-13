@@ -7,11 +7,44 @@
 <meta name="theme-color" content="#05060a">
 <title>404 — nothing here | Aryan Verma</title>
 <meta name="robots" content="noindex">
+
+<!-- ── the one thing this page has to get right before anything else loads ──
+     GitHub Pages serves this file for any missing path under the site root and
+     LEAVES THE URL ALONE. So a relative href here resolves against the path that
+     was *asked for*, not against the site root: /Portfolio/a/b/c goes looking for
+     /Portfolio/a/b/css/style.css and gets nothing. One segment deep it happens to
+     work, which is why this was easy to miss — /Portfolio/typo resolves css/
+     correctly, so every shallow 404 looked fine.
+
+     Unstyled is survivable. Unstyled at some depths and not others is the kind of
+     bug a stranger finds for you, so the base is pinned once here and every
+     relative URL below — stylesheet, favicon, eggs.js, the sprite sheets the
+     stylesheet itself goes on to ask for, and both buttons — is fixed with it.
+
+     STATIC, not written by the script. A relative <link> in the raw HTML gets
+     fetched by the preload scanner before any script runs, against the document
+     URL — so inserting the base from JS left the correct request AND a wasted one
+     that Pages answers with the whole 404 page under the wrong Content-Type,
+     twice, with a console error each. A base element the scanner can see solves
+     that; there is nothing left to guess wrong.
+
+     The root is a literal because a static file cannot derive it: this repo is
+     BU1lDR/Portfolio, so Pages publishes at /Portfolio/. The script is the
+     apology for hardcoding it — a custom domain or a rename would serve the site
+     from / instead, and it corrects the base before the stylesheet is reached.
+     That costs one speculative 404 in the case where the guess was wrong, which
+     is the right way round: nothing wasted in the configuration we actually
+     ship, and never a page with no stylesheet at all. -->
+<base href="/Portfolio/">
+<script>
+  if (location.pathname.indexOf('/Portfolio/') !== 0) document.querySelector('base').href = '/';
+</script>
+
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700&family=Shippori+Mincho:wght@500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=6">
 <style>
   .nf {
     min-height: 100svh;
@@ -21,12 +54,109 @@
     padding: 2rem var(--gut);
     text-align: center;
   }
+
+  /* ── the 404, cut in two ─────────────────────────────────────
+     He is on the roof of the terminal on every other page of this site, so on
+     the one page that is nothing but an error he has already done something
+     about it. The number is in two pieces and he is standing over them.
+
+     THE ANGLE IS THE SAME 32deg as .term__cut--v in css/style.css §10b — same
+     blade, same stroke, and it is worth spelling out why it is expressed as
+     percentages here rather than as a rotation. The digits are about twice as
+     wide as they are tall, so a 32deg line cannot enter one edge and leave the
+     opposite one: 375px of width at 32deg would need 234px of drop against a box
+     177px tall. Run it the other way and the arithmetic works out — 177px of
+     height needs 177 x tan32 = 110px of run, which is 29% of the width — so the
+     line enters the TOP edge at 65% and leaves the BOTTOM at 36%, and the
+     percentages hold that ratio at every size the clamp produces.
+
+     Which also means the cut is vertical-ish and splits the number into an
+     upper-left piece and a lower-right one, rather than a top and a bottom. That
+     is what a kesa-giri does to something wider than it is tall. It is the same
+     cut, read across a different shape.
+
+     TWO COPIES, because one box cannot be clipped to both sides of a line — the
+     same constraint split() works around in js/samurai.js by photographing the
+     terminal card. Here the second copy is just written down: it is three
+     characters of static markup and there is nothing to clone at runtime. The
+     first is in flow and defines the size; the second is laid over it and is
+     aria-hidden, so this is one "404" to a screen reader and two on screen. */
   .nf__code {
+    position: relative;
+    display: inline-block;
     font: 700 clamp(5rem, 22vw, 13rem)/.85 var(--f-sans);
     letter-spacing: -.06em;
     -webkit-text-stroke: 2px var(--red);
     color: transparent;
   }
+  .nf__half { display: block; }
+  .nf__half--a {
+    clip-path: polygon(0 0, 65% 0, 36% 100%, 0 100%);
+    transform: translate(-7px, -5px);
+  }
+  .nf__half--b {
+    position: absolute;
+    inset: 0;
+    clip-path: polygon(65% 0, 100% 0, 100% 100%, 36% 100%);
+    transform: translate(7px, 5px);
+  }
+  /* The stroke itself. A 3px bar rotated to the same 32deg, pinned to the top of
+     the box at the x the polygons meet, and tall enough (150%) that it crosses
+     the whole thing whatever the clamp resolves to — exactly how .term__cut--v is
+     built, down to the gradient. */
+  .nf__code::after {
+    content: '';
+    position: absolute;
+    top: -6%;
+    left: 65%;
+    width: 3px;
+    height: 118%;
+    transform: rotate(32deg);
+    transform-origin: 50% 0;
+    background: linear-gradient(to bottom, transparent, var(--red) 12% 82%, transparent);
+    box-shadow: 0 0 16px 1px rgba(255, 59, 83, .45);
+  }
+
+  /* Him. ONE declaration, and it is not the one doing the work.
+
+     .sam is already `position: absolute; right: 8px; bottom: 100%` — see "HE IS A
+     CHILD OF .termwin" in css/style.css §10b — and `bottom: 100%` means "my
+     bottom edge is at my parent's top edge", whoever the parent happens to be. On
+     every other page that parent is the terminal window and the effect is that
+     his feet are on its roof, frame for frame, with no JS. Here the parent is the
+     number, so the same line stands him on top of the thing he has just cut, and
+     the h1 only had to become `position: relative` for it to happen.
+
+     So the whole rig arrives intact and unaware this page exists: the 256px box,
+     the 2x zoom, the porthole, the mirror, the drop shadows, the five-frame
+     breath, and both media queries that take him away under 860px wide or 600px
+     tall. There is no JS on this page driving him — the idle loop is CSS, and the
+     rule that would park it is scoped to a .termwin ancestor there is none of.
+
+     The nudge, and the trap in working it out: .sam__flip mirrors the sheet, so
+     his painted columns are NOT where the sheet says. Idle paints cell x27..82,
+     which after the mirror is cell 46..101, which at 2x is 92..202 device px in
+     from the left of his 256 box. Measured on the page at 1280 wide, that puts
+     his body at 293..403 across a 437px number while the cut crosses the top edge
+     at 284 — so his trailing edge lands 9px past the cut and he stands entirely
+     on the lower-right piece, the one he stepped onto, facing back at the line he
+     made. Which is the whole reason for -20px rather than .sam's own 8px. */
+  .nf__code .sam { right: -20px; }
+
+  /* Headroom, and the honest version of it. His painted pixels reach 186px above
+     his feet, i.e. 186px above the top of the number, and this layout centres a
+     ~440px stack in the viewport — so on anything under about 790px tall the
+     centring does not leave 186px and the top of his banner, then his head, go
+     off the top of the page.
+
+     Rather than shrink him (integer scale only — see §10b) or let him clip, he is
+     simply absent where he does not fit, which is the same call the shared
+     stylesheet already makes at 860px wide. Above the threshold the h1 takes 5rem
+     of margin to guarantee the clearance: at exactly 800px tall that leaves 232px
+     above the number against the 186px he needs. Below it, neither rule applies
+     and the page has no wasted space at the top. */
+  @media (max-height: 799px) { .nf__code .sam { display: none; } }
+  @media (min-height: 800px) and (min-width: 861px) { .nf__code { margin-top: 5rem; } }
   .nf__jp {
     font: 500 var(--t-lg)/1 var(--f-jp);
     letter-spacing: .3em;
@@ -54,7 +184,31 @@
 
 <main class="nf">
   <p class="nf__jp">見つかりません</p>
-  <h1 class="nf__code">404</h1>
+
+  <!-- Two "404"s and one heading. The second span is the other side of the cut,
+       so it is aria-hidden: on screen there are two pieces of a number, to a
+       screen reader there is one h1 that reads "404". -->
+  <h1 class="nf__code">
+    <span class="nf__half nf__half--a">404</span>
+    <span class="nf__half nf__half--b" aria-hidden="true">404</span>
+
+    <!-- The same six boxes as index.html, verbatim, minus the .sam__hit — there
+         is no terminal on this page for him to guard and nothing for a poke to
+         escalate into, so the hit area would be an invisible click-eater sat over
+         the number. He breathes and that is all he does here. -->
+    <div class="sam p-idle" aria-hidden="true">
+      <div class="sam__zoom">
+        <div class="sam__rig">
+          <div class="sam__stage">
+            <div class="sam__flip">
+              <div class="sam__cel"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </h1>
+
   <p class="nf__msg">That path doesn't resolve. Either it moved, or it never existed.</p>
   <p class="nf__term">$ cat <span style="color:var(--txt-3)">this-page</span><br>
      cat: this-page: No such file or directory</p>
@@ -63,5 +217,18 @@
     <a class="btn btn--ghost" href="./#work"><span>See the work</span><i>作品</i></a>
   </div>
 </main>
+
+<!-- Getting here is itself one of the things to find, so it counts. The whole
+     scoreboard for one call is not as wasteful as it looks: eggs.js is ~2KB, it
+     is already cached from the page they arrived from, and the alternative is
+     writing the localStorage key by hand in two places.
+
+     Inline rather than a file because it is one line and because it must run
+     after eggs.js, which is not deferred; guarded and wrapped because a 404 page
+     that throws is worse than a 404 page that miscounts. -->
+<script src="js/eggs.js?v=6"></script>
+<script>
+  try { if (window.Eggs) window.Eggs.found('notfound'); } catch (e) {}
+</script>
 </body>
 </html>
