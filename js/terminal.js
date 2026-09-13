@@ -752,7 +752,8 @@
     /* ── the ls typo ────────────────────────────────────────────
        On a real box `sl` gives you a steam locomotive, as punishment for
        mistyping `ls`. There is no locomotive here, but there is somebody who
-       runs, so he does — right across the window and off the far side. */
+       runs, so he does — right across the whole page and off the far side, on a
+       参道 that lays itself down ahead of his feet. */
 
     sl: {
       desc: '',
