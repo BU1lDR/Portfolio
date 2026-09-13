@@ -1,0 +1,27 @@
+# ──────────────────────────────────────────────────────────────
+#  /.well-known/security.txt          RFC 9116
+#
+#  This is a static portfolio on GitHub Pages. There is no backend, no
+#  database, no session, and no user data — so the honest answer to "what
+#  is the attack surface here" is: the contact form posts to Formspree,
+#  and everything else is bytes on a CDN.
+#
+#  It is here anyway, for two reasons. One, a security portfolio that
+#  does not publish a contact route for security reports is a security
+#  portfolio that has not read its own advice. Two, if you went looking
+#  for this file, you are exactly the kind of visitor I want to hear
+#  from, and you have earned a shortcut: run `unmask` in the terminal.
+#
+#  零と壱より生まれる
+# ──────────────────────────────────────────────────────────────
+
+Contact: mailto:aryanverma102007@gmail.com
+Expires: 2027-09-01T00:00:00.000Z
+Preferred-Languages: en, hi
+Canonical: https://bu1ldr.github.io/Portfolio/.well-known/security.txt
+Policy: https://bu1ldr.github.io/Portfolio/#contact
+
+# No bounty, no swag, no NDA. You get a reply, credit if you want it, and
+# a fix. Please do not run automated scanners against Pages on my behalf
+# — you would be testing GitHub's infrastructure, not mine, and their
+# disclosure programme is the right place for that.
