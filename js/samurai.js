@@ -59,10 +59,12 @@
   var narrow = matchMedia('(max-width: 860px)');
   var squat = matchMedia('(max-height: 599px)');
 
-  var POSES = ['p-idle', 'p-run', 'p-leap', 'p-fall', 'p-land', 'p-cut-min', 'p-cut-close'];
-  /* The run-in is the only move there is. He used to have a lunge per cut as
-     well; §10b's "why he no longer drops" is the whole story. */
-  var MOVES = ['is-runin'];
+  var POSES = ['p-idle', 'p-run', 'p-leap', 'p-fall', 'p-land',
+               'p-cut-min', 'p-cut-close', 'p-exit'];
+  /* Two moves: he comes in, and after the close he goes back out. He used to
+     have a lunge per cut as well; §10b's "why he no longer drops" is the whole
+     story, and its "and then he leaves" is the exit's. */
+  var MOVES = ['is-runin', 'is-exit'];
 
   var dead = false;            // sheets failed to load — never fire a cut
   var pend = null;             // the strike in flight, or null
@@ -99,9 +101,17 @@
     close: {
       pose: 'p-cut-close', vfx: 'is-cut-close',
       lead: 150,
-      /* No tail. The fold needs one because the window survives it and so does
-         he; here the window is leaving in two pieces and he holds the finished
-         cut all the way through. Nothing to land on. */
+      /* One step, and it is an exit rather than a landing. The fold's tail rides
+         him down to the peek bar because he has somewhere to stand afterwards;
+         here the window is leaving in two pieces and there is nothing under him
+         to land on, so he leaves too — off the right-hand edge of the screen, the
+         way the run-in brings him in. 200ms after contact: he holds the finished
+         kesa-giri through the frames it is worth seeing (the halves part on the
+         impulse at 114 and 198), then turns and goes. §10b's "and then he leaves"
+         has the geometry and, more importantly, the deadline — .termwin holds
+         opacity for 920ms after contact and he is a child of it, so 200 + the
+         exit's own 620 has to fit inside that, and does, with 100ms spare. */
+      tail: [[200, 'p-exit', 'is-exit']],
       /* 1140 rather than 700 because the halves now fall off the bottom of the
          screen instead of fading out over it, and 860ms of falling that starts at
          contact is not finished until 1010 — after which §10b holds the emptied
@@ -109,7 +119,10 @@
          clone and the clip-paths away, so anything earlier than that tears the
          wreckage out of mid-air. 70ms of slack past the snap. */
       done: 1140,
-      needs: ['attack_2'],
+      /* jump as well as attack_2 now, because the tail paints from it. Without it
+         a cold cache would step him through an empty porthole on the way out —
+         the exact hole this list exists to close. */
+      needs: ['attack_2', 'jump'],
       split: true,       // ...and the window comes apart along the blade
       act: function () { T.close(); }
     }
@@ -122,7 +135,8 @@
   var SHEET = {
     'p-idle': 'idle', 'p-run': 'run', 'p-leap': 'jump',
     'p-fall': 'jump', 'p-land': 'jump',
-    'p-cut-min': 'attack_3', 'p-cut-close': 'attack_2'
+    'p-cut-min': 'attack_3', 'p-cut-close': 'attack_2',
+    'p-exit': 'jump'
   };
   function drawable(list) {
     for (var i = 0; i < list.length; i++) if (have[list[i]] !== true) return false;
@@ -436,13 +450,21 @@
        stopped, planted. */
     at(run, function () { pose(c.pose); move(null); });
     at(run + c.lead, commit);
-    /* The tail, if the cut has one. Each step is [ms after contact, pose]. The
-       IIFE is not decoration: this file is `var`-scoped, so without one every
+    /* The tail, if the cut has one. Each step is [ms after contact, pose] and
+       optionally a third element, a move — the close's exit needs one because
+       leaving is both a new sheet and a new trajectory, where the fold's two
+       steps only change frames. A step with no move leaves the current one
+       alone, which is what the fold wants: move(null) already ran above.
+
+       The IIFE is not decoration: this file is `var`-scoped, so without one every
        timer would close over the same loop variable and they would all fire the
        last pose in the list. */
     for (var i = 0; c.tail && i < c.tail.length; i++) {
       (function (step) {
-        at(run + c.lead + step[0], function () { pose(step[1]); });
+        at(run + c.lead + step[0], function () {
+          pose(step[1]);
+          if (step[2]) move(step[2]);
+        });
       }(c.tail[i]));
     }
     at(run + c.done, finish);
