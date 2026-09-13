@@ -325,6 +325,7 @@
             out('cat: resume.pdf: binary file', 'tl-err');
             return out('Try <span class="tl-key">resume</span> to download it.', 'tl-dim');
           case '.secret':
+            egg('secret');
             out('<span class="tl-jp">影の中で構築する。</span>', 'tl-red');
             out('"Build in the shadows." Nothing here but a nice sentence.', 'tl-dim');
             return;
@@ -389,6 +390,7 @@
       desc: 'it had to be here',
       run: function () {
         if (!window.MatrixFX) return out('matrix: renderer unavailable', 'tl-err');
+        egg('matrix');
         var on = window.MatrixFX.toggle();
         out(on ? 'Wake up… <span class="tl-dim">(run <span class="tl-key">matrix</span> again, or press Esc)</span>'
                : 'Back to reality.');
@@ -480,14 +482,92 @@
     },
     minimize: { desc: 'alias for minimise', hidden: true, run: function () { CMDS.minimise.run(); } },
 
+    /* ── the scoreboard ─────────────────────────────────────────
+       Deliberately NOT hidden. Every other egg on this site is invisible until
+       you trip over it, which for ten of them meant they were found once, by
+       accident, by one person. One visible line in `help` is what turns them
+       into something a visitor knows to look for — so this command is the egg
+       that makes the rest of them worth having. */
+
+    eggs: {
+      desc: 'how many you have found',
+      run: function (args) {
+        if (!window.Eggs) return out('eggs: no scoreboard loaded.', 'tl-err');
+        var all = window.Eggs.list();
+        var n = window.Eggs.count(), t = window.Eggs.total();
+        var r = window.Eggs.rank();
+        var spoil = /^(all|-a|--all|spoil|list)$/i.test(args[0] || '');
+
+        out('<span class="tl-jp">卵</span> <b>' + n + ' / ' + t + '</b> found' +
+            '  <span class="tl-dim">·  ' + r.jp + ' <i>' + r.en + '</i></span>', 'tl-hi');
+        /* A 24-cell bar, so progress is legible without counting the list. */
+        var fill = t ? Math.round(n / t * 24) : 0;
+        out('<span class="tl-red">' + '█'.repeat(fill) + '</span>' +
+            '<span class="tl-dim">' + '░'.repeat(24 - fill) + '</span>', 'tl-out');
+        gap();
+
+        var groups = [['shell', 'in this shell'], ['page', 'on the page'],
+                      ['samurai', 'the guard'], ['elsewhere', 'elsewhere']];
+        groups.forEach(function (g) {
+          var mine = all.filter(function (e) { return e.where === g[0]; });
+          var mineGot = mine.filter(function (e) { return e.got; }).length;
+          if (!mine.length) return;
+          out('<span class="tl-key">' + pad(g[1], 15) + '</span>' +
+              '<span class="tl-dim">' + mineGot + '/' + mine.length + '</span>');
+          mine.forEach(function (e) {
+            /* The `how` is printed for an egg you have already found — it is not
+               a spoiler once you have seen it, and it is the only record of what
+               you did. For one you have not, the row is a blank you can count
+               but not read. */
+            if (e.got) {
+              out('  <span class="tl-red">✓</span> ' + pad(esc(e.name), 22) +
+                  '<span class="tl-dim">' + esc(e.how) + '</span>');
+            } else if (spoil) {
+              out('  <span class="tl-dim">·</span> ' + pad(esc(e.name), 22) +
+                  '<span class="tl-dim">' + esc(e.how) + '</span>', 'tl-dim');
+            } else {
+              out('  <span class="tl-dim">·  ????</span>', 'tl-dim');
+            }
+          });
+          gap();
+        });
+
+        if (n === t) {
+          out('That is all of them. <span class="tl-jp">見事</span> — nicely done.', 'tl-hi');
+        } else if (!spoil) {
+          out('<span class="tl-dim">' + (t - n) + ' left. <span class="tl-key">eggs all</span> ' +
+              'if you would rather just be told.</span>', 'tl-dim');
+        }
+      }
+    },
+
     /* ── easter eggs ───────────────────────────────────────── */
 
     sudo: {
       desc: 'nice try',
       hidden: true,
       run: function () {
-        out(esc(prof.handle || 'aryan') + ' is not in the sudoers file.', 'tl-err');
-        out('This incident has been reported. <span class="tl-dim">(it has not)</span>', 'tl-dim');
+        /* Three strikes, and the third is not a joke about permissions. The
+           counter is per-session on purpose: it resets on reload, so the
+           escalation is something you do in one sitting rather than something
+           that silently arms itself weeks later. */
+        sudos++;
+        egg('sudo');
+        if (sudos < 3) {
+          out(esc(prof.handle || 'aryan') + ' is not in the sudoers file.', 'tl-err');
+          out('This incident has been reported. <span class="tl-dim">(it has not)</span>', 'tl-dim');
+          if (sudos === 2) out('<span class="tl-dim">Asking again will not change the file.</span>', 'tl-dim');
+          return;
+        }
+        sudos = 0;
+        out('This incident <b>has</b> been reported.', 'tl-err');
+        /* Handed to the guard rather than closed here, so it is the same 150ms
+           contact frame and the same kesa-giri as ✕ — see `exit` above. If he
+           cannot perform, the joke still lands and the window still goes. */
+        if (window.Samurai && window.Samurai.strike('close', 620)) { egg('patience'); return; }
+        out('<span class="tl-dim">…he is off duty. Consider yourself lucky.</span>', 'tl-dim');
+        egg('patience');
+        if (window.TermWindow) setTimeout(function () { window.TermWindow.close(); }, 620);
       }
     },
 
@@ -495,6 +575,7 @@
       desc: 'purely cosmetic',
       hidden: true,
       run: function () {
+        egg('hack');
         seq([
           ['<span class="tl-key">[*]</span> initialising…'],
           ['<span class="tl-key">[*]</span> reticulating splines…'],
@@ -512,27 +593,282 @@
     vim: {
       desc: 'you know how this goes',
       hidden: true,
-      run: function () { out('vim: opened. You are now trapped. <span class="tl-dim">:q! … :q!! … please</span>'); }
+      run: function () {
+        egg('vim');
+        out('vim: opened. You are now trapped. <span class="tl-dim">:q! … :q!! … please</span>');
+      }
     },
 
     coffee: {
       desc: '',
       hidden: true,
-      run: function () { out('☕ brewing… <span class="tl-jp">コーヒー</span> — HTTP 418, I am a teapot.'); }
+      run: function () {
+        egg('coffee');
+        out('☕ brewing… <span class="tl-jp">コーヒー</span> — HTTP 418, I am a teapot.');
+      }
     },
 
     '42': {
       desc: '',
       hidden: true,
-      run: function () { out('The Answer. Still looking for the Question.'); }
+      run: function () { egg('42'); out('The Answer. Still looking for the Question.'); }
+    },
+
+    /* ── the toolkit answers to its own names ───────────────────
+       Section 03 参 lists nine security tools. Typing one of them here is the
+       one egg on this site that cannot be found by guessing: you have to have
+       actually read the skills list. That makes it the best-aimed thing in the
+       file — it rewards attention rather than trivia, and the visitor it rewards
+       is the one who was reading carefully enough to matter.
+
+       All of the output is fabricated and says so. A portfolio that prints a
+       plausible-looking real scan of anything is a portfolio making a claim it
+       cannot support. */
+
+    nmap: {
+      desc: '',
+      hidden: true,
+      run: function (args) {
+        egg('recon');
+        var target = (args.join(' ') || 'localhost').replace(/^-\S+\s*/, '') || 'localhost';
+        seq([
+          ['Starting Nmap 7.95 ( <span class="tl-dim">https://nmap.org</span> ) against ' +
+           '<span class="tl-key">' + esc(target) + '</span>'],
+          ['Nmap scan report for ' + esc(target) + ' (127.0.0.1)'],
+          ['Host is up (0.000091s latency).'],
+          null,
+          ['<span class="tl-key">PORT     STATE     SERVICE</span>'],
+          ['80/tcp   open      http      <span class="tl-dim">this, but plaintext</span>'],
+          ['443/tcp  open      https     <span class="tl-dim">this</span>'],
+          ['22/tcp   filtered  ssh       <span class="tl-red">no shell for you</span>'],
+          ['3306/tcp closed    mysql     <span class="tl-dim">there is no database</span>'],
+          ['1337/tcp open      ' + esc(prof.handle || 'aryan') +
+           '     <span class="tl-dim">you are already talking to it</span>'],
+          null,
+          ['Nmap done: 1 host up, 1 honest port, scanned in 0.04s'],
+          ['<span class="tl-dim">All of the above is made up. It is a static page on a CDN.</span>', 'tl-dim']
+        ], 190);
+      }
+    },
+
+    sqlmap: {
+      desc: '',
+      hidden: true,
+      run: function () {
+        egg('recon');
+        seq([
+          ['[<span class="tl-key">INFO</span>] testing connection to the target URL'],
+          ['[<span class="tl-key">INFO</span>] testing if the target is protected by a WAF'],
+          ['[<span class="tl-red">WARN</span>] no parameter found to test'],
+          ['[<span class="tl-red">WARN</span>] no form found to test'],
+          ['[<span class="tl-red">WARN</span>] no database found to be injected into'],
+          null,
+          ['There is nothing to inject. Every byte here is static.', 'tl-hi'],
+          ['<span class="tl-dim">Which is the boring answer, and also the correct defence.</span>', 'tl-dim']
+        ], 260);
+      }
+    },
+
+    burp: {
+      desc: '',
+      hidden: true,
+      run: function () {
+        egg('recon');
+        out('Proxy listening on 127.0.0.1:8080. <span class="tl-dim">Intercept is on.</span>');
+        out('You will find: one GET for the page, one for the CSS, five sprite sheets,');
+        out('and a POST to Formspree if you use the contact form. That is the whole');
+        out('conversation. <span class="tl-dim">Repeater will be very quiet.</span>');
+      }
+    },
+
+    hydra: {
+      desc: '',
+      hidden: true,
+      run: function () {
+        egg('recon');
+        out('Hydra v9.5 starting…');
+        out('[<span class="tl-red">ERROR</span>] no login form on target', 'tl-err');
+        out('There is no account to brute-force. <span class="tl-dim">There is no account.</span>', 'tl-dim');
+      }
+    },
+
+    wireshark: {
+      desc: '',
+      hidden: true,
+      run: function () {
+        egg('recon');
+        out('Capturing on <span class="tl-key">any</span> …');
+        out('<span class="tl-dim">All of it is TLS 1.3 to github.io. You are welcome to look;</span>');
+        out('<span class="tl-dim">you will see the size of my stylesheet and nothing else.</span>');
+      }
+    },
+
+    shodan: {
+      desc: '',
+      hidden: true,
+      run: function () {
+        egg('recon');
+        out('<span class="tl-key">bu1ldr.github.io</span>');
+        out(kv('org', 'GitHub, Inc.'));
+        out(kv('ports', '80, 443'));
+        out(kv('vulns', '<span class="tl-dim">none of mine to claim — it is their infrastructure</span>'));
+        out(kv('tags', 'cdn, static, <span class="tl-red">no attack surface</span>'));
+      }
+    },
+
+    metasploit: {
+      desc: '',
+      hidden: true,
+      run: function () {
+        egg('recon');
+        seq([
+          ['<span class="tl-red">msf6</span> > use exploit/multi/http/portfolio'],
+          ['[<span class="tl-red">-</span>] No exploit named that. There is no exploit named that.'],
+          null,
+          ['A static site has no interpreter to reach. The payload has nowhere', 'tl-hi'],
+          ['to land. <span class="tl-dim">This is not me being clever — it is just what HTML is.</span>']
+        ], 300);
+      }
+    },
+    msfconsole: { desc: '', hidden: true, run: function () { CMDS.metasploit.run([]); } },
+
+    /* ── proverbs ───────────────────────────────────────────────
+       Filler, and it knows it. It is here because `fortune` is the first thing a
+       certain kind of visitor types into any prompt that looks like a shell, and
+       "command not found" is a worse answer than a proverb. */
+
+    fortune: {
+      desc: '',
+      hidden: true,
+      run: function () {
+        egg('fortune');
+        var f = FORTUNES[Math.floor(Math.random() * FORTUNES.length)];
+        out('<span class="tl-jp tl-red">' + f[0] + '</span>');
+        out('<span class="tl-dim">' + esc(f[1]) + '</span>');
+        out(esc(f[2]));
+      }
+    },
+
+    /* ── the ls typo ────────────────────────────────────────────
+       On a real box `sl` gives you a steam locomotive, as punishment for
+       mistyping `ls`. There is no locomotive here, but there is somebody who
+       runs, so he does — right across the window and off the far side. */
+
+    sl: {
+      desc: '',
+      hidden: true,
+      run: function () {
+        egg('sl');
+        if (window.Samurai && window.Samurai.cross()) {
+          out('<span class="tl-dim">You meant <span class="tl-key">ls</span>. ' +
+              'Something went past instead.</span>');
+          return;
+        }
+        /* He is off duty — reduced motion, a small screen, a closed window, a
+           cold cache. The joke degrades to the joke. */
+        out('<span class="tl-dim">You meant <span class="tl-key">ls</span>.</span>');
+        out('&nbsp;&nbsp;&nbsp;<span class="tl-red">≡≡≡</span>&gt; <span class="tl-dim">(no locomotive available)</span>');
+      }
+    },
+
+    /* ── the whole page ─────────────────────────────────────────
+       The one egg that leaves the terminal. He steps off the window, crosses the
+       viewport, and every section heading he passes comes apart along his blade
+       and knits back together. See §10c and Samurai.spar(). */
+
+    spar: {
+      desc: '',
+      hidden: true,
+      run: function () {
+        egg('spar');
+        if (window.Samurai && window.Samurai.spar()) {
+          out('<span class="tl-jp">お相手いたす</span> — <span class="tl-dim">watch the headings.</span>');
+          return;
+        }
+        out('He is not going to do that right now.', 'tl-dim');
+        out('<span class="tl-dim">Needs an open window, a screen wider than 860px, and motion allowed.</span>', 'tl-dim');
+      }
+    },
+
+    /* ── the name that is only in the source ────────────────────
+       Not in `help`, not in tab completion's useful range, and not guessable:
+       the only place the string "unmask" appears to a visitor is the comment at
+       the top of index.html and the console banner. Anyone running it opened the
+       source of a security portfolio, which is the exact behaviour worth
+       rewarding, so this is the one egg that answers with something real. */
+
+    unmask: {
+      desc: '',
+      hidden: true,
+      run: function () {
+        var fresh = egg('unmask');
+        seq([
+          ['<span class="tl-jp tl-red">面を取る</span>'],
+          ['You read the source. <span class="tl-dim">Almost nobody does.</span>', 'tl-hi'],
+          null,
+          ['So, plainly, with the aesthetic switched off for a moment:'],
+          null,
+          ['I am a first-year B.Tech IT student at ADGIPS, GGSIPU — CGPA 9.04 —'],
+          ['and I want a cybersecurity internship. Not a rotation into one: the'],
+          ['actual thing. Blue team, red team, detection, tooling, I am not fussy'],
+          ['about which, and I would rather be the least experienced person in a'],
+          ['competent room than the most in a slow one.'],
+          null,
+          ['What is actually mine on this page: every line of the HTML, CSS and'],
+          ['JS, no framework and no build step. The samurai is CraftPix art and is'],
+          ['credited. Everything else I typed.'],
+          null,
+          [kv('email', link('mailto:' + (prof.email || ''), prof.email || ''))],
+          [kv('github', link('https://github.com/BU1lDR', 'github.com/BU1lDR'))],
+          [kv('resume', '<span class="tl-key">resume</span> downloads it')],
+          null,
+          ['There is a <span class="tl-key">/.well-known/security.txt</span> too, if you have not been there yet.', 'tl-dim'],
+          [fresh ? 'And that was an easter egg. Try <span class="tl-key">eggs</span>.'
+                 : 'Try <span class="tl-key">eggs</span> for the rest of them.', 'tl-dim']
+        ], 150);
+      }
     }
   };
+
+  /* ── proverbs, with the literal reading and then the point ────
+     Three lines each: the Japanese, a gloss, and what it is doing here. The
+     third line is the only one I wrote. */
+  var FORTUNES = [
+    ['七転び八起き', 'nana korobi ya oki — fall seven times, get up eight',
+     'The standard one. It is standard because it is true.'],
+    ['井の中の蛙大海を知らず', 'a frog in a well does not know the ocean',
+     'Why I would rather be the least experienced person in a good room.'],
+    ['急がば回れ', 'if you are in a hurry, go around',
+     'The shortest path through a problem is usually not the first one you see.'],
+    ['塵も積もれば山となる', 'even dust, piled up, becomes a mountain',
+     'This site is one commit at a time. So is everything else.'],
+    ['聞くは一時の恥、聞かぬは一生の恥',
+     'asking is a moment of shame; not asking is a lifetime of it',
+     'The single most useful thing anybody told me about working with engineers.'],
+    ['能ある鷹は爪を隠す', 'the able hawk hides its talons',
+     'Stated without comment, on a page with a samurai on it.'],
+    ['石の上にも三年', 'three years, even on a rock',
+     'Persistence beats intensity. Learned this from CTFs.'],
+    ['負けるが勝ち', 'to lose is to win',
+     'Every box that beat me taught me more than the ones that did not.']
+  ];
+
+  /* Per-session, and reset by a successful escalation. See `sudo`. */
+  var sudos = 0;
+
+  /* Report an egg without every call site having to check that the scoreboard
+     loaded. Returns true the first time, which two commands use to say
+     something extra. */
+  function egg(id) {
+    return !!(window.Eggs && window.Eggs.found(id));
+  }
 
   /* Commands typed as multi-word phrases, matched before tokenising. */
   var PHRASES = [
     {
       test: /^rm\s+-rf\s+\/?\s*$/i,
       run: function () {
+        egg('rmrf');
         out('rm: refusing to remove \'/\': Permission denied', 'tl-err');
         out('Also: this is my portfolio. <span class="tl-dim">Be nice.</span>', 'tl-dim');
       }
@@ -614,10 +950,23 @@
     timers.push(setTimeout(function () { runWhenIdle(raw); }, 120));
   }
 
+  /* Commands the shell will run but will never NAME. `unmask` is only worth
+     anything if the string is genuinely findable in one place — the comment at
+     the top of index.html — and two perfectly innocent features were leaking
+     it: Tab on "un" completed it, and the typo suggester offers anything within
+     two edits, which includes `mask` and `unmark`. Both now skip this list.
+
+     Kept to commands whose secrecy is the point. The other eggs are hidden from
+     `help` but findable by poking around, which is what they are for. */
+  var SECRET = { unmask: true };
+
+  function suggestable(c) { return !SECRET[c]; }
+
   /** Cheap edit-distance so typos get a suggestion. */
   function nearest(word) {
     var best = null, bestD = 3;
     Object.keys(CMDS).forEach(function (c) {
+      if (!suggestable(c)) return;
       var d = dist(word, c);
       if (d < bestD) { bestD = d; best = c; }
     });
@@ -678,7 +1027,9 @@
       ev.preventDefault();
       var frag = input.value.trim().toLowerCase();
       if (!frag || /\s/.test(frag)) return;
-      var hits = Object.keys(CMDS).filter(function (c) { return c.indexOf(frag) === 0; });
+      var hits = Object.keys(CMDS).filter(function (c) {
+        return c.indexOf(frag) === 0 && suggestable(c);
+      });
       if (hits.length === 1) {
         input.value = hits[0] + ' ';
         moveCaretEnd();
@@ -797,6 +1148,28 @@
     focus: function () { input.focus(); },
     welcome: kick,
     isBusy: function () { return busy; },
-    run: runWhenIdle
+    run: runWhenIdle,
+    /* Print into the shell without pretending someone typed a command — no
+       prompt echo, no history entry. main.js uses it for the bot trap, which
+       reports here because the shell is the only place on the page with a voice.
+       Queued behind a running sequence for the same reason runWhenIdle is. */
+    say: function (html, cls) {
+      if (busy) { timers.push(setTimeout(function () { window.Terminal.say(html, cls); }, 120)); return; }
+      out(html, cls);
+      scrollDown();
+    },
+    /* Put a command at the prompt without running it. The long-press egg uses
+       this, and the distinction from run() is the whole point of having both: a
+       command that executes itself is the site showing off, and a command sitting
+       at the prompt waiting for Enter is a suggestion. You still press the key.
+
+       The caret has to be moved explicitly. Setting .value programmatically
+       leaves it at position 0 in some engines, and a hint you have to press End
+       before using is worse than no hint. */
+    prefill: function (text) {
+      input.value = String(text == null ? '' : text);
+      input.focus();
+      try { input.setSelectionRange(input.value.length, input.value.length); } catch (e) {}
+    }
   };
 })();
