@@ -127,7 +127,7 @@ window.PORTFOLIO = {
     },
     {
       when: '2026',
-      what: 'Backend — API & Integration',
+      what: 'Backend — Lead',
       where: 'Smart India Hackathon — अर्थNiti',
       note: 'Problem statement: AI-driven hyper-local business advisory and ' +
             'financial structuring assistant for rural micro-entrepreneurs.'
