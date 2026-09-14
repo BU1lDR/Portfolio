@@ -1771,12 +1771,6 @@ body:not(.term-stowed) .termlaunch.is-shown {
      to close the same gap by moving HIM, and this closes it by aiming the beam,
      which is the half that does not put a man through a window. */
   --sam-cut-x: 266px;
-  /* How far off to the right he starts a run-in. Deliberately more than the
-     corner offset, so he enters from off-screen rather than fading in. In cell
-     px like everything below, so the scale doubles it — which is right, because
-     his stride doubles too and the apparent speed is unchanged. */
-  --sam-run-x: 120px;
-  --sam-run-dur: 440ms;
 }
 
 /* The anchor. Never transformed — every animation lives on a descendant, so
@@ -1798,6 +1792,44 @@ body:not(.term-stowed) .termlaunch.is-shown {
    fractional, which is also why this is a flat 2× rather than something that
    adapts: a scale that changes mid-session pops, and 1.5× shimmers. */
 .sam {
+  /* ── his ground speed, and it lives HERE for a reason ──────────
+     These two used to sit on .termwin, back when the only sprite on the page was
+     a child of it. They are read by `.sam.p-run .sam__cel` and by
+     `.sam.is-runin .sam__rig`, with no fallback — and `sl` and `spar` both build a
+     throwaway sprite in a fixed overlay at body level now, outside .termwin
+     entirely. So --sam-run-dur did not resolve on those, which made
+     `animation: sam-run var(--sam-run-dur) steps(8) infinite` INVALID AT
+     COMPUTED-VALUE TIME, which resets the whole shorthand, which means
+     animation-name: none. The run cycle simply did not play: both crossings were
+     one frozen frame of run.png being slid across the page. Which is exactly what
+     it looked like, and no amount of tuning the translate was ever going to fix
+     it.
+
+     On .sam they cannot go missing again. Every sprite that exists has this class
+     — the real one, .sam--road, .sam--free — wherever it happens to live, and
+     strike()'s inline override still wins over a class rule for the real one.
+
+     AND THE NUMBERS ARE MEASURED, not chosen. run.png is eight frames and the
+     foot that is on the ground drifts backwards 9.5 cell px per frame across it
+     (contact patch by contact patch — .preview-tools/run-stride.js). That drift IS
+     the ground speed: carry him at exactly 9.5 cell px per frame and the planted
+     foot stays still on the ground, which is what running looks like. Slower and
+     it slides forward under him, which is a moonwalk; faster and it slides
+     backwards. Both read as gliding.
+
+     Eight frames at 9.5 is 76 cell px per 440ms cycle. It used to be 120, 58% too
+     fast, on the reasoning that the 2x scale doubles his stride so the apparent
+     speed is unchanged — true of the stride, false of the skate, because the drift
+     and the translate are both in cell px inside the zoom and so have to match
+     each other there. js/samurai.js derives its SPEED from these same two
+     numbers, so there is one ground speed on this page and not three.
+
+     76 still starts him clear of the card: his painted right edge is 31 cell px
+     inside his own box's right, so he begins 45 cell px past the corner and
+     enters rather than fades in. */
+  --sam-run-x: 76px;
+  --sam-run-dur: 440ms;
+
   position: absolute;
   right: 8px;
   bottom: 100%;
