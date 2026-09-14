@@ -81,13 +81,18 @@
      which looks exactly like a broken button. Bump the number EVERYWHERE it
      appears whenever you change css/ or js/, and do not count them by hand:
 
-         grep -c '?v=' index.html 404.html      # 7 and 2 at the time of writing
-         sed -i 's/?v=10"/?v=11"/g' index.html 404.html
+         grep -n '?v=' index.html 404.html      # 7 real refs here, 2 in 404.html
+         sed -i 's/?v=N"/?v=M"/g' index.html 404.html    # N = current, M = N + 1
+
+     N and M rather than the actual numbers, because this line used to carry them
+     literally — which meant the example matched ITSELF. grep -c counted 8 and not
+     7, and running the sed rewrote the search half of its own pattern into the
+     replacement, leaving `s/?v=11"/?v=11"/g` behind for whoever came next.
 
      404.html loads the same stylesheet and its own subset of the scripts, so
      leaving it behind gives you a shell on the 404 page running against last
      week's CSS. -->
-<link rel="stylesheet" href="css/style.css?v=10">
+<link rel="stylesheet" href="css/style.css?v=11">
 
 <!-- The boot overlay shows this ~0.7s in, so it must not be discovered
      late by the parser. 15 KB — it is on the critical path by design. -->
@@ -1023,15 +1028,15 @@
      not even data.js — so first is a position it can actually hold. Deleting
      this one line turns the scoreboard off and leaves all two dozen eggs
      working: every call site is guarded. -->
-<script src="js/eggs.js?v=10"></script>
-<script src="js/data.js?v=10"></script>
-<script src="js/scene.js?v=10" defer></script>
-<script src="js/terminal.js?v=10" defer></script>
-<script src="js/main.js?v=10" defer></script>
+<script src="js/eggs.js?v=11"></script>
+<script src="js/data.js?v=11"></script>
+<script src="js/scene.js?v=11" defer></script>
+<script src="js/terminal.js?v=11" defer></script>
+<script src="js/main.js?v=11" defer></script>
 <!-- After main.js, not before: samurai.js checks for window.TermWindow and
      stands down if it is missing, which is only a meaningful test once module 09
      has defined it. Deleting this one line is the samurai's kill switch — he
      stays on the roof, breathing, from CSS alone. -->
-<script src="js/samurai.js?v=10" defer></script>
+<script src="js/samurai.js?v=11" defer></script>
 </body>
 </html>
