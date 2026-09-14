@@ -172,7 +172,13 @@ ul, ol { list-style: none; }
 }
 :focus:not(:focus-visible) { outline: none; }
 
-::selection { background: var(--red); color: #fff; }
+/* What the blade leaves behind. Both spellings, for the same reason §10a's
+   .ghost gives for its pair — and because that pair was the only one in the
+   sheet, so the one selection rule that matters on every paragraph of the page
+   was the one Firefox <62 did not get. They cannot share a selector list: an
+   unknown pseudo-element invalidates the entire rule it appears in. */
+::selection      { background: var(--red); color: #fff; }
+::-moz-selection { background: var(--red); color: #fff; }
 
 /* scrollbar */
 * { scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
@@ -545,7 +551,11 @@ body.cursor-label .cursor-ring {
 body.cursor-label .cursor-ring__label { opacity: 1; }
 body.cursor-label .cursor { opacity: 0; }
 
-/* over text input */
+/* over a text INPUT — a caret, in the terminal's green, matching the real
+   caret-color the shell and the contact fields already set. This is the state
+   for a field you can type into; selectable prose gets the blade below, and the
+   two are deliberately different objects because they afford different things:
+   one puts characters where you click, the other takes them away. */
 body.cursor-text .cursor-ring {
   width: 2px; height: 26px;
   margin: -13px 0 0 -1px;
@@ -555,20 +565,142 @@ body.cursor-text .cursor-ring {
 }
 body.cursor-text .cursor { opacity: 0; }
 
-body.cursor-down .cursor-ring { transform: scale(.82); }
+/* ── over selectable prose: the blade ──────────────────────────
+   A vertical katana, tip up, centred on the pointer exactly where an I-beam's
+   hot point is — so it still reads as "text goes here" first and as 打刀 second.
+   Three parts in 30px, and the count is why none of it is rotated: a tilted
+   30px object stops reading as a cursor and starts reading as a small picture
+   following the mouse. The theme is in the silhouette and the colour, not in a
+   jaunty angle.
+
+     y  0..24   blade (::before) — steel fading to vermilion, chisel tip
+     y 24..26   tsuba (::after)  — the guard, the only part wider than the box
+     y 26..34   tsuka (this element's own background) — wrapped hilt, bottom-anchored
+
+   Blade three times the hilt, and that ratio is the whole silhouette. The first
+   pass was 19 over 9 — barely two to one — and it read as a gladius: a stubby
+   thing with a big red crossguard in the middle. Worse, the blade's gradient
+   went red at 46%, so the steel visually ended halfway up and the eye put the
+   guard higher than it was. Filmed at 4x in .preview-tools/cursor-shot.js,
+   which is the only way to judge a 4px-wide object. The steel now holds to
+   about 72% and only warms at the very base, near the guard, where a warm
+   reflection is what you would actually see.
+
+   The guard is the reason the blade is a pseudo-element rather than this box:
+   it has to overhang, and a 12px-wide box would put the blade's own 4px in the
+   middle of 12px of empty hit area for no reason.
+
+   NOT box-shadow for the glow. clip-path clips an element's shadow along with
+   its content, so a box-shadow here would be cut off exactly at the silhouette
+   and disappear. filter: drop-shadow() reads the CLIPPED alpha and traces the
+   blade, which is the whole point of the tip. */
+body.cursor-sel .cursor-ring {
+  width: 4px; height: 34px;
+  margin: -17px 0 0 -2px;
+  border: 0;
+  border-radius: 0;
+  /* Positioned + sized rather than a colour stop, so the repeat that makes the
+     柄巻 wrap can stay a plain 4px repeating gradient and still be confined to
+     the bottom 8px.
+
+     `0 100%` — BOTTOM-ANCHORED, and it has to be. This was `0 26px`, measured
+     down from the top, which is the same 8px strip only while the box is 34px
+     tall. On press it grows to 42 and ::before's `bottom: 10px` grows with it, so
+     the blade extended straight over a hilt that had stayed at 26..34 and ate all
+     but the 2px hidden behind the guard: press to draw the sword and the handle
+     vanished. Every other part of this is anchored to the bottom edge already,
+     which is exactly why the odd one out was the one that broke. */
+  background: repeating-linear-gradient(180deg, #8a2130 0 2px, #57121c 2px 4px)
+              0 100% / 100% 8px no-repeat;
+}
+body.cursor-sel .cursor-ring::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 10px 0;
+  background: linear-gradient(180deg, #fff 0 8%,
+                rgba(238, 241, 248, .96) 38%,
+                rgba(214, 221, 236, .82) 74%,
+                rgba(255, 59, 83, .62));
+  clip-path: polygon(50% 0, 100% 15%, 100% 100%, 0 100%, 0 15%);
+  filter: drop-shadow(0 0 5px rgba(255, 59, 83, .55));
+  transition: filter .16s var(--ease);
+}
+/* A gradient and not `background: var(--red)`, which at 10x4px was the loudest
+   thing in the whole cursor — a flat saturated bar reads as a plus sign, and the
+   eye went to the crossing rather than to the tip that marks the caret. Lit top
+   edge into a dark base is the same trick as the blade: two stops make it a
+   fitting rather than a mark. */
+body.cursor-sel .cursor-ring::after {
+  content: '';
+  position: absolute;
+  left: -3px; right: -3px; bottom: 8px;
+  height: 2px;
+  background: linear-gradient(180deg, #ff6478, #b4192c);
+}
+body.cursor-sel .cursor { opacity: 0; }
+
+/* Press, while over prose: the draw. The box grows 8px and the margin absorbs
+   all of it (-17 → -25, so bottom stays 17px under the pointer), which means
+   the hilt holds still and the extra length goes into the blade — ::before is
+   pinned 10px off the bottom, so it lengthens on its own. Width, height and
+   margin are already in the transition list above, so the draw is animated and
+   the return is too. */
+body.cursor-sel.cursor-down .cursor-ring { height: 42px; margin-top: -25px; }
+/* .68 and not the .95 this started at. drop-shadow traces the blade's alpha, so
+   a hard flare on a 27px blade spills straight over the guard and the hilt 8px
+   below it and drowns both — the drawn sword lost its handle. Filmed at 4x. */
+body.cursor-sel.cursor-down .cursor-ring::before {
+  filter: drop-shadow(0 0 8px rgba(255, 59, 83, .68)) brightness(1.18);
+}
+
+/* The press scale for every OTHER state lives in js/main.js, composed into the
+   same transform the follow loop writes. It used to be a rule here —
+   `body.cursor-down .cursor-ring { transform: scale(.82) }` — and it had never
+   once fired: the loop sets .cursor-ring's transform as an INLINE style on
+   every frame, and an inline declaration beats any stylesheet rule short of
+   !important. Which could not be used either, because it would beat the
+   tracking as well and pin the ring to the top-left corner. So the value moved
+   to the only place that can hold both at once. */
 
 /* Hide the whole custom-cursor rig on touch / no-hover devices,
    and give the real cursor back. */
 @media (hover: none), (pointer: coarse) {
   .cursor, .cursor-ring { display: none; }
 }
+
+/* EVERYTHING, and the !important is not laziness — it is the fix.
+   This used to enumerate: body.cursor-ready plus a, button, input, textarea and
+   [data-tilt], because §02's `button { cursor: pointer }` outranks a bare
+   `body.cursor-ready`. But `cursor` is an INHERITED property, and a rule that
+   matches an element directly always wins over a value that element inherited,
+   no matter how weak the selector. So every `cursor: pointer` written anywhere
+   else in this sheet punched a hole in the rig and put the OS hand on top of
+   the dot and the ring — .sec__num i, .sam__hit, and .term__bar with its dots
+   and peek label once the window is folded. Ten elements, and no screenshot can
+   ever catch one, because the OS cursor is not part of the page's raster.
+   Measured in .preview-tools/cursor-leaks.js, which now fails if any element
+   reports a cursor other than `none` while the rig is armed.
+
+   Specificity cannot express "later than everything, including rules I have not
+   written yet", and a longer list would just be the same bug with more entries.
+   The declaration IS an override of the whole sheet, so it says so. It is safe
+   because both gates are still on: the coarse-pointer query above never reaches
+   this block, and .cursor-ready is only added once a real mouse has moved, so a
+   keyboard-only or touch visitor never loses a cursor they were using.
+
+   The elements that lost a MEANINGFUL pointer did not lose the hint — §06's
+   HOVER list picked up .sec__num i, .sam__hit and the folded bar in the same
+   change, so they get the red ring instead, which says "target" louder than the
+   OS hand ever did. */
 @media (hover: hover) and (pointer: fine) {
   body.cursor-ready,
-  body.cursor-ready a,
-  body.cursor-ready button,
-  body.cursor-ready input,
-  body.cursor-ready textarea,
-  body.cursor-ready [data-tilt] { cursor: none; }
+  body.cursor-ready * { cursor: none !important; }
+  /* And the last 10px: <html> keeps its own `auto` because .cursor-ready is on
+     <body>, which shows a real arrow over the strip that scrollbar-gutter holds
+     back. Separate rule on purpose — :has() is baseline but an unsupported
+     selector invalidates its whole rule, and sharing one would take the blanket
+     above down with it. */
+  html:has(body.cursor-ready) { cursor: none; }
 }
 
 
