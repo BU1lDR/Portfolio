@@ -466,9 +466,12 @@
     if (runway > c.lead + 80 && drawable(['run'])) {
       run = runway - c.lead;
       sam.style.setProperty('--sam-run-dur', run + 'ms');
-      /* Constant ground speed whatever the runway, or his feet skate: ~280px/s,
-         the same as the CSS default for the shorter entrance run. */
-      sam.style.setProperty('--sam-run-x', Math.round(run * 0.28) + 'px');
+      /* Whatever the runway, the same ground speed — the ONE ground speed, the one
+         the sheet's contact foot was drawn at. See SPEED further down; it is
+         declared after this point but only ever read here at click time, long
+         after this file has finished executing. cells() because --sam-run-x is
+         read inside .sam__zoom and SPEED is in device px. */
+      sam.style.setProperty('--sam-run-x', cells(run * SPEED) + 'px');
       pose('p-run');
       move('is-runin');
     }
@@ -777,11 +780,30 @@
      Returns false rather than doing nothing quietly, because terminal.js prints a
      different line then.
 
-     SPEED is one constant, shared with spar() below, and it is the same ~280px/s
-     the run-in uses: a run cycle looks wrong at any other ground speed and his
-     feet skate. It is written in device px per ms because that is the unit a
-     measured rect comes in. */
-  var SPEED = 0.28;
+     SPEED is derived, not chosen, and that is the whole reason this used to look
+     like gliding rather than running. See STRIDE below. */
+
+  /* ── the one ground speed on this page ────────────────────────
+     A run cycle only reads as a run if the foot that is on the ground stays
+     STILL on the ground. The sheet decides how fast that is: run.png is eight
+     frames and its contact foot drifts backwards 9.5 cell px per frame, measured
+     patch by patch off the shipped PNG (.preview-tools/run-stride.js). Eight of
+     those is 76 cell px, and cell px double through .sam__zoom, so one cycle
+     carries him 152 device px. Nothing here is a preference — move him slower
+     than this and the planted foot slides forward under him, which is a moonwalk;
+     faster and it slides backwards. Both look like gliding.
+
+     THE BUG THIS REPLACES was a unit mix-up, and it is worth writing down because
+     it is invisible in a diff. --sam-run-x is in cell px, so the run-in's 0.28
+     meant 0.28 CELL px per ms — 0.56 device px per ms on the screen. SPEED was
+     copied from that 0.28 and applied to a measured rect, i.e. as DEVICE px per
+     ms. So the entrance ran 62% too fast and the crossing 19% too slow, one
+     number, two speeds, both wrong, and the comment on each cheerfully claimed
+     they matched at "~280px/s". They are one expression now: change the cycle and
+     the ground speed follows it, in both files, or it does not change at all. */
+  var RUN_CYCLE = 440;                    // ms — must equal --sam-run-dur's default
+  var STRIDE = 152;                       // device px carried per cycle
+  var SPEED = STRIDE / RUN_CYCLE;         // 0.345 device px/ms
 
   /* Device px to the CELL px the rig wants. The rig is inside .sam__zoom, which
      is scale(2), so anything set from here lands twice as far as it reads —
