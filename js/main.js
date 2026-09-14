@@ -3,6 +3,7 @@
 
      boot overlay · nav · scroll reveal · custom cursor
      3D tilt · typewriter · contact form
+     the floating terminal window · easter eggs · résumé viewer
    ═══════════════════════════════════════════════════════════════ */
 
 (function () {
@@ -1182,6 +1183,184 @@
         ev.stopPropagation();
       }, true);
     });
+  })();
+
+  /* ══ 12 résumé viewer ══════════════════════════════════════ */
+
+  /* Clicking Resume used to drop a PDF in your downloads folder and show you
+     nothing. Now it shows you the PDF and puts the download underneath it, which
+     is the actual request: read first, keep it if you want it.
+
+     Everything this module owns is in index.html's `.rv` block and style.css §10c.
+     It exposes window.ResumeView so js/terminal.js's `resume` command can open the
+     same panel — one viewer, three ways in (hero button, contact block, shell).
+
+     THREE THINGS THIS HAS TO GET RIGHT, none of them the panel itself.
+
+     One: the PDF must not be fetched until asked for. The <object> ships with no
+     `data` attribute and gets one on first open, so a visitor who never clicks
+     Resume never pays for it. Note what is NOT here: any code deciding whether the
+     embed worked. That was written — inspect the frame after load, see if anything
+     rendered — and it got the answer wrong in both directions on two different
+     builds of the same browser. The <object>'s fallback content does the job
+     natively and correctly, so the script's whole job here is one attribute.
+
+     Two: Esc. It is spoken for three times on this page already — the mobile
+     menu, the terminal window (module 09, on the capture phase, gated on the
+     event being inside .termwin), and MatrixFX in js/terminal.js. This one is
+     also on capture and stops propagation, so the top layer wins and closing the
+     résumé cannot also close the terminal behind it. The terminal's gate means it
+     would not have fired anyway; belt and braces, because that gate is one
+     refactor away from not being true.
+
+     Three: focus. Opening moves focus into the panel, Tab is trapped inside it, and
+     closing puts focus back on whatever opened it — including when the opener was
+     a command typed in the shell, in which case there is no button to return to
+     and the shell's input is the right answer. That last case is why `open()`
+     takes the opener rather than reading document.activeElement. */
+  (function () {
+    var rv = $('#resumeView');
+    if (!rv) return;
+
+    var frame  = $('#rvFrame');
+    var panel  = rv.querySelector('.rv__panel');
+    var closer = $('#rvClose');
+    var url    = (window.PORTFOLIO && window.PORTFOLIO.resumeUrl) || 'assets/resume.pdf';
+
+    var open = false;
+    var opener = null;
+    var loaded = false;
+
+    // Every link on the page pointing at the file, kept in step with data.js.
+    $$('[data-resume], #rvGet, #rvTab').forEach(function (a) {
+      if (a.tagName === 'A') a.href = url;
+    });
+
+    /* The tab order inside the panel, recomputed per Tab rather than cached,
+       because it genuinely changes: the <object> is a tab stop only once a
+       plugin has taken it over, and whether that happens is the browser's
+       decision, made after this module has finished running. */
+    function stops() {
+      return [].filter.call(
+        panel.querySelectorAll(
+          'a[href], button, object, iframe, [tabindex]:not([tabindex="-1"])'),
+        function (el) { return !el.hasAttribute('hidden') && el.offsetParent !== null; });
+    }
+
+    /* The whole of the loading logic, and it is one line on purpose. Setting
+       `data` is the request; everything after it belongs to the browser. If it
+       can render a PDF it renders one, and if it cannot it lays out the children
+       instead — no `load` handler to wait for, no timeout to guess at, nothing
+       here that can be wrong about which of those happened. */
+    function load() {
+      if (loaded) return;
+      loaded = true;
+      frame.setAttribute('data', url);
+    }
+
+    function openView(from) {
+      if (open) return;
+      open = true;
+      opener = from || null;
+      rv.hidden = false;
+      doc.body.classList.add('is-locked');
+      load();
+      /* Two frames, not one. Removing [hidden] and adding .is-open in the same
+         frame gives the browser a single style resolution and no transition — the
+         element goes straight to its end state. rAF twice is the reliable way to
+         land them in separate frames. */
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () { rv.classList.add('is-open'); });
+      });
+      closer.focus({ preventScroll: true });
+    }
+
+    function closeView() {
+      if (!open) return;
+      open = false;
+      rv.classList.remove('is-open');
+      doc.body.classList.remove('is-locked');
+      /* Hidden only after the fade, or it vanishes instead of leaving. Matches
+         §10c's 300ms and does not need to be exact — early would cut the fade,
+         late only delays a display:none nobody can see. */
+      setTimeout(function () { if (!open) rv.hidden = true; }, reduce ? 130 : 340);
+      if (opener && opener.focus) {
+        opener.focus({ preventScroll: true });
+        /* An opener can stop being focusable while the panel is up. The one that
+           actually does it is the shell: `resume` hands over #termInput, and if
+           the window folds in the meantime that input is inside a collapsed body
+           and refuses focus. Silently, of course — focus() on an unfocusable
+           element is a no-op, not an error. Left there, the panel goes
+           display:none a third of a second later with focus still inside it,
+           which drops it on <body> and restarts Tab at the top of the document.
+           So: check it took, and land on the button that opens this same panel
+           if it did not. */
+        if (doc.activeElement !== opener) {
+          var alt = $('[data-resume]');
+          if (alt) alt.focus({ preventScroll: true });
+        }
+      }
+      opener = null;
+    }
+
+    // The page's own buttons. Plain left-click only: cmd/ctrl/middle-click and
+    // "save link as" keep working on the href, which is the point of the <a>.
+    $$('[data-resume]').forEach(function (a) {
+      a.addEventListener('click', function (ev) {
+        if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey || ev.button) return;
+        ev.preventDefault();
+        openView(a);
+      });
+    });
+
+    closer.addEventListener('click', function () { closeView(); });
+    $('#rvScrim').addEventListener('click', function () { closeView(); });
+
+    /* Capture, and it stops there — see note three above. */
+    doc.addEventListener('keydown', function (ev) {
+      if (!open) return;
+      if (ev.key === 'Escape') {
+        ev.stopPropagation();
+        ev.preventDefault();
+        closeView();
+        return;
+      }
+      if (ev.key !== 'Tab') return;
+      var f = stops();
+      if (!f.length) return;
+      var first = f[0], last = f[f.length - 1];
+      /* activeElement is the <iframe> while focus is inside the PDF, so this also
+         correctly treats "somewhere in the document" as "on the frame". */
+      var at = doc.activeElement;
+      if (ev.shiftKey && (at === first || !panel.contains(at))) {
+        ev.preventDefault(); last.focus();
+      } else if (!ev.shiftKey && at === last) {
+        ev.preventDefault(); first.focus();
+      }
+    }, true);
+
+    /* Downloading is not leaving. Without this, clicking Download closes nothing
+       and looks like it did nothing on browsers that download silently — so say
+       so, in the one place the eye already is. */
+    var get = $('#rvGet');
+    if (get) get.addEventListener('click', function () {
+      var span = get.querySelector('span');
+      if (!span || get.dataset.said) return;
+      get.dataset.said = '1';
+      var was = span.textContent;
+      span.textContent = 'Saved ↓';
+      setTimeout(function () {
+        span.textContent = was;
+        delete get.dataset.said;
+      }, 1800);
+    });
+
+    window.ResumeView = {
+      open: function (from) { openView(from); },
+      close: closeView,
+      isOpen: function () { return open; },
+      url: url
+    };
   })();
 
   /* ── read the source ──────────────────────────────────────────
