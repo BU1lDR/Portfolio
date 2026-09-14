@@ -283,10 +283,27 @@
     email:   { desc: 'just the email', hidden: true,
       run: function () { out(link('mailto:' + (prof.email || ''), prof.email || '—')); } },
 
+    /* This used to trigger a download and print a line about it, which meant the
+       one command people actually run gave them a file and no way to look at it.
+       It opens the viewer now — main.js module 12, the same panel the Resume
+       buttons on the page open — and the download lives inside that.
+
+       The fallback is the old behaviour, not an error. ResumeView is gone if
+       main.js failed to load or if this ever runs on a page without the panel in
+       it (404.html has a shell on it too), and in that case handing over the file
+       is still better than refusing. */
     resume: {
-      desc: 'download the PDF',
+      desc: 'open the résumé',
       run: function () {
         var url = P.resumeUrl || 'assets/resume.pdf';
+        var RV = window.ResumeView;
+        if (RV && RV.open) {
+          out('opening ' + esc(url) + ' …');
+          /* The input is handed in as the thing to return focus to when the panel
+             closes — there is no button to go back to when the way in was typed. */
+          RV.open(input || null);
+          return out('Esc closes it. The download is at the bottom of the box.', 'tl-dim');
+        }
         out('fetching ' + esc(url) + ' …');
         var a = document.createElement('a');
         a.href = url;
@@ -323,7 +340,7 @@
           case 'certs.md':    return CMDS.certs.run();
           case 'resume.pdf':
             out('cat: resume.pdf: binary file', 'tl-err');
-            return out('Try <span class="tl-key">resume</span> to download it.', 'tl-dim');
+            return out('Try <span class="tl-key">resume</span> — it opens the thing.', 'tl-dim');
           case '.secret':
             egg('secret');
             out('<span class="tl-jp">影の中で構築する。</span>', 'tl-red');
@@ -821,7 +838,7 @@
           null,
           [kv('email', link('mailto:' + (prof.email || ''), prof.email || ''))],
           [kv('github', link('https://github.com/BU1lDR', 'github.com/BU1lDR'))],
-          [kv('resume', '<span class="tl-key">resume</span> downloads it')],
+          [kv('resume', '<span class="tl-key">resume</span> puts it on screen')],
           null,
           ['There is a <span class="tl-key">/.well-known/security.txt</span> too, if you have not been there yet.', 'tl-dim'],
           [fresh ? 'And that was an easter egg. Try <span class="tl-key">eggs</span>.'
