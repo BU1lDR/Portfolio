@@ -969,10 +969,27 @@
     wake();
     crossing = true;
 
-    /* From where he is standing to properly off the left edge: his leading
-       painted edge has to clear x=0, plus 80 of slack, because half a samurai
-       parked at the edge is worse than no samurai. */
-    var travel = Math.round(r.left + TIP) + 80;
+    /* From where he is standing to properly off the left edge — and it is the whole
+       BOX that has to clear x=0, not his leading painted edge.
+
+       THIS WAS THE "HE GETS STUCK RUNNING WHEN HE REACHES THE OTHER END" BUG, and
+       the old line read as if it had already handled it: r.left + TIP + 80, i.e.
+       "put his leading painted edge 80px past the edge of the screen". It does do
+       that. But he faces LEFT, so his leading edge is his FRONT, and clearing his
+       front past x=0 says nothing whatsoever about his back. The box came to rest
+       at -(TIP + 80) = -172, and the box is 256px wide, so 84px of it — most of his
+       trailing half — stayed inside .sam-road's overflow clip. sam-run is infinite
+       and sam-cross holds its end transform under `both`, so what you got was a
+       samurai running on the spot at the left edge for 1115ms, until the overlay
+       was torn down. Measured in .preview-tools/sl-tail.js.
+
+       r.width, not TIP plus a painted width. The clip is measured against the box,
+       and the box is 256px regardless of where the art sits inside its cell, so
+       nothing here needs to know anything about the sheet — which means a different
+       sheet cannot quietly bring this back. Costs 84px of extra travel: at a
+       constant CROSS_SPEED that is 49ms more crossing and no change to the cadence,
+       because the foot-plant law is a speed, not a distance. */
+    var travel = Math.round(r.left + r.width) + 80;
     var dur = Math.round(travel / CROSS_SPEED);
 
     /* Declared here rather than beside the timers that use it, because the sheen
@@ -1156,8 +1173,9 @@
     /* Only now, so there is never a frame with neither of them on screen: the
        runner is already in the document and already at the real one's coordinates
        when the real one goes. */
+    var runner = road.querySelector('.sam--road');
     sam.classList.add('is-away');
-    road.querySelector('.sam--road').classList.add('is-cross');
+    runner.classList.add('is-cross');
 
     /* ── the man and the ground no longer leave together ───────────
        They used to: one tidy() at dur+200 took the overlay and gave the real
@@ -1197,6 +1215,19 @@
       roadTidy = null;
     };
     roadTidy = tidy;
+
+    /* And he is REMOVED the moment he is off, rather than riding out the hold inside
+       the clip. With the travel fixed above he is already fully outside .sam-road by
+       dur, so this is not what makes him invisible — it is what stops an infinite
+       sam-run and a held rig transform from ticking on an unseeable node through the
+       whole 620ms hold and the fade after it. It also turns "there is never a frame
+       with two of him visible" from a property of the geometry, which is what it
+       used to be and which is why one wrong distance broke it, into a property of
+       the DOM. 60ms rather than 0 so sam-cross's `both` fill has unambiguously
+       landed first. tidy() removing the whole overlay stays idempotent either way. */
+    at(dur + 60, function () {
+      if (runner.parentNode) runner.parentNode.removeChild(runner);
+    });
 
     at(dur + 200, function () {
       restore();
