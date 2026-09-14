@@ -293,8 +293,43 @@
     var rx = tx, ry = ty;
     var ready = false;
 
-    var HOVER = 'a, button, [role="button"], .term__chips button, label';
+    /* The last three joined this list when §04 stopped enumerating what to hide
+       the OS cursor on and started hiding it on everything. Each of them had
+       been carrying a `cursor: pointer` of its own, which — cursor being an
+       inherited property, and a direct match always beating an inherited value —
+       was quietly winning against the rig and drawing the OS hand on top of it.
+       The counter egg in §11 is the one that matters: its comment says
+       "cursor:pointer is the whole hint", because an underline or a hover colour
+       would answer the question the egg asks. Blanking that pointer without
+       putting the element here would have deleted the only hint the egg has. The
+       red ring is a louder one. */
+    var HOVER = 'a, button, [role="button"], .term__chips button, label, ' +
+                '.sec__num i, .sam__hit, .termwin.is-min .term__bar';
     var TEXT = 'input[type="text"], input[type="email"], textarea, .term__input';
+
+    /* Asked of the element, not of a tag list: does THIS node hold text you
+       could drag across? A list of prose tags is the obvious way to do it and it
+       is wrong in both directions — it misses the <b>, <em>, <code> and <span>
+       that real copy is full of, and it claims a <p> that some other rule has
+       made unselectable. Two questions instead, cheap one first:
+
+         1. does it own a non-empty text node directly (not via a descendant, or
+            every <section> on the page counts and the blade never turns off)
+         2. is that text actually selectable
+
+       user-select inherits, so (2) catches the nav, the section numerals and the
+       terminal chrome — all of which set it on an ancestor — without naming any
+       of them. Which is the point: a blade over text you cannot select is a
+       promise the page does not keep. */
+    function prose(el) {
+      if (!el || el.nodeType !== 1) return false;
+      var has = false;
+      for (var n = el.firstChild; n; n = n.nextSibling) {
+        if (n.nodeType === 3 && n.nodeValue.trim()) { has = true; break; }
+      }
+      if (!has) return false;
+      return getComputedStyle(el).userSelect !== 'none';
+    }
 
     window.addEventListener('pointermove', function (ev) {
       if (ev.pointerType === 'touch') return;
@@ -303,8 +338,15 @@
       if (!ready) { ready = true; doc.body.classList.add('cursor-ready'); }
     }, { passive: true });
 
-    window.addEventListener('pointerdown', function () { doc.body.classList.add('cursor-down'); }, { passive: true });
-    window.addEventListener('pointerup', function () { doc.body.classList.remove('cursor-down'); }, { passive: true });
+    /* Mirrored into plain flags as well as classes, because the press feedback
+       for every state except the blade is a scale, and a scale has to be written
+       by the follow loop below — see the note at the end of §04's cursor block
+       for why it cannot live in the stylesheet. */
+    var down = false, sel = false;
+    var PRESS = .82;
+
+    window.addEventListener('pointerdown', function () { down = true; doc.body.classList.add('cursor-down'); }, { passive: true });
+    window.addEventListener('pointerup', function () { down = false; doc.body.classList.remove('cursor-down'); }, { passive: true });
 
     // Leaving / re-entering the window
     doc.addEventListener('mouseleave', function () { doc.body.classList.remove('cursor-ready'); });
@@ -322,6 +364,11 @@
       doc.body.classList.toggle('cursor-text', !!isText && !labelled);
       doc.body.classList.toggle('cursor-hover', !!isHover && !labelled && !isText);
 
+      /* Last, and only if nothing above claimed the pointer. The order is the
+         priority: a link inside a paragraph is a link. */
+      sel = !labelled && !isText && !isHover && prose(t);
+      doc.body.classList.toggle('cursor-sel', sel);
+
       if (labelled && label) label.textContent = labelled.dataset.cursor || '';
     }, { passive: true });
 
@@ -329,7 +376,16 @@
     (function follow() {
       rx += (tx - rx) * 0.17;
       ry += (ty - ry) * 0.17;
-      ring.style.transform = 'translate3d(' + rx + 'px,' + ry + 'px,0)';
+      /* The press scale is composed in HERE and not in the stylesheet. This line
+         writes an inline transform every frame, and an inline declaration beats
+         any stylesheet rule short of !important — so §04's old
+         `body.cursor-down .cursor-ring { transform: scale(.82) }` had never once
+         run, and !important would not have saved it either, since it would have
+         beaten the translate as well and parked the ring in the corner.
+         Skipped while the blade is up: that state answers a press by drawing the
+         blade 8px longer, and shrinking it at the same time reads as neither. */
+      ring.style.transform = 'translate3d(' + rx + 'px,' + ry + 'px,0)' +
+                             (down && !sel ? ' scale(' + PRESS + ')' : '');
       requestAnimationFrame(follow);
     })();
   })();
