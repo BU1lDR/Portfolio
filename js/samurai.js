@@ -824,6 +824,50 @@
   var STRIDE = 152;                       // device px carried per cycle
   var SPEED = STRIDE / RUN_CYCLE;         // 0.345 device px/ms
 
+  /* ── and the dash, which is `sl` only ─────────────────────────
+     0.345 px/ms is a man travelling. It is the right speed for the run-in, where
+     he is arriving somewhere and you are meant to watch him do it, and it is the
+     wrong speed for `sl`, where he took better than three seconds to cross a
+     1440px page. Three seconds of watching someone jog is not a passer-by, it is
+     a parade.
+
+     THE ONLY HONEST WAY TO GO FASTER IS TO RAISE THE CADENCE BY THE SAME FACTOR,
+     and that is the whole reason this is a divisor and not a second hand-picked
+     speed. STRIDE is fixed by the art — 152 device px per cycle, measured off
+     run.png — so ground speed and cycle length are locked to each other by
+     SPEED = STRIDE / CYCLE. Multiply the speed and leave the cycle alone and the
+     planted foot slides backwards under him, which is the exact glide the commit
+     above this one existed to remove. Both move or neither does.
+
+     5 is chosen; 88ms and 1.727 are consequences. It divides 440 exactly, which
+     keeps CROSS_CYCLE a whole number of ms and CROSS_SPEED therefore exactly
+     STRIDE/88 rather than STRIDE over something rounded.
+
+     What 88ms means in practice: eight frames land 11ms apart against a 16.7ms
+     display frame, so the browser shows roughly five of the eight each cycle and
+     a different five each time. THAT IS NOT A BUG AND IT IS WHY THIS WAS SAFE TO
+     DO. Both animations are linear in time — sam-run advances the strip, sam-cross
+     advances the position — so whichever frame a given display refresh happens to
+     sample, the foot in it is in the right place for that instant. Foot-planting
+     is a relationship per unit time, not per frame, and dropping frames cannot
+     break it. What you see instead of eight clean poses is a scribble of legs,
+     which is what legs look like at 1.7px/ms and is the point.
+
+     The eye still fills in a streak whether or not one is drawn, so §10b draws it
+     — see "the smear he leaves". */
+  var DASH = 5;
+  var CROSS_CYCLE = RUN_CYCLE / DASH;             // 88ms
+  var CROSS_SPEED = STRIDE / CROSS_CYCLE;         // 1.727 device px/ms
+
+  /* How many previous frames of him are drawn behind him during the dash. The
+     geometry is entirely in §10b — see "the smear he leaves" — and the count is
+     here because it is the number of extra nodes cross() has to write.
+
+     One, and going higher is worse rather than merely more expensive: his banner is
+     ribbed, so evenly spaced copies of it interfere into a lattice and you get a
+     picket fence instead of a blur. .preview-tools/ghost-ab.js has the sheet. */
+  var GHOSTS = 1;
+
   /* Device px to the CELL px the rig wants. The rig is inside .sam__zoom, which
      is scale(2), so anything set from here lands twice as far as it reads —
      exactly the trap --sam-run-x's comment warns about, and the only reason this
@@ -866,7 +910,7 @@
        painted edge has to clear x=0, plus 80 of slack, because half a samurai
        parked at the edge is worse than no samurai. */
     var travel = Math.round(r.left + TIP) + 80;
-    var dur = Math.round(travel / SPEED);
+    var dur = Math.round(travel / CROSS_SPEED);
 
     var road = doc.createElement('div');
     road.className = 'sam-road';
@@ -883,15 +927,27 @@
 
     /* Each gate is fully up before he reaches it. Same arithmetic the spar uses
        for the headings — distance still to travel, over ground speed — taken from
-       his leading edge rather than his box, and with 700ms of lead because the
-       rise itself takes 420: at the 260 this started on, the gate was still
+       his leading edge rather than his box, and with a lead on top because the
+       rise takes time: at the 260ms lead this started on, the gate was still
        fading in as he ran through it, so it read as growing around him rather
-       than as something already standing there. */
+       than as something already standing there.
+
+       RISE AND LEAD BOTH DIVIDE BY DASH, and they have to, together. The whole
+       crossing is a fifth of what it was, so a 420ms rise would now take two
+       thirds of it and a 700ms lead is longer than the run: every gate would be
+       told to start before time zero, all three would go up in the same frame,
+       and the one thing this arithmetic buys — gates that are already standing
+       there rather than assembling around him — would be gone. Held as fractions
+       of the crossing, the three gates are spaced the same way at any speed. The
+       420 is sam-road-rise's own duration in §10b, so it is passed in rather than
+       hard-coded twice. */
+    var rise = Math.round(420 / DASH);          // 84ms
+    var lead = rise + Math.round(280 / DASH);   // + the beat it stands there first
     for (var i = 0; i < GATES.length; i++) {
       var away = travel * GATES[i];
       html += '<div class="sam-road__torii" style="left:' +
                 Math.round(r.left + TIP - away) + 'px;--d:' +
-                Math.max(0, Math.round(away / SPEED) - 700) + 'ms">' +
+                Math.max(0, Math.round(away / CROSS_SPEED) - lead) + 'ms">' +
               '<i></i><b></b></div>';
     }
     html += '</div>';
@@ -899,19 +955,47 @@
     /* The same five nested nodes .sam uses, so every pose rule in §10b applies to
        this unchanged, and built by hand rather than cloned from .sam because .sam
        carries state — a pose, possibly is-doze — that must not come along. */
+    /* --sam-run-dur is overridden HERE, on the runner itself, and that override is
+       the load-bearing half of the dash. .sam declares 440ms and `.sam.p-run
+       .sam__cel` reads it with no fallback, so without this line the strip would
+       still be stepping at the walking cadence while the rig flew across at five
+       times the speed — a man sliding along at 1.7px/ms taking one step per 152px
+       of ground, i.e. the glide again, only worse. CROSS_SPEED and CROSS_CYCLE
+       come out of the same STRIDE, so setting both from the same pair is what
+       keeps the foot planted. */
+    /* The afterimage. GHOSTS more porthole-and-strip stacks inside the same rig,
+       each showing the pose he held one sheet frame ago at the place he was standing
+       one sheet frame ago — §10b's "the smear he leaves" has why an actual previous
+       frame beats a drawn-on trail, why both halves of it fall out of one number,
+       and why the count and the spacing are what they are.
+
+       FURTHEST BACK FIRST, because DOM order is the stacking and there is no
+       z-index anywhere in this stack: he has to be painted last or his own pixels
+       come out from under a translucent copy of himself. Same reason the path
+       lays haze, stones, gates, man in that order.
+
+       --g is the only thing that differs, so the geometry lives in the stylesheet
+       and this stays a loop over a depth. */
+    var GHOST = '<div class="sam__flip"><div class="sam__cel"></div></div>';
+    var stack = '';
+    for (var g = GHOSTS; g >= 1; g--)
+      stack += '<div class="sam__stage sam__stage--ghost" style="--g:' + g + '">' +
+                 GHOST + '</div>';
+    stack += '<div class="sam__stage">' + GHOST + '</div>';
+
     html += '<div class="sam sam--road p-run" style="left:' + Math.round(r.left) +
               'px;top:' + Math.round(r.top) + 'px;--sam-cross-x:' + cells(travel) +
-              'px;--sam-cross-dur:' + dur + 'ms">' +
-              '<div class="sam__zoom"><div class="sam__rig"><div class="sam__stage">' +
-                '<div class="sam__flip"><div class="sam__cel"></div></div>' +
-              '</div></div></div>' +
+              'px;--sam-cross-dur:' + dur + 'ms;--sam-run-dur:' + CROSS_CYCLE + 'ms">' +
+              '<div class="sam__zoom"><div class="sam__rig">' + stack + '</div></div>' +
             '</div>';
 
     road.innerHTML = html;
     /* The wipe runs at 1.4x his ground speed so the stones are always arriving in
        front of his feet. Ahead of him, not under him — a path that keeps exact
-       pace with a runner is a path he appears to be dragging. */
+       pace with a runner is a path he appears to be dragging. Derived from dur, so
+       it followed the dash without being touched. */
     road.style.setProperty('--sam-road-dur', Math.round(dur / 1.4) + 'ms');
+    road.style.setProperty('--sam-road-rise', rise + 'ms');
     doc.body.appendChild(road);
     /* Only now, so there is never a frame with neither of them on screen: the
        runner is already in the document and already at the real one's coordinates
@@ -919,32 +1003,74 @@
     sam.classList.add('is-away');
     road.querySelector('.sam--road').classList.add('is-cross');
 
-    var tidy = function () {
-      if (road.parentNode) road.parentNode.removeChild(road);
+    /* ── the man and the ground no longer leave together ───────────
+       They used to: one tidy() at dur+200 took the overlay and gave the real
+       sprite back in the same breath, and at a three-second crossing that was
+       fine. At 640ms it is not. The 参道 was asked for as its own thing — stones,
+       haze, three 鳥居 — and the whole of it would now be laid, run down and gone
+       inside two thirds of a second, which is not long enough to look at a torii
+       let alone three.
+
+       So the path holds after he is off, and the teardown splits in two.
+       restore() gives the real sprite back on his post; tidy() takes the overlay
+       away. That is only safe because of where he is when restore() fires: past
+       x=0, with sam-cross's `both` holding him there, inside a .sam-road that is
+       `overflow: hidden`. He is clipped out of the viewport entirely, so there is
+       no frame in which two samurai are visible at once — which is the invariant
+       the single tidy() was protecting, and it is preserved by geometry rather
+       than by the two happening simultaneously.
+
+       Both are idempotent and roadTidy still points at the one that does
+       everything, so finish() landing anywhere in here puts the page back exactly
+       as before. */
+    var HOLD = 620;               // the path stays lit this long after he is gone
+    var restored = false;
+    var restore = function () {
+      if (restored) return;
+      restored = true;
       sam.classList.remove('is-away');
+    };
+    var tidy = function () {
+      restore();
+      if (road.parentNode) road.parentNode.removeChild(road);
       crossing = false;
       roadTidy = null;
     };
     roadTidy = tidy;
 
-    /* The path goes before he is fully off, so it is already fading as he leaves
-       rather than blinking out after him. */
-    at(Math.max(0, dur - 260), function () { road.classList.add('is-going'); });
-
     at(dur + 200, function () {
-      tidy();
+      restore();
       /* And back onto the roof the way he first came onto it — same sheet, same
-         440ms, same is-runin. once() refuses while a strike is pending, which is
-         correct: a dismissal that started mid-crossing owns him now. */
+         440ms, same is-runin, deliberately NOT the dash: he tears past, then walks
+         back on. The contrast is most of what makes the tearing past read as
+         unusual. once() refuses while a strike is pending, which is correct: a
+         dismissal that started mid-crossing owns him now. */
       once('p-run', 440);
       move('is-runin');
     });
+
+    /* Then the ground goes. OUT is set INTO the stylesheet rather than read out of
+       it, because the removal has to outlast the fade and the two numbers were
+       previously written down in different files: §10b said .42s and here the
+       overlay came off 460ms after the fade began, which left 40ms of slack that
+       nobody had checked and that no comment mentioned. One constant, passed in,
+       and the removal is stated as fade-plus-slack so it cannot be wrong. */
+    var OUT = 420;
+    road.style.setProperty('--sam-road-out', OUT + 'ms');
+    at(dur + HOLD, function () { road.classList.add('is-going'); });
+    at(dur + HOLD + OUT + 160, tidy);
     /* Outside `timers`, and this is the line that matters. at() pushes into that
        array and finish() clears all of it, so a real dismissal landing mid-run
        would otherwise leave the overlay on the page and the real sprite
        invisible. finish() calls roadTidy for the normal case; this catches the
-       rest. Both are idempotent. */
-    setTimeout(tidy, dur + 1600);
+       rest. Both are idempotent.
+
+       Written as the scheduled teardown plus a margin rather than as a round
+       number. It used to be dur+1600 against a teardown at dur+200 — 1400ms of
+       margin by accident — and the hold below pushes the real teardown out to
+       dur+1200, which would have left the backstop firing 400ms later on a
+       coincidence nobody had noticed. */
+    setTimeout(tidy, dur + HOLD + OUT + 160 + 400);
     return true;
   }
 
