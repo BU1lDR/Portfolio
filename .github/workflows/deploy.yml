@@ -29,7 +29,46 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configure Pages
+        id: pages
         uses: actions/configure-pages@v5
+
+      # ── the one thing that cannot be static in a static site ────────────────
+      # Pages answers any missing path with 404.html and leaves the URL alone, so
+      # every relative href in that file resolves against the path that was ASKED
+      # FOR rather than the site root. It pins a <base> to fix that, and the long
+      # comment at the top of the file explains why the base has to be markup the
+      # preload scanner can see rather than something a script writes.
+      #
+      # Which leaves it hardcoding /Portfolio/ — true only while the repo is named
+      # Portfolio. Rename it, or move to a custom domain, and a stranger's 404 is
+      # the one page on the site that loses its stylesheet. Pages knows its own
+      # root, so ask, and write the answer in on the way past.
+      - name: Point the 404 page at the published root
+        run: |
+          root='${{ steps.pages.outputs.base_path }}'
+          # base_path is authoritative. The fallback is GitHub's own rule, in case
+          # the action stops emitting it: a repo named <owner>.github.io publishes
+          # at /, so does any repo with a CNAME, and everything else at /<repo>/.
+          if [ -z "$root" ]; then
+            repo='${{ github.repository }}'; repo="${repo#*/}"
+            owner=$(echo '${{ github.repository_owner }}' | tr 'A-Z' 'a-z')
+            if [ -f CNAME ] || [ "$(echo "$repo" | tr 'A-Z' 'a-z')" = "$owner.github.io" ]
+            then root='/'
+            else root="/$repo"
+            fi
+          fi
+          [ "$root" = '/' ] || root="${root%/}/"
+          # Fail loudly rather than ship a 404 page that cannot find its CSS. A
+          # broken deploy is visible; an unstyled error page is found by a
+          # stranger, months later, and never reported.
+          case "$root" in
+            /*) ;;
+            *) echo "::error::computed root '$root' is not absolute"; exit 1 ;;
+          esac
+          sed -i "s|<base href=\"[^\"]*\">|<base href=\"$root\">|" 404.html
+          grep -q "<base href=\"$root\">" 404.html || {
+            echo "::error::the <base> substitution did not take"; exit 1; }
+          echo "404.html base -> $root"
 
       # Static site — no build step. Upload the repo root as-is.
       - name: Upload artifact

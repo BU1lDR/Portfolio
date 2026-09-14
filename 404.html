@@ -28,16 +28,32 @@
      twice, with a console error each. A base element the scanner can see solves
      that; there is nothing left to guess wrong.
 
-     The root is a literal because a static file cannot derive it: this repo is
-     BU1lDR/Portfolio, so Pages publishes at /Portfolio/. The script is the
-     apology for hardcoding it — a custom domain or a rename would serve the site
-     from / instead, and it corrects the base before the stylesheet is reached.
-     That costs one speculative 404 in the case where the guess was wrong, which
-     is the right way round: nothing wasted in the configuration we actually
-     ship, and never a page with no stylesheet at all. -->
+     The root is a literal because a static file cannot derive it — but it is no
+     longer a GUESS. The deploy writes it: .github/workflows/deploy.yml asks Pages
+     for its own base_path and seds it in before uploading, and fails the run
+     rather than publish a substitution that did not take. So a repo rename or a
+     custom domain needs no edit here. /Portfolio/ is the checked-in default,
+     right for BU1lDR/Portfolio and right for a local preview served from a folder
+     of that name.
+
+     The script below is the belt to that braces, for the case the deploy cannot
+     reach: this file opened somewhere the injected root does not match, where a
+     relative stylesheet would be requested above the site root and come back
+     empty. It reads the root back OFF the base element instead of repeating the
+     literal, and that is the actual fix here — there used to be two copies of
+     /Portfolio/ on this page, one of them inside a comparison rather than a URL,
+     which is exactly the kind of pair that drifts apart silently. One copy now,
+     and it is the one the deploy overwrites.
+
+     Correcting to / costs one speculative 404 in that case, which is the right
+     way round: nothing wasted in the configuration we actually ship, and never a
+     page with no stylesheet at all. -->
 <base href="/Portfolio/">
 <script>
-  if (location.pathname.indexOf('/Portfolio/') !== 0) document.querySelector('base').href = '/';
+  (function () {
+    var b = document.querySelector('base'), root = b.getAttribute('href');
+    if (root !== '/' && location.pathname.indexOf(root) !== 0) b.href = '/';
+  })();
 </script>
 
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
