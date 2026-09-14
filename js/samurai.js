@@ -882,11 +882,74 @@
      rather than where his box is, needs this. */
   var TIP = 92;
 
-  /* The gates, as fractions of the crossing rather than pixel positions, so three
-     of them are spaced the same way on a 900px window and a 2560px one. Not at 0
-     or 1: a gate on top of where he starts is a gate you never see him enter, and
-     one at the far end goes up as he is already leaving the screen. */
-  var GATES = [0.18, 0.48, 0.79];
+  /* The gates. `at` is a fraction of the crossing rather than a pixel position, so
+     three of them are spaced the same way on a 900px window and a 2560px one. Not
+     at 0 or 1: a gate on top of where he starts is a gate you never see him enter,
+     and one at the far end goes up as he is already leaving the screen.
+
+     h AND o EXIST BECAUSE ALL THREE USED TO BE 210x210 AT .62 — one object stamped
+     three times across one frame, which no amount of gradient work on an individual
+     gate can disguise. Tallest is brightest so that size and weight agree instead
+     of arguing.
+
+     210 IS THE CEILING AND NOTHING HERE MAY EXCEED IT. The smallest supported
+     viewport is 861x700 (see .preview-tools/road-gates.js) and the clearance
+     between the top of a 210px gate and the underside of the nav was measured
+     there, not derived. Varying downward cannot break that; varying upward would
+     silently re-open a gate that was closed on evidence. */
+  var GATES = [
+    { at: 0.18, h: 210, o: .62 },
+    { at: 0.48, h: 182, o: .52 },
+    { at: 0.79, h: 198, o: .58 }
+  ];
+
+  /* ── the course of flagstones ─────────────────────────────────
+     One element per stone, and the single-element band it replaced is worth
+     recording because it looked perfectly reasonable as CSS: one div, a
+     repeating-linear-gradient for the joints, a clip-path to wipe it in. Filmed
+     close up (.preview-tools/road-build.js) it is a grey ruler, and it could not
+     have been anything else — a gradient repeats. Thirty-one identical stones at
+     identical intervals in one tone is a measuring device, and no part of it can
+     be under construction, because a gradient cannot arrive. A stone that is its
+     own element can.
+
+     44px nominal, jittered by ±8. Wide enough that a 1440px page is thirty-odd
+     stones rather than seventy — seventy is cobble, and a cobbled 参道 is the wrong
+     building — and narrow enough that his 152px stride covers three and a half of
+     them per cycle rather than one and a bit. STONE_GAP is the joint, and it comes
+     OUT of each stone rather than being added between them, so the course tiles
+     exactly however the jittered widths happen to fall. */
+  var STONE = 44;
+  var STONE_GAP = 2;
+
+  /* One stone in DUSTY throws dust as it seats. Not all of them: every stone
+     puffing is a continuous fog rolling along the path, which reads as weather.
+     One in three is the same event happening in several places at once, which is
+     what something being built looks like. */
+  var DUSTY = 3;
+
+  /* ── and it is the same path every time ───────────────────────
+     Deterministic on purpose, not for want of a better seed. Math.random() would
+     make the 参道 a different path on every `sl`: nobody could point at a stone,
+     and .preview-tools/road-build.js compares two runs of this animation frame by
+     frame, so every frame of that comparison would become a coin toss. Fixed, it
+     is THE path — the same stones in the same places, the way a real approach to a
+     shrine is the same one you walked last time.
+
+     Numerical Recipes' LCG, and deliberately not anything better: thirty-odd draws
+     for tone and a dozen for dust drift. What it has to be is the same draws in
+     the same order in every browser, which is what rules Math.random() out and
+     rules six lines in. Math.imul rather than `*`, because s * 1664525 lands just
+     under 2^53 and "just under" is not a property to rely on. The seed means
+     nothing beyond being fixed. */
+  var SEED = 4021;
+  function rng(seed) {
+    var s = seed >>> 0;
+    return function () {
+      s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+      return s / 4294967296;
+    };
+  }
 
   var crossing = false;
   /* The teardown for whatever overlay is in flight, so finish() can put the page
@@ -912,18 +975,88 @@
     var travel = Math.round(r.left + TIP) + 80;
     var dur = Math.round(travel / CROSS_SPEED);
 
+    /* Declared here rather than beside the timers that use it, because the sheen
+       needs to know how long the path outlasts him — see the teardown at the
+       bottom of this function for what the number is and why. */
+    var HOLD = 620;
+
     var road = doc.createElement('div');
     road.className = 'sam-road';
     road.setAttribute('aria-hidden', 'true');
 
+    /* ── appended empty, then measured, then filled ──────────────
+       The wipe, the stones, the build front and the sheen all cross the same
+       distance in the same time, and that distance is the width of this overlay —
+       which is NOT 100vw. Since `scrollbar-gutter: stable` went on <html>, 100vw
+       includes the reserved gutter and a fixed overlay does not, so a front written
+       in vw finishes ten pixels past its own last stone and visibly comes off its
+       work. One measurement of the real element, handed to CSS once as
+       --sam-road-span, and the four of them cannot drift apart.
+
+       Safe to append empty: fixed, inset 0, no children, pointer-events none. And
+       it stays in the same task as the innerHTML below, so there is no frame in
+       which an empty overlay exists. */
+    doc.body.appendChild(road);
+    var span = road.clientWidth || Math.round(r.right + 80);
+
+    /* 疾 — the character, and under it the line it comes from. FIRST, because DOM
+       order is the stacking inside this overlay and a backdrop has to be painted
+       before everything it is behind. §10b has why this glyph and that caption. */
+    var html = '<div class="sam-road__kanji"><em>疾</em>' +
+               '<span>疾きこと風の如く</span></div>';
+
     /* ONE MEASUREMENT, TWO USERS. The path sits at r.bottom — his feet — and the
        runner is placed at r.left/r.top, so the ground cannot end up under his
        soles or over his head however the window has been resized or scrolled. */
-    /* Order is the stacking: haze behind everything, then the stones, then the
-       gates standing up through both, then him, last and in front. */
-    var html = '<div class="sam-road__at" style="top:' + Math.round(r.bottom) + 'px">' +
-               '<div class="sam-road__haze"></div>' +
-               '<div class="sam-road__band"></div>';
+    /* Order is the stacking: haze behind everything, then the bed, the stones, the
+       sheen and the build front, then the gates standing up through all of it, then
+       him, last and in front. */
+    html += '<div class="sam-road__at" style="top:' + Math.round(r.bottom) + 'px">' +
+            '<div class="sam-road__haze"></div>' +
+            '<div class="sam-road__band"></div>';
+
+    /* ── dealing the stones ───────────────────────────────────────
+       Right to left, from the right edge of the overlay to past the left. --d is
+       not an index times a step: it is the time the build front takes to reach that
+       stone's right edge, so a stone that came out wide waits proportionally longer
+       and the front and the course stay locked together whatever the widths do.
+
+       WHY setDur IS DERIVED AND NOT PICKED. A stone has to be finished settling
+       before he stands on it, and the whole of the time available for that is the
+       gap between the front passing over a spot and his foot arriving at the same
+       spot — which is dur - laid at every point on the path, by construction, since
+       both are one distance over one constant speed. Minus a beat, so the last
+       stone is down and still rather than merely nearly down. Pick a number instead
+       and it is right at one crossing width and wrong at every other. */
+    var laid = Math.round(dur / 1.4);
+    var setDur = Math.max(120, dur - laid - 60);
+    var front = span / laid;                  // device px per ms, the build front
+    var rand = rng(SEED);
+    html += '<div class="sam-road__course">';
+    var x = span, k = 0;
+    while (x > -STONE) {
+      var w = STONE + Math.round(rand() * 16) - 8;
+      x -= w;
+      /* ONE NUMBER DOING THREE JOBS, and §10b says the same thing from the CSS
+         side. Tone, edge brightness and how deep the stone sits all come off this
+         draw, so the stones that have settled into the bed are the dark ones.
+         Three independent randoms would eventually hand the brightest tone to the
+         most sunken stone, which is precisely how procedural texture gives itself
+         away. */
+      var n = rand();
+      var sink = n < .3 ? 2 : (n < .58 ? 1 : 0);
+      html += '<div class="sam-road__stone" style="left:' + x + 'px;width:' +
+                (w - STONE_GAP) + 'px;--n:' + n.toFixed(3) + ';--j:' + sink +
+                ';--d:' + Math.round((span - (x + w)) / front) + 'ms">' +
+              (k % DUSTY === 1
+                 ? '<b style="--px:' + (Math.round(rand() * 15) - 11) + 'px"></b>'
+                 : '') +
+              '</div>';
+      k++;
+    }
+    html += '</div>' +
+            '<div class="sam-road__sheen"></div>' +
+            '<div class="sam-road__front"><i></i><b></b></div>';
 
     /* Each gate is fully up before he reaches it. Same arithmetic the spar uses
        for the headings — distance still to travel, over ground speed — taken from
@@ -944,11 +1077,18 @@
     var rise = Math.round(420 / DASH);          // 84ms
     var lead = rise + Math.round(280 / DASH);   // + the beat it stands there first
     for (var i = 0; i < GATES.length; i++) {
-      var away = travel * GATES[i];
+      var gate = GATES[i];
+      var away = travel * gate.at;
+      /* i 笠木+島木+額束, b 貫, u the two stone plinths, s the dust each post
+         kicks up as it seats. Four hooks rather than four classes because every
+         dimension and every delay is already stated in §10b as a fraction of --h
+         or of --sam-road-rise, and adding names here would be adding a second place
+         for that arithmetic to live. */
       html += '<div class="sam-road__torii" style="left:' +
-                Math.round(r.left + TIP - away) + 'px;--d:' +
+                Math.round(r.left + TIP - away) + 'px;--h:' + gate.h +
+                'px;--o:' + gate.o + ';--d:' +
                 Math.max(0, Math.round(away / CROSS_SPEED) - lead) + 'ms">' +
-              '<i></i><b></b></div>';
+              '<i></i><b></b><u></u><s></s></div>';
     }
     html += '</div>';
 
@@ -990,13 +1130,29 @@
             '</div>';
 
     road.innerHTML = html;
-    /* The wipe runs at 1.4x his ground speed so the stones are always arriving in
-       front of his feet. Ahead of him, not under him — a path that keeps exact
-       pace with a runner is a path he appears to be dragging. Derived from dur, so
-       it followed the dash without being touched. */
-    road.style.setProperty('--sam-road-dur', Math.round(dur / 1.4) + 'ms');
+
+    /* ── everything the stylesheet is not allowed to guess ────────
+       The construction runs at 1.4x his ground speed so the stones are always
+       arriving in front of his feet. Ahead of him, not under him — a path that keeps
+       exact pace with a runner is a path he appears to be dragging. Derived from
+       dur, so it followed the dash without being touched. */
+    road.style.setProperty('--sam-road-span', span + 'px');
+    road.style.setProperty('--sam-road-dur', laid + 'ms');
+    road.style.setProperty('--sam-stone-dur', setDur + 'ms');
+    /* Dust outlives the stone that threw it, which is the whole reason it reads as
+       dust rather than as a flash — 2.6x means the last puffs are still drifting
+       while he is already off the left edge. */
+    road.style.setProperty('--sam-dust-dur', Math.round(setDur * 2.6) + 'ms');
     road.style.setProperty('--sam-road-rise', rise + 'ms');
-    doc.body.appendChild(road);
+    /* Both halves of the glyph land inside the first half of the crossing. It is
+       part of the event, not a caption arriving after one. */
+    road.style.setProperty('--sam-kanji-dur', Math.round(dur * .55) + 'ms');
+    /* The sheen starts on the frame the last stone is dealt — §10b delays it by
+       --sam-road-dur — and it has to be off the page before the fade begins, or the
+       overlay goes out with a bright smear stopped halfway across it. The gap
+       between "path finished" and "fade starts" is exactly dur + HOLD - laid, and
+       90ms of that is left as margin. */
+    road.style.setProperty('--sam-sheen-dur', (dur + HOLD - laid - 90) + 'ms');
     /* Only now, so there is never a frame with neither of them on screen: the
        runner is already in the document and already at the real one's coordinates
        when the real one goes. */
@@ -1023,7 +1179,11 @@
        Both are idempotent and roadTidy still points at the one that does
        everything, so finish() landing anywhere in here puts the page back exactly
        as before. */
-    var HOLD = 620;               // the path stays lit this long after he is gone
+    /* HOLD — 620ms, declared at the top of this function with the other durations
+       because the sheen is sized off it. The path stays lit that long after he is
+       gone, and §10b's sheen is what fills the beat: a held still frame reads as the
+       animation having ended early, one slow pass of light over the finished course
+       reads as the path cooling. */
     var restored = false;
     var restore = function () {
       if (restored) return;
