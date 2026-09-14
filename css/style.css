@@ -12,7 +12,7 @@
      07  buttons
      08  hero
      09  section furniture
-     10  terminal
+     10  terminal   (10b the samurai, 10c the résumé viewer)
      11  about
      12  skills
      13  work cards
@@ -125,6 +125,16 @@ html {
      margin HERE instead would push every target down by the same amount,
      including the ones — contact, the hero — that already sit where they should. */
   scroll-padding-top: var(--nav-h);
+
+  /* Reserve the scrollbar's strip whether or not a scrollbar is drawn. This page
+     is always tall enough to scroll, so on a browser with classic scrollbars the
+     strip is occupied anyway and this costs nothing — and it buys the one thing
+     `body.is-locked` cannot do for itself. Locking overflow removes the scrollbar,
+     the viewport gets ~15px wider, and everything laid out against its edges jumps
+     sideways: the centred wrap, the fixed nav, the terminal window in its corner.
+     Two things lock the page (the boot overlay, and the résumé viewer in §10c),
+     and the viewer opens from halfway down where that jump is plainly visible. */
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -2355,7 +2365,13 @@ body.term-stowed .sam.p-idle .sam__cel,
 
 /* ── the path he crosses on (`sl`) ─────────────────────────────
    A 参道 — the stone approach to a shrine — laid across the viewport ahead of
-   his feet, with 鳥居 to run through. It lasts about four seconds.
+   his feet, with 鳥居 to run through.
+
+   TIMING IS NO LONGER ONE NUMBER. He is past in about 640ms at 1440px wide — see
+   DASH in js/samurai.js — and the path outlasts him by 620ms before it fades,
+   because a 参道 laid, run down and gone inside two thirds of a second is not
+   something anyone gets to look at. Roughly 1.7s end to end, of which he is
+   present for the first third.
 
    WHY THE PATH FORCED THE RUN TO BE REBUILT. `sl` used to translate the REAL
    sprite leftward inside .termwin and then drop him back on his post the instant
@@ -2394,9 +2410,17 @@ body.term-stowed .sam.p-idle .sam__cel,
   position: fixed;
   inset: 0;
   z-index: 95;
-  overflow: hidden;            /* he exits past x=0 and must not raise a bar */
+  /* He exits past x=0 and must not raise a bar — and since the dash, this clip is
+     load-bearing for a second reason: it is what lets the real sprite come back
+     onto his post while this overlay is still on the page fading out. The runner
+     is held off the left edge by sam-cross's `both` and clipped away here, so
+     there is no frame with two of him visible. js/samurai.js::cross() spells that
+     out where it splits restore() from tidy(). */
+  overflow: hidden;
   pointer-events: none;
-  transition: opacity .42s linear;
+  /* Duration comes from JS so that the fade and the element's removal are one
+     number rather than two that happen to agree. See OUT in cross(). */
+  transition: opacity var(--sam-road-out, .42s) linear;
 }
 .sam-road.is-going { opacity: 0; }
 
@@ -2509,7 +2533,13 @@ body.term-stowed .sam.p-idle .sam__cel,
   margin-left: calc(var(--h) / -2);
   color: #c22d42;
   opacity: 0;
-  animation: sam-road-rise 420ms var(--ease) both;
+  /* Duration from JS, because the rise has to keep its proportion to a crossing
+     whose length changed by 5x. cross() divides 420 by DASH and passes the result
+     back in, and computes each gate's --d lead from that same number, so "already
+     standing there before he reaches it" survives the dash instead of collapsing
+     into three gates that all go up in the first frame. Fallback matches the
+     number cross() divides, so a JS-less page still gets the original rise. */
+  animation: sam-road-rise var(--sam-road-rise, 420ms) var(--ease) both;
   animation-delay: var(--d, 0ms);
 }
 .sam-road__torii::before,
@@ -2603,6 +2633,92 @@ body.term-stowed .sam.p-idle .sam__cel,
 .sam-road .sam--road {
   right: auto;
   bottom: auto;
+}
+
+/* ── the smear he leaves ───────────────────────────────────────
+   At 1.727 device px/ms he clears his own painted width in about eight display
+   frames, and the eye supplies a streak whether or not one is drawn. Drawing it is
+   the difference between reading as "fast" and reading as "went past", which is
+   the thing that was asked for.
+
+   THE FIRST ATTEMPT WAS 流線 — manga speed lines, a comb of 1px rules hung off
+   .sam__rig behind him — and it was wrong in a way worth recording, because it
+   looked perfectly reasonable as CSS. A rectangle of parallel lines travelling
+   alongside a figure does not read as that figure moving fast. It reads as a
+   graphic stuck to his back: it has its own edges, its own colour, and its own
+   shape, so the brain files it as a second object rather than as more of the first
+   one. .preview-tools/shots/sl-film-06.png is what that looked like.
+
+   WHAT ACTUALLY WORKS IS AN AFTERIMAGE, and it costs almost nothing here because
+   the runner is already a stack of five nested nodes that cross() writes by hand.
+   One extra .sam__stage copy, showing the pose he held one sheet frame ago AT the
+   place he was standing one sheet frame ago. Not a stylised trail — the actual
+   previous frame of the actual animation, which is what a camera with a slow
+   shutter would have caught.
+
+   BOTH HALVES COME OUT OF THE SAME "one frame back", and this is the part that
+   makes it correct rather than approximate:
+
+     distance   one cycle carries him STRIDE = 76 CELL px (152 device, halved by
+                the zoom this lives inside), over eight frames. One frame is
+                9.5 cell px. Note what this does NOT depend on — the cycle length.
+                STRIDE is fixed by the art, so 9.5 stays right at any speed and
+                only the delay below has to follow DASH.
+     pose       one frame of eight is an eighth of a cycle backwards, which as a
+                delay is minus seven eighths of one: -0.875 x var(--sam-run-dur).
+                Negative rather than +0.125 so it is already inside the cycle at
+                t=0 — a positive delay leaves the ghost sitting on frame 0 with no
+                animation applied at all until it elapses, which is a visibly wrong
+                pose for the first stride.
+
+   9.5 cell px is 19 device px, and 19 device px at 1.727 px/ms is 11ms, which is
+   one frame of an 88ms eight-frame cycle. The two agree because they are the same
+   measurement written twice, and .preview-tools/sl-dash.js checks it on the page
+   rather than here in a comment.
+
+   THE FRACTION IS FINE AND THE INTEGER WOULD NOT BE. 9.5 is a cell-px value inside
+   scale(2), so it lands on 19 whole device pixels and the bitmap is never
+   resampled — which matters on a sprite whose sashimono pole is one pixel wide.
+   Rounding it to 10 here to look tidier is what would put it on a half pixel.
+
+   ONE COPY, AND THIS WAS DECIDED BY LOOKING RATHER THAN BY ARGUING — the six
+   candidates and the sheet that settled it are .preview-tools/ghost-ab.js. Two
+   things came out of it, and both are about the sashimono, the tall banner on his
+   back:
+
+     spacing   at two frames apart (19 cell px, 38 device) the copies stop
+               overlapping. The banner is a narrow near-vertical shape, so three of
+               them 38px apart read as three men running in formation. One frame is
+               the spacing at which the trailing edge goes soft instead.
+     count     but going the other way and stacking three or four copies one frame
+               apart is its own failure, and a less obvious one. The banner is
+               ribbed; evenly spaced copies of a ribbed shape interfere into a
+               lattice, and what you see is a picket fence rather than a blur. Two
+               copies already hint at it. One does not, because there is nothing for
+               a single echo to interfere WITH.
+
+   So: one copy, and it can afford to be stronger than a member of a stack would be
+   — .38 rather than the ~.2 that a three-deep ramp would have to end on. It has to
+   survive being on screen for a third of a second while travelling at 1.7px/ms,
+   which is a much dimmer thing than this still frame suggests.
+
+   Only .sam--road.is-cross, so the real sprite on his post can never sprout copies
+   of himself and the spar keeps its own language. */
+.sam-road .sam--road.is-cross .sam__stage--ghost {
+  /* --g is 1..GHOSTS, set per copy in cross(). GHOSTS is 1, so --g is always 1 —
+     the arithmetic is left in terms of it anyway so that the count stays a single
+     constant in one file, and raising it degrades to something sane rather than to
+     a pile of identical copies. */
+  transform: translate3d(calc(9.5px * var(--g)), 0, 0);
+  opacity: calc(.38 / var(--g));
+}
+.sam-road .sam--road.is-cross .sam__stage--ghost .sam__cel {
+  /* Same sheet, same cycle, wound back an eighth of a turn per copy.
+     `animation-delay` survives here because `.sam.p-run .sam__cel`'s shorthand is a
+     different declaration — the shorthand resets delay to 0, and this then
+     overrides it. Put it in the shorthand instead and specificity order resets it
+     right back. */
+  animation-delay: calc(var(--sam-run-dur) * -0.875 * var(--g));
 }
 
 /* And the real one, stood down for the length of it. visibility rather than
@@ -3146,6 +3262,231 @@ body.term-stowed .sam.p-idle .sam__cel,
 @media (max-height: 699px) {
   .termwin:not(.is-min) .sam { visibility: hidden; opacity: 0; }
   .sam { transition: opacity 240ms var(--ease); }
+}
+
+
+/* ── 10c the résumé viewer ───────────────────────────────────────
+   The first modal on this site, and it is here rather than in §15 with the
+   contact furniture because it belongs to the same family as the terminal
+   window above: a floating panel with a title bar, a hairline frame and a
+   Japanese glyph on the left.
+
+   WHERE IT SITS IN THE STACK. There is no z-index scale in this file, there is
+   a ladder, and it reads: 90 the ambience layers, 95 the matrix canvas and the
+   samurai's road, 96 the terminal window and its reopen button, 97 the spar,
+   100 the nav, 200 the custom cursor, 500 the boot curtain, 999 the skip link.
+   180 puts this above the nav — a modal that the nav floats over is not a modal
+   — and below the cursor, because the cursor is a cursor and must never be
+   underneath the thing it is pointing at. Anything landing between the two in
+   future wants a number in that gap, not a bigger one than this.
+
+   HEIGHT IS THE WHOLE LAYOUT PROBLEM. A PDF has no intrinsic height here, so
+   the panel is told what height to be and the page inside it gets whatever is
+   left after the bar and the foot. That is a column flexbox with `min-height: 0`
+   on the middle child — without that one line the iframe refuses to shrink below
+   its default 150px and pushes the download row off the bottom of the panel,
+   which is the exact bug this feature exists to avoid. */
+.rv {
+  position: fixed;
+  inset: 0;
+  z-index: 180;
+  display: grid;
+  place-items: center;
+  /* dvh, so an open panel is not cut off by a mobile browser's retracting
+     address bar. The fallback matters on nothing current and costs one line. */
+  height: 100vh;
+  height: 100dvh;
+  padding: clamp(.75rem, 3vw, 2.5rem);
+  /* Above the nav means above the nav's shadow too, so the scrim has to cover
+     the full viewport and the padding above is inside it. */
+}
+
+/* [hidden] has to beat display:grid, and a bare attribute selector does not —
+   same specificity, and `hidden` loses on source order. */
+.rv[hidden] { display: none; }
+
+.rv__scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 4, 7, .8);
+  /* The blur is what stops the page behind reading as content you could still
+     click. It is also the single most expensive thing in this file, which is
+     why it is on a 24px radius and not 40. */
+  backdrop-filter: blur(6px) saturate(.75);
+  -webkit-backdrop-filter: blur(6px) saturate(.75);
+  opacity: 0;
+  transition: opacity 260ms var(--ease);
+}
+
+.rv__panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 940px);
+  height: min(100%, 900px);
+  overflow: hidden;
+  background: var(--elev);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow), var(--glow);
+  opacity: 0;
+  transform: translateY(14px) scale(.985);
+  transition: opacity 300ms var(--ease), transform 380ms var(--ease);
+}
+
+.rv.is-open .rv__scrim { opacity: 1; }
+.rv.is-open .rv__panel { opacity: 1; transform: none; }
+
+/* ── its title bar ── */
+.rv__bar {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  flex: 0 0 auto;
+  padding: .62rem .7rem .62rem .95rem;
+  background: var(--elev-2);
+  border-bottom: 1px solid var(--line);
+}
+
+.rv__glyph {
+  font-family: var(--f-jp);
+  font-size: 1.05rem;
+  line-height: 1;
+  color: var(--red);
+  opacity: .9;
+}
+
+.rv__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: 500 var(--t-sm)/1.4 var(--f-mono);
+  letter-spacing: .04em;
+  color: var(--txt-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rv__title em {
+  font-family: var(--f-jp);
+  font-style: normal;
+  color: var(--txt-3);
+  margin-left: .5rem;
+}
+
+.rv__x {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  font: 400 13px/1 var(--f-mono);
+  color: var(--txt-3);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: color 160ms, border-color 160ms, background-color 160ms;
+}
+.rv__x:hover, .rv__x:focus-visible {
+  color: var(--red);
+  border-color: var(--red-soft);
+  background: var(--red-soft);
+}
+
+/* ── the page ── */
+.rv__stage {
+  position: relative;
+  flex: 1 1 auto;
+  /* The line without which the whole panel comes apart — see the note above. */
+  min-height: 0;
+  /* Light, because a PDF's own pages are white and a black surround makes the
+     first page look like it is floating with no edges. This is the one place on
+     the site that is not dark, and it is not a theme, it is paper. */
+  background: #1a1c22;
+}
+
+.rv__frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* The apology, and it is the <object>'s own fallback content rather than a layer
+   over the top — see index.html for why that distinction is the whole design.
+   Which means it has to fill the object's box by itself: a fallen-back <object>
+   is just a box with children in it, and left alone those children sit in the
+   top-left of an otherwise empty grey field looking like a rendering failure
+   rather than an explanation of one. */
+.rv__fallback {
+  display: grid;
+  align-content: center;
+  gap: .55rem;
+  min-height: 100%;
+  padding: clamp(1.2rem, 5vw, 3rem);
+  text-align: center;
+  background: var(--elev);
+  font-size: var(--t-sm);
+  color: var(--txt-2);
+}
+.rv__fallback b { color: var(--txt); font-weight: 500; }
+.rv__fb-jp {
+  font-family: var(--f-jp);
+  font-size: var(--t-lg);
+  color: var(--red);
+  opacity: .8;
+}
+
+/* ── the download row ── */
+.rv__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  padding: .8rem .95rem;
+  background: var(--elev-2);
+  border-top: 1px solid var(--line);
+}
+
+.rv__meta {
+  font: 400 var(--t-xs)/1.5 var(--f-mono);
+  color: var(--txt-3);
+  letter-spacing: .03em;
+}
+.rv__sep { margin: 0 .5rem; opacity: .55; }
+
+.rv__acts {
+  display: flex;
+  gap: .55rem;
+  flex-wrap: wrap;
+}
+
+/* Narrow: the metadata line is the first thing to go, and the two buttons take
+   the full width side by side so neither is the small one. */
+@media (max-width: 560px) {
+  .rv__meta { display: none; }
+  .rv__foot { justify-content: stretch; }
+  .rv__acts { flex: 1 1 auto; }
+  .rv__acts .btn { flex: 1 1 0; justify-content: center; padding-inline: .55em; }
+  /* And the two decorative arrows go as well, because at 390px they are exactly
+     the difference between one line and two: "Open in a tab" wrapping while
+     "Download PDF" beside it stays on one line does not read as a tight fit, it
+     reads as a broken button. Both are aria-hidden, so nothing is lost. */
+  .rv__acts .btn > i { display: none; }
+  .rv__acts .btn > span { white-space: nowrap; }
+}
+
+/* Short: the bar and the foot are fixed furniture, so on a laptop in landscape
+   at 500px tall the page in the middle is what has to give. Nothing to do but
+   let it — this is here to say that is intentional, and that the panel must not
+   grow a scrollbar of its own, which is what removing `overflow: hidden` above
+   would cause. */
+
+@media (prefers-reduced-motion: reduce) {
+  .rv__panel { transform: none; transition: opacity 120ms linear; }
+  .rv__scrim { transition: opacity 120ms linear; }
 }
 
 
