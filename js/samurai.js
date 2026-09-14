@@ -58,6 +58,9 @@
   var reduce = matchMedia('(prefers-reduced-motion: reduce)');
   var narrow = matchMedia('(max-width: 860px)');
   var squat = matchMedia('(max-height: 599px)');
+  /* Mirrors §10b's third gate, the one that also needs the fold state — see off().
+     599 hides him at any width; this one only bites while the window is expanded. */
+  var lowroof = matchMedia('(max-height: 699px)');
 
   var POSES = ['p-idle', 'p-run', 'p-leap', 'p-fall', 'p-land',
                'p-cut-min', 'p-cut-close', 'p-exit', 'p-guard', 'p-hurt'];
@@ -148,11 +151,27 @@
     return true;
   }
 
-  /* Every reason not to perform. Reduced motion and the two size cut-offs
-     mirror §10b's media queries exactly — if CSS has hidden him, JS must not
-     fire a red slash across the window on behalf of an invisible sprite. */
+  /* Every reason not to perform. Reduced motion and the size cut-offs mirror
+     §10b's media queries exactly — if CSS has hidden him, JS must not fire a red
+     slash across the window on behalf of an invisible sprite.
+
+     The last term is the fold-aware one, and it is a condition CSS states as
+     `.termwin:not(.is-min) .sam` — below 700px of viewport an EXPANDED window puts
+     his head, and the road he crosses on, behind the nav; a folded one leaves him
+     300-450px of clear air. Same viewport, opposite answers, so the height alone
+     cannot decide it.
+
+     It belongs in off() rather than somewhere narrower because the crossing has
+     the same problem, which is not obvious and is worth stating: the 参道 band is
+     laid at the WINDOW'S ROOF, not at the bottom of the viewport
+     (.preview-tools/road-headroom.js — band top tracks win.top exactly, 370 at
+     900px of viewport and 214 at 640). So `sl` and `spar` run him along the same
+     line that is behind the nav, and refusing them here is the same fix, not an
+     unrelated one. cross() already declines a folded window, so the pair of them
+     leaves the crossing available exactly where there is room for it. */
   function off() {
-    return dead || doc.hidden || reduce.matches || narrow.matches || squat.matches;
+    return dead || doc.hidden || reduce.matches || narrow.matches || squat.matches ||
+           (lowroof.matches && !isMin());
   }
 
   function isMin() { return win.classList.contains('is-min'); }
