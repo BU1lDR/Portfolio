@@ -78,10 +78,16 @@
 <!-- ?v= is a cache buster, and it earns its keep: GitHub Pages serves assets
      with a ten-minute max-age, so without it a visitor who has been here
      before can sit on an old stylesheet and an old main.js after a deploy —
-     which looks exactly like a broken button. Bump the number in all five
-     references — this one and the four scripts at the end of <body> —
-     whenever you change css/ or js/. -->
-<link rel="stylesheet" href="css/style.css?v=9">
+     which looks exactly like a broken button. Bump the number EVERYWHERE it
+     appears whenever you change css/ or js/, and do not count them by hand:
+
+         grep -c '?v=' index.html 404.html      # 7 and 2 at the time of writing
+         sed -i 's/?v=10"/?v=11"/g' index.html 404.html
+
+     404.html loads the same stylesheet and its own subset of the scripts, so
+     leaving it behind gives you a shell on the 404 page running against last
+     week's CSS. -->
+<link rel="stylesheet" href="css/style.css?v=10">
 
 <!-- The boot overlay shows this ~0.7s in, so it must not be discovered
      late by the parser. 15 KB — it is on the critical path by design. -->
@@ -312,6 +318,93 @@
   <i aria-hidden="true">端末</i>
 </button>
 
+<!-- ── the résumé viewer ────────────────────────────────────────
+     Every Resume button on this page used to be a bare `download` link, so
+     clicking one dropped a file in your downloads folder and gave you nothing
+     to look at. Now they all open this instead: the PDF on screen, with the
+     download sat under it as a deliberate second step rather than the only
+     thing that happens.
+
+     It ships EMPTY on purpose — no src on the frame. A PDF is ~18KB of bytes
+     the browser will happily fetch on page load if you let it, for a panel
+     most visitors never open, so js/main.js module 12 sets the src the first
+     time it is asked for and never again. That is also why the fallback copy
+     below is written as if the embed failed: with no script at all this stays
+     hidden, and if scripting is on but embedding is not supported, the two
+     links in the foot are the whole feature and they work.
+
+     `hidden` rather than a class, so a stylesheet failure leaves it closed
+     rather than parked over the page. Module 12 swaps it for .is-open, which
+     is what actually animates.
+     ──────────────────────────────────────────────────────────── -->
+<div class="rv" id="resumeView" hidden role="dialog" aria-modal="true"
+     aria-labelledby="rvTitle">
+  <div class="rv__scrim" id="rvScrim"></div>
+
+  <div class="rv__panel" role="document">
+    <div class="rv__bar">
+      <span class="rv__glyph" aria-hidden="true">履</span>
+      <h2 class="rv__title" id="rvTitle">resume.pdf <em>履歴書</em></h2>
+      <button class="rv__x" type="button" id="rvClose"
+              aria-label="Close résumé" title="Close (esc)">
+        <span aria-hidden="true">✕</span>
+      </button>
+    </div>
+
+    <!-- The page itself, and it is an <object> for one reason that is worth more
+         than every other consideration: the paragraph inside it is not markup
+         waiting for JavaScript to decide, it is the element's own fallback
+         content. A browser that cannot render application/pdf — iOS Safari,
+         most Android browsers — renders the children instead, natively, with no
+         feature test involved.
+
+         The alternative was an <iframe> plus a script that inspected the frame
+         afterwards to guess whether anything had appeared in it. That guess was
+         written, measured and thrown away: the same check called a blank frame
+         a success in one build and a working PDF a failure in another, which is
+         both possible errors out of two attempts. There is no honest heuristic
+         here, and there does not need to be one — this is what fallback content
+         is for. -->
+    <div class="rv__stage">
+      <object class="rv__frame" id="rvFrame" type="application/pdf"
+              aria-label="Résumé, PDF">
+        <div class="rv__fallback">
+          <p class="rv__fb-jp" aria-hidden="true">表示できません</p>
+          <p><b>This browser will not show a PDF inline.</b></p>
+          <p>Nothing is broken and nothing is missing — use either link below and
+            the file opens in whatever your device does use for PDFs.</p>
+        </div>
+      </object>
+    </div>
+
+    <!-- The download, as its own section rather than as the side effect of a
+         click. Two ways out because they are genuinely different jobs: keep a
+         copy, or read it full-size in a tab. -->
+    <div class="rv__foot">
+      <!-- No file size here, and that is a decision rather than an omission. The
+           only way to know it is to ask the server, and the <object> above is
+           specified NOT to ask when the browser cannot render the type — so a
+           reader on such a browser would be charged a request purely to be told
+           how big the file they cannot see is. Two static facts instead. -->
+      <p class="rv__meta">
+        <span>PDF</span>
+        <span class="rv__sep" aria-hidden="true">·</span>
+        <span>one page, no cover letter</span>
+      </p>
+      <div class="rv__acts">
+        <a class="btn btn--ghost btn--sm" id="rvTab" href="assets/resume.pdf"
+           target="_blank" rel="noopener">
+          <span>Open in a tab</span><i aria-hidden="true">↗</i>
+        </a>
+        <a class="btn btn--solid btn--sm" id="rvGet" href="assets/resume.pdf"
+           download data-cursor="save">
+          <span>Download PDF</span><i class="ico-dl" aria-hidden="true">↓</i>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
 <main id="main">
 
   <!-- ══ HERO ═══════════════════════════════════════════════ -->
@@ -356,9 +449,14 @@
         <a class="btn btn--solid" href="#work" data-cursor="view">
           <span>View work</span><i>作品</i>
         </a>
-        <!-- TODO: put your real PDF at assets/resume.pdf -->
-        <a class="btn btn--ghost" href="assets/resume.pdf" download data-cursor="save">
-          <span>Resume</span><i class="ico-dl">↓</i>
+        <!-- Still an <a> to the file, still keyboard- and middle-click-friendly,
+             and still works with the script gone — module 12 intercepts the
+             click and opens the viewer instead. `download` is deliberately NOT
+             here any more: the fallback behaviour should be "show me the PDF",
+             which is what the viewer does, not "save it silently". -->
+        <a class="btn btn--ghost" href="assets/resume.pdf"
+           data-resume data-cursor="read">
+          <span>Resume</span><i aria-hidden="true">見</i>
         </a>
       </div>
 
@@ -885,8 +983,10 @@
           </div>
           <div class="contact__block">
             <h3>Resume</h3>
-            <a class="btn btn--ghost btn--sm" href="assets/resume.pdf" download>
-              <span>Download PDF</span><i class="ico-dl">↓</i>
+            <!-- Same handoff as the hero's button: opens the viewer, and the
+                 download lives inside it. See the .rv block near the top. -->
+            <a class="btn btn--ghost btn--sm" href="assets/resume.pdf" data-resume>
+              <span>Read it here</span><i aria-hidden="true">見</i>
             </a>
           </div>
           <p class="contact__ascii" aria-hidden="true">また会いましょう<br>/* see you around */</p>
@@ -923,15 +1023,15 @@
      not even data.js — so first is a position it can actually hold. Deleting
      this one line turns the scoreboard off and leaves all two dozen eggs
      working: every call site is guarded. -->
-<script src="js/eggs.js?v=9"></script>
-<script src="js/data.js?v=9"></script>
-<script src="js/scene.js?v=9" defer></script>
-<script src="js/terminal.js?v=9" defer></script>
-<script src="js/main.js?v=9" defer></script>
+<script src="js/eggs.js?v=10"></script>
+<script src="js/data.js?v=10"></script>
+<script src="js/scene.js?v=10" defer></script>
+<script src="js/terminal.js?v=10" defer></script>
+<script src="js/main.js?v=10" defer></script>
 <!-- After main.js, not before: samurai.js checks for window.TermWindow and
      stands down if it is missing, which is only a meaningful test once module 09
      has defined it. Deleting this one line is the samurai's kill switch — he
      stays on the roof, breathing, from CSS alone. -->
-<script src="js/samurai.js?v=9" defer></script>
+<script src="js/samurai.js?v=10" defer></script>
 </body>
 </html>
