@@ -4830,6 +4830,23 @@ body.term-stowed .sam.p-idle .sam__cel,
 .form__status.is-err { color: var(--red); }
 .form__status.is-busy { color: var(--txt-3); }
 
+/* The status line holds controls and not just a sentence in exactly one state:
+   stranded() in js/main.js §08, where a visitor whose browser has no mail handler
+   gets the address and a copy button instead of a promise nothing kept.
+
+   Flex rather than inline children because a button in a run of text sits on the
+   baseline and the descenders fight it; and wrapping, because the sentence plus a
+   full email address plus a button is more than this column has on one line at
+   any width worth designing for. The gap does the separating, so the JS appends
+   the three parts with no punctuation between them. */
+.form__status--out {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .55rem .7rem;
+}
+.form__status--out a { color: var(--red); }
+
 .contact__side { display: flex; flex-direction: column; gap: 1.9rem; }
 .contact__block h3 {
   margin-bottom: .7rem;

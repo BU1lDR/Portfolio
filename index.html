@@ -933,7 +933,16 @@
              EDIT #8 — contact form
              1. Make a free form at https://formspree.io
              2. Paste your form ID below (replace YOUR_FORMSPREE_ID)
-             Until then the form falls back to opening your mail client.
+
+             Until then this form still SENDS — js/main.js §08 sees the untouched
+             placeholder in the action and composes the message into the visitor's
+             own mail client instead of POSTing it. Wiring up Formspree is an
+             upgrade (no mail app needed at the other end, and replies land in a
+             dashboard), not a repair.
+
+             data-fallback-email is where that handoff points, and it is also the
+             address printed on screen if the visitor's browser turns out to have
+             no mail handler at all. Keep it in step with the Direct block below.
              ============================================================ -->
         <form class="form reveal" id="contactForm"
               action="https://formspree.io/f/YOUR_FORMSPREE_ID"

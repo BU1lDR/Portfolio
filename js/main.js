@@ -443,6 +443,55 @@
       status.className = 'form__status' + (kind ? ' is-' + kind : '');
     }
 
+    /* The way out for a visitor whose browser has no mail handler — see the
+       handoff in the submit listener for why that case is invisible to us until
+       after the fact. They have already typed the thing; the only unforgivable
+       outcome here is losing it. So the address goes on screen in plain text and
+       the whole message goes to the clipboard, which makes pasting it into
+       webmail one step instead of a retype.
+
+       The copy runs off a real click and not off the timer that got us here: a
+       clipboard write needs a user gesture, and the gesture that submitted the
+       form expired long before this rendered. Deliberately no form.reset() on
+       this path either, for the same reason — if every copy route fails, the
+       words are still in the textarea. */
+    function stranded(subject, body) {
+      if (!status) return;
+      status.className = 'form__status is-err form__status--out';
+      status.textContent = 'Your browser has no mail app set up. Send it to';
+
+      var mail = doc.createElement('a');
+      mail.href = 'mailto:' + fallback;
+      mail.textContent = fallback;
+      status.appendChild(mail);
+
+      var copy = doc.createElement('button');
+      copy.type = 'button';
+      copy.className = 'btn btn--ghost btn--sm';
+      copy.innerHTML = '<span>Copy message</span><i aria-hidden="true">写</i>';
+      copy.addEventListener('click', function () {
+        var text = 'Subject: ' + subject + '\n\n' + body;
+        var label = copy.querySelector('span');
+        /* Last resort, and it is a real one rather than an apology: select the
+           textarea so Ctrl+C works. The clipboard API needs a secure context and
+           can still be refused by permissions policy, and "copy failed" with no
+           follow-up would put us back where this whole branch started. */
+        function byHand() {
+          var msg = $('#fMsg');
+          if (msg) { msg.focus(); msg.select(); }
+          label.textContent = 'Press Ctrl+C';
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () {
+            label.textContent = 'Copied';
+          }, byHand);
+        } else {
+          byHand();
+        }
+      });
+      status.appendChild(copy);
+    }
+
     function fieldError(id, msg) {
       var input = $('#' + id);
       var slot = $('[data-err-for="' + id + '"]');
@@ -509,16 +558,41 @@
         return;
       }
 
-      // No Formspree ID yet: hand off to the user's mail client instead of
-      // silently doing nothing.
+      /* No form backend, so the message leaves through the visitor's own mail
+         client. That is a real send and not a stub — but it is the one path on
+         this page that can fail with nothing to catch. `mailto:` either hands off
+         to something or does absolutely nothing at all, and there is no event
+         either way: no load, no error, no promise. Plenty of people read mail in
+         a browser tab with no registered handler, and for them this used to say
+         "opening your mail app…" indefinitely while nothing opened and the
+         message they had just written sat there looking sent.
+
+         So hand off, then check a beat later whether anything took it. */
       if (!configured) {
-        var subject = encodeURIComponent($('#fSubject').value.trim() || 'Hello from your portfolio');
-        var body = encodeURIComponent(
-          $('#fMsg').value.trim() +
-          '\n\n— ' + $('#fName').value.trim() + ' (' + $('#fEmail').value.trim() + ')'
-        );
-        window.location.href = 'mailto:' + fallback + '?subject=' + subject + '&body=' + body;
-        say('Opening your mail app… (the form isn\'t wired to a backend yet)', 'busy');
+        var subject = $('#fSubject').value.trim() || 'Hello from your portfolio';
+        var body = $('#fMsg').value.trim() +
+                   '\n\n— ' + $('#fName').value.trim() +
+                   ' (' + $('#fEmail').value.trim() + ')';
+        window.location.href = 'mailto:' + fallback +
+          '?subject=' + encodeURIComponent(subject) +
+          '&body=' + encodeURIComponent(body);
+
+        /* Nothing about backends in here any more. Whether I have got round to
+           wiring up a form service is my problem and not the reader's; what they
+           need from this line is where their message just went. */
+        say('Opening your mail app…', 'busy');
+
+        setTimeout(function () {
+          /* The test for "nothing happened". Anything that did accept the handoff
+             takes the focus with it — a desktop mail app backgrounds this tab, a
+             webmail handler navigates it away — so still being visible AND still
+             holding focus means the handoff went nowhere.
+             Both conditions, because either one alone cries wolf: a second
+             monitor can leave us plainly visible but unfocused, and a tab that
+             merely lost focus has not necessarily failed at anything. */
+          if (document.visibilityState !== 'visible' || !document.hasFocus()) return;
+          stranded(subject, body);
+        }, 1400);
         return;
       }
 
