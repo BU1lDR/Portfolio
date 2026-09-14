@@ -2424,6 +2424,99 @@ body.term-stowed .sam.p-idle .sam__cel,
 }
 .sam-road.is-going { opacity: 0; }
 
+/* ── 疾 ────────────────────────────────────────────────────────
+   One character across the whole screen for the length of the crossing.
+
+   WHY 疾 AND NOT SOMETHING LOUDER. `sl` is the locomotive gag — you type the
+   train, something tears past — and 疾 is the character in 疾走, running at full
+   speed, and in 疾風, a gale. Thirteen strokes with 矢, an arrow, sitting inside
+   it: it is the right shape as well as the right word, which matters when it is
+   going to be four hundred pixels tall.
+
+   The caption is 「疾きこと風の如く」 and it is not decoration either. It is the
+   first line of 風林火山 — 疾如風、徐如林、侵掠如火、不動如山 — Sun Tzu by way of
+   Takeda Shingen, who had it on his battle standard. "Swift as the wind." The
+   sprite is carrying a banner on his back in every frame of this animation. It
+   also disambiguates the glyph: 疾 alone can be read as illness (疾病), and the
+   compound standing next to it settles which 疾 this is.
+
+   FIRST CHILD OF .sam-road, WHICH IS THE WHOLE LAYOUT DECISION. There is no
+   z-index anywhere inside this overlay — DOM order is the stacking, exactly as it
+   is for the sprite's own ghosts — so being first is what puts the glyph behind
+   the haze, the stones, the gates and the man. Give it a z-index instead and it
+   either sits over his head or needs a second number to stop it, and the overlay
+   grows a stacking order that has to be maintained.
+
+   It is a BACKDROP, so it is drawn as one: 6% white fill with a 2px vermilion
+   stroke doing most of the reading. Body copy runs underneath it unharmed, which
+   it must — the page is still the page. The stroke rather than a heavier fill is
+   what buys legibility at that alpha; a 6% solid 疾 is a smudge, a 6% solid 疾
+   with an outline is a character.
+
+   No fade of its own at the end. .sam-road's opacity transition takes the glyph
+   out with the stones and the gates, because they are one event and should leave
+   as one. */
+.sam-road__kanji {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.sam-road__kanji em {
+  display: block;
+  font-family: var(--f-jp);
+  font-style: normal;
+  font-weight: 700;
+  /* Both axes, so it is bounded by whichever runs out first: at 1440x900 the
+     height governs and at a tall narrow window the width does. min() rather than
+     a vmin so the two limits can be tuned apart — 74/52 is the pair where the
+     glyph is the biggest it can be without any stroke leaving the viewport. */
+  font-size: min(74vh, 52vw);
+  line-height: .84;
+  color: rgba(226, 240, 255, .06);
+  -webkit-text-stroke: 2px rgba(255, 59, 83, .13);
+  text-shadow: 0 0 90px rgba(255, 59, 83, .1);
+  /* Written top to bottom, which is the direction it would be written in. A
+     right-to-left reveal would have matched the path being laid, and it was tried
+     and it is worse: a kanji uncovered from the wrong end reads as a wipe over a
+     picture of a character rather than as the character being written. */
+  animation: sam-kanji-in var(--sam-kanji-dur, 420ms) var(--ease-io) both;
+}
+/* 縦書き down the right-hand side, because that is where a caption goes on a
+   poster and because horizontal text under the glyph would land in the middle of
+   the body copy. Held well above the terminal card: .termwin is z-index 96 and
+   would occlude it anyway, but a caption that disappears behind a window is still
+   a caption someone laid out badly. */
+.sam-road__kanji span {
+  position: absolute;
+  top: 20%;
+  right: clamp(12px, 3.4vw, 56px);
+  writing-mode: vertical-rl;
+  font-family: var(--f-jp);
+  font-weight: 500;
+  /* Not --t-sm. At 14px in .42 red on a black overlay this measured 24x153 and
+     read as a scrollbar artefact rather than as an inscription — the one piece of
+     the egg that actually SAYS something, and it was the least legible thing in
+     the frame. The glow is what lets the alpha stay low enough to keep the 疾
+     behind it the subject: the strokes get their contrast from the halo rather
+     than from being opaque. */
+  font-size: clamp(15px, 1.35vw, 19px);
+  letter-spacing: .34em;
+  color: rgba(255, 89, 108, .6);
+  text-shadow: 0 0 14px rgba(255, 59, 83, .34);
+  animation: sam-kanji-in var(--sam-kanji-dur, 420ms) var(--ease-io) both;
+  /* Behind the glyph in time as well as in space: the character lands, then it is
+     named. Both share one duration from JS so the pair scales with the crossing. */
+  animation-delay: calc(var(--sam-kanji-dur, 420ms) * .55);
+}
+@keyframes sam-kanji-in {
+  from { opacity: 0; clip-path: inset(0 0 100% 0); transform: scale(1.06); }
+  30%  { opacity: 1; }
+  to   { opacity: 1; clip-path: inset(0 0 0 0); transform: scale(1); }
+}
+
 /* Zero-height, so everything on the path is positioned against the one line
    that matters and the band is the only thing with a thickness. */
 .sam-road__at {
@@ -2433,64 +2526,362 @@ body.term-stowed .sam.p-idle .sam__cel,
   height: 0;
 }
 
-/* Laid right to left, ahead of him: js/samurai.js sets --sam-road-dur shorter
-   than his run so the stones are always arriving in front of his feet rather
-   than under them. A clip-path wipe rather than an animated width because the
-   width is what the gradients are sized against — animating it would re-resolve
-   every one of them per frame, where a clip only ever hides what is already
-   painted.
+/* ── the bed the stones are set into ──────────────────────────
+   This used to BE the path: one element, a repeating gradient faking the joints,
+   wiped in with a clip-path. Filmed close up (.preview-tools/road-build.js, the
+   `before` set) that reads as a grey ruler, and for a reason no amount of colour
+   tuning could fix — a repeating gradient repeats. Thirty-one identical stones at
+   identical 46px intervals with identical tone is a measuring device, not a
+   surface, and nothing about it can be under construction because a gradient
+   cannot arrive.
 
-   38px, not the 54 this started at. A deep band stops reading as a path and
-   starts reading as a slab laid over the page — and since it hangs from his feet
-   it is hanging over whatever the terminal is sitting in front of. Shallow enough
-   to be a path seen nearly edge-on is both the better drawing and the smaller
-   imposition. */
+   So the stones left, and what stayed behind is the ground UNDER them: the dark
+   sub-base, wiped right to left ahead of his feet so there is something for a
+   flagstone to land on. Darker than any stone, deliberately — the joints between
+   them are this showing through, and a joint has to be the darkest thing in the
+   drawing or the surface reads as tiles laid on a floor rather than as stone set
+   into earth.
+
+   STILL A CLIP-PATH WIPE, and still for the original reason: the width is what
+   the gradient is sized against, so animating the width re-resolves it every
+   frame where a clip only hides what is already painted. The stones are what had
+   to stop being a gradient. This never did.
+
+   40px rather than 38 — two more only, and they go on the bottom fade, because
+   the stones now stand 26px proud of the line and the shadow they sit in needs
+   somewhere to end. */
 .sam-road__band {
   position: absolute;
   left: 0;
   right: 0;
   top: 0;
-  height: 38px;
+  height: 40px;
   clip-path: inset(0 0 0 100%);
   animation: sam-road-lay var(--sam-road-dur, 1200ms) linear both;
-  background:
-    /* the joints between flagstones: a bright edge and a dark one together, so
-       each stone has a lit side and a shaded side and reads as a block rather
-       than as a hairline. Raked 6deg off vertical so the band reads as a path
-       going away rather than as a wall seen face on. */
-    repeating-linear-gradient(96deg,
-      rgba(226, 240, 255, .16) 0 1px,
-      rgba(0, 0, 0, .5) 1px 3px,
-      transparent 3px 46px),
-    /* one darker course along the bottom, which is all the depth 38px can carry
-       before it stops being a surface */
-    linear-gradient(to bottom,
-      #1b1f29 0 52%, #0c0f16 52% 84%, rgba(5, 6, 10, 0) 100%);
+  background: linear-gradient(to bottom,
+    #090c12 0 64%, rgba(5, 6, 10, .58) 64% 88%, rgba(5, 6, 10, 0) 100%);
 }
 
-/* The surface itself — thin, bright, and warm at the end he started from. The
-   stones are cold; this is the one line his feet actually meet.
+/* Warmer at the end he started from — and this is all that is left of the 2px
+   bright rule that used to run the whole width here. Two things replaced it and
+   both are better because both MOVE. Every stone carries its own lit top edge
+   now, so the surface line is made of stones instead of drawn across them; and
+   the accent is the build front (below), a light that travels with the
+   construction — which is exactly what the comment that used to sit here said a
+   static gradient could not do, written as an apology for a red dash parked at
+   the right edge of the page for the rest of the run.
 
-   The warmth FADES IN rather than starting at full --red, because a static
-   gradient cannot follow the moving wipe front and the accent therefore ends up
-   parked at the right edge of the page for the rest of the run. At 3% of full
-   accent it was a bright red dash in the strip of page the terminal card does not
-   cover — an artifact, not a highlight. Held to half strength and given the whole
-   right third to arrive in, it reads as the path being warmer where he came
-   from, which is the thing it was for. */
+   What is left is the residue: a wide soft warmth where he pushed off, with no
+   edge of its own to be mistaken for a UI element. */
 .sam-road__band::before {
   content: '';
   position: absolute;
-  inset: 0 0 auto 0;
-  height: 2px;
+  right: 0;
+  top: -22px;
+  width: 32%;
+  height: 52px;
   background: linear-gradient(to left,
-    rgba(255, 59, 83, .5), rgba(226, 240, 255, .8) 34%, rgba(226, 240, 255, .3));
-  box-shadow: 0 0 12px 0 rgba(255, 59, 83, .22);
+    rgba(255, 88, 74, .17), rgba(255, 88, 74, .05) 46%, rgba(255, 88, 74, 0));
 }
 
 @keyframes sam-road-lay {
   from { clip-path: inset(0 0 0 100%); }
   to   { clip-path: inset(0 0 0 0); }
+}
+
+/* ── 石畳 — the course, one element per flagstone ──────────────
+   THE WHOLE RAKE OF THE PATH IS ON THE CONTAINER, not on the stones, and that is
+   the only reason the stones can animate at all. 5deg of skew turns every
+   vertical joint into a lean, which is the depth cue the old band bought with a
+   96deg gradient; putting it on each stone instead would mean every stone's
+   transform carried both the rake and the animation, and the animation would win.
+   One skew
+   here, thirty-one clean transforms below.
+
+   Left/right rather than a width, so it spans the overlay however wide that is,
+   and 26px tall: that is the thickness of the stone, seen nearly edge-on, and it
+   hangs BELOW his foot line rather than above it. His feet meet the top edge —
+   y=0 is the ground plane and everything under it is the front face of the
+   course. Get that backwards and he walks on air. */
+.sam-road__course {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 26px;
+  transform: skewX(-5deg);
+}
+
+/* Each stone: a top face lit from above, a front face turning away below it, and
+   a shadow cast into the joint on its left. --n, --j, --d and its width all come
+   from js/samurai.js, which walks the viewport right to left dealing them out.
+
+   --n IS ONE NUMBER DOING THREE JOBS and that is the point of it. Tone, edge
+   brightness and — over in the JS — how deep the stone sits are all read off the
+   same 0..1, so a stone that has settled into the bed is also the one catching
+   less light. Three independent randoms would let a sunken stone come out the
+   brightest on the path, which is the specific way procedural texture looks fake.
+
+   hsl() with calc() rather than a colour per stone written out in JS, so the
+   palette stays in the stylesheet where the rest of the palette is. Every var()
+   here carries a fallback, and they are load-bearing: `calc(21% + * 7%)` is not a
+   syntax error CSS recovers from, it throws the whole background away and leaves
+   an invisible stone. */
+.sam-road__stone {
+  position: absolute;
+  left: 0;
+  top: calc(var(--j, 0) * 1px);
+  width: 44px;
+  height: 26px;
+  /* Origin at the TOP because that is the ground plane: the squash on landing has
+     to compress the stone's visible thickness downward, away from the line his
+     feet are on. Origin at the bottom instead lifts the tread off the line for a
+     few frames every time a stone seats, i.e. it puts a ripple through the one
+     edge that must not move. */
+  transform-origin: 50% 0;
+  animation: sam-stone-set var(--sam-stone-dur, 160ms) linear both;
+  animation-delay: var(--d, 0ms);
+  /* FOUR STOPS AND THE LAST ONE IS TRANSPARENT, which is not a flourish. The first
+     tuning of this ran the tread from 20% to 28% lightness and ended the front face
+     on a solid colour, and filmed on the page that is a row of pale concrete blocks
+     with a hard bottom edge — the brightest thing in the frame after the sprite
+     himself, and a wall rather than a path. The band this replaced sat at #1b1f29,
+     which is 11% lightness, and it was right about that even while it was wrong
+     about everything else.
+     So: a dark slate tread, a front face darker again, and the bottom two pixels
+     given away to the bed so the course has no edge of its own down there to be
+     read as the top of a wall. */
+  background:
+    /* Weathering. One light patch and one dark patch, put in DIFFERENT places by
+       --n — the light one at --n across, the dark one at its mirror — because a
+       stone cut from a gradient with no mottling on it is a tile, and thirty-odd
+       tiles from the same gradient are thirty-odd copies of one tile. At 3x zoom
+       the version without these reads as bevelled glass panels. Two radials per
+       stone is what buys "this piece of stone and not that one". */
+    radial-gradient(118% 62% at calc(var(--n, .5) * 100%) 16%,
+      rgba(226, 240, 255, .05), rgba(226, 240, 255, 0) 62%),
+    radial-gradient(88% 54% at calc(100% - var(--n, .5) * 100%) 76%,
+      rgba(0, 0, 0, .3), rgba(0, 0, 0, 0) 64%),
+    /* And the faces. THE STOPS DELIBERATELY DO NOT MEET: 22%→31% and 41%→49% are
+       gaps, so CSS ramps between the faces instead of butting them, and the ramp is
+       the chamfer where one face turns into the next. Written as `0 22%, 22% 41%`
+       it is three hard bands, which is a drawing of a bevel rather than an edge. */
+    linear-gradient(to bottom,
+      /* the tread — the only face with sky on it */
+      hsl(213 14% calc(13% + var(--n, .5) * 7%)) 0 22%,
+      /* the turn of the edge */
+      hsl(216 18% calc(8% + var(--n, .5) * 4%)) 31% 41%,
+      /* the front face, in its own shadow */
+      hsl(220 26% calc(4.5% + var(--n, .5) * 2%)) 49% 84%,
+      rgba(5, 6, 10, 0) 100%);
+}
+/* The lit edge — one pixel, and thirty-odd of them are the path's surface line.
+   Made of stones, so it breaks at every joint and steps up and down with --j,
+   which is the entire difference between a stone path and a drawn rule. */
+.sam-road__stone::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  /* Cool, because the light on this page is cool, but not BLUE: at 32% saturation
+     thirty-odd of these in a row read as a strip of LED and the eye goes to them
+     instead of to the man. 18% is the same light, on stone. */
+  background: hsl(210 18% calc(38% + var(--n, .5) * 22%));
+  opacity: .55;
+}
+/* Shadow cast into the joint to its left. Outside the box on purpose: a joint
+   belongs to the gap, not to either stone, and drawing it inside would eat a
+   pixel of tread off every stone in the course. */
+.sam-road__stone::after {
+  content: '';
+  position: absolute;
+  left: -3px;
+  top: 0;
+  bottom: -2px;
+  width: 3px;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, .7));
+}
+
+/* Dust, on roughly one stone in three — js/samurai.js decides which, and gives
+   each one a --px so the puffs do not all drift the same way. Every stone
+   throwing dust is a fog bank; every third is an event happening in several
+   places at once, which is what construction looks like.
+
+   Timed off --sam-stone-dur rather than given its own delay, so it fires at the
+   instant the stone seats however long the seating takes. The 55% is where the
+   impact is in sam-stone-set below; the two numbers are the same moment and are
+   written as such. */
+.sam-road__stone b {
+  position: absolute;
+  left: 50%;
+  top: -4px;
+  width: 56px;
+  height: 24px;
+  margin-left: -28px;
+  opacity: 0;
+  animation: sam-dust-puff var(--sam-dust-dur, 420ms) ease-out both;
+  animation-delay: calc(var(--d, 0ms) + var(--sam-stone-dur, 160ms) * .55);
+  background: radial-gradient(46% 52% at 50% 72%,
+    rgba(206, 220, 244, .26), rgba(150, 168, 196, .11) 48%, rgba(150, 168, 196, 0) 74%);
+}
+
+/* Rising, not dropping. Both were built and the difference is not subtle: stones
+   falling in from above spend their whole flight in the air ABOVE his foot line,
+   which is where the 鳥居 are, so a cascade of them reads as rubble coming down
+   around the gates. Rising up out of the bed keeps every moving pixel below the
+   line, in the darkest part of the haze, and it is the truthful fiction anyway —
+   this path is conjured for him, not delivered.
+
+   THE FILTER IS WHY YOU CAN SEE ANY OF THAT HAPPEN. Without it the cascade was
+   invisible, and the reason is worth writing down because the geometry was
+   already right: nine stones ARE in flight at any moment, but a stone rising out
+   of a black bed is a dark slate sliver at partial opacity against a darker
+   background, so the front looked like a hard cut between no path and path. What
+   was missing was not motion, it was contrast — and the honest place to get it is
+   the build front, which is a light. A stone lit by the thing that is making it,
+   cooling as it settles out of the front's reach, is both the legible drawing and
+   the only physically coherent one. brightness() is composited in Chromium, so
+   thirty-odd of these cost about what the transforms already cost.
+
+   2.1 is a ceiling, not a taste. brightness() multiplies the whole subtree, so it
+   scales the joint shadow and the dark bottom face along with the lit top — past
+   about 2.2 the tonal spread between neighbouring stones collapses and the eight
+   in flight at any moment merge into one bright grey tube, which is a chrome pipe
+   being extruded, not a road being laid. Filmed at 2.9 to find that out.
+
+   The -3px at 58% is a stone coming up proud of the line and settling back into
+   it. It is three pixels for a fifth of a second and it is the difference between
+   a stone that arrives and a stone that appears. */
+@keyframes sam-stone-set {
+  0% {
+    animation-timing-function: cubic-bezier(.16, .6, .3, 1);
+    opacity: 0;
+    transform: translate3d(0, 20px, 0) scaleY(.5);
+    filter: brightness(2.1);
+  }
+  22% { opacity: 1; }
+  58% { transform: translate3d(0, -3px, 0) scaleY(1.1); filter: brightness(1.35); }
+  78% { transform: translate3d(0, 1px, 0) scaleY(.96); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) scaleY(1); filter: brightness(1); }
+}
+
+@keyframes sam-dust-puff {
+  0%   { opacity: 0; transform: translate3d(0, 4px, 0) scale(.26); }
+  20%  { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--px, -6px), -15px, 0) scale(1.55); }
+}
+
+/* ── the build front ──────────────────────────────────────────
+   The light the construction happens at, and the piece the `before` film was most
+   obviously missing: a clip-path wipe has a leading edge, but a leading edge is a
+   cut, and a cut across a dark page is invisible. Nothing marked where the path
+   was being made, so the path was not being made — it had simply already
+   happened, slightly to the right.
+
+   It travels the overlay's own measured width in --sam-road-dur, the same span in
+   the same time as the wipe and the same time the last stone is dealt, so the
+   three cannot drift apart: js/samurai.js hands all of them one --sam-road-span
+   and one --sam-road-dur. That is why the span is measured off the appended
+   element rather than written as 100vw — since `scrollbar-gutter: stable` went on
+   <html>, 100vw and the width of a fixed overlay are not the same number, and a
+   front that finishes 10px short of the last stone is a front that visibly
+   detaches from its own work.
+
+   NO mix-blend-mode. .sam-road has a z-index, which isolates blending to the
+   overlay's own contents, so `screen` here would blend against the haze and the
+   stones and against nothing at all everywhere else — an effect that changes
+   halfway across the page for reasons no one could see. Bright colours at honest
+   alpha instead. */
+.sam-road__front {
+  position: absolute;
+  left: var(--sam-road-span, 100vw);
+  top: -36px;
+  width: 2px;
+  height: 58px;
+  animation: sam-road-front var(--sam-road-dur, 1200ms) linear both;
+  background: linear-gradient(to bottom,
+    rgba(255, 236, 225, 0),
+    rgba(255, 236, 225, .8) 60%,
+    rgba(255, 122, 106, .68));
+  box-shadow: 0 0 18px 4px rgba(255, 112, 96, .24);
+}
+/* The halo, which is most of what you actually see of it. */
+.sam-road__front i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 230px;
+  height: 140px;
+  margin: -70px 0 0 -115px;
+  background: radial-gradient(50% 50% at 50% 50%,
+    rgba(255, 142, 114, .24), rgba(255, 96, 88, .1) 44%, rgba(255, 96, 88, 0) 72%);
+}
+/* And light pooling forward onto ground that has no stones on it yet, which is
+   the detail that makes the front read as the CAUSE of the path rather than as a
+   decoration travelling along it.
+
+   A radial rather than the linear rule it started as, and the reason is the frame
+   it was caught in: 190px of 7px-tall horizontal gradient sitting on a path line
+   with no stones under it yet reads as a stray underline in the body copy. Light
+   spilled on the ground has no edges; an ellipse anchored at the front says that
+   and a rectangle cannot. */
+.sam-road__front b {
+  position: absolute;
+  right: 100%;
+  top: 32px;
+  width: 205px;
+  height: 26px;
+  background: radial-gradient(62% 52% at 100% 50%,
+    rgba(255, 150, 122, .26), rgba(255, 150, 122, .07) 52%, rgba(255, 150, 122, 0) 78%);
+}
+@keyframes sam-road-front {
+  0%   { opacity: 0; transform: translate3d(0, 0, 0); }
+  7%   { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(calc(var(--sam-road-span, 100vw) * -1), 0, 0); }
+}
+
+/* ── the sheen ────────────────────────────────────────────────
+   For the 620ms after he is gone. The path was asked to outlast him so there
+   would be time to look at it, and in the `before` film what you look at is a
+   still image for two thirds of a second — which reads as the animation having
+   ended early rather than as a held beat. One slow pass of light down the finished
+   course, in the same direction the stones were laid, and the hold becomes the
+   path cooling rather than the page waiting.
+
+   Delayed by exactly --sam-road-dur, so it starts on the frame the last stone is
+   dealt and never travels over unlaid ground. Clipped to 12px, because a
+   highlight on the front face of the course would be light coming from below. */
+.sam-road__sheen {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 12px;
+  overflow: hidden;
+}
+.sam-road__sheen::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 100%;
+  width: 42%;
+  animation: sam-sheen var(--sam-sheen-dur, 900ms) linear both;
+  animation-delay: var(--sam-road-dur, 1200ms);
+  background: linear-gradient(to left,
+    rgba(226, 240, 255, 0), rgba(226, 240, 255, .1) 40%,
+    rgba(255, 208, 190, .2) 58%, rgba(226, 240, 255, 0));
+}
+/* -1.42, not -(span + 42vw): the highlight is 42% of the span wide, so the
+   distance that clears it off the far edge is 1.42 spans. Written as one multiple
+   of one number so the width above and the travel here cannot disagree — mixing
+   vw into this was a bug waiting for the first viewport with a scrollbar. */
+@keyframes sam-sheen {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(calc(var(--sam-road-span, 100vw) * -1.42), 0, 0); }
 }
 
 /* ── 鳥居 ──────────────────────────────────────────────────────
@@ -2507,15 +2898,24 @@ body.term-stowed .sam.p-idle .sam__cel,
    against his 110px of painted width. He runs through the middle of it with room
    either side.
 
-   Six boxes: two pillars off the container's own pseudo-elements, the 笠木 and
+   Ten boxes: two pillars off the container's own pseudo-elements, the 笠木 and
    島木 (the paired top beams that make it a 明神 rather than a plank on two posts)
-   plus the 額束 strut off the <i>, and the 貫 off the <b>. `left` is the gate's
-   CENTRE — the negative margin does that — because js/samurai.js knows where he
-   will be, not where a box edge should go.
+   plus the 額束 strut off the <i>, the 貫 off the <b>, two stone plinths off the
+   <u> and two kicks of dust off the <s>. `left` is the gate's CENTRE — the
+   negative margin does that — because js/samurai.js knows where he will be, not
+   where a box edge should go.
 
    The pillars lean 1.2deg inward. That is 転び, and it is the cheapest detail
    here by a wide margin: without it this is two rectangles and a lintel, and
    with it it is a torii.
+
+   AND NOT ONE OF THEM IS A FLAT FILL ANY MORE. Every box was `background:
+   currentColor` — filmed close up that is three vermilion rectangles and a
+   lintel, which is a diagram of a torii. Painted wood is round: it has a lit
+   side, a core, and a turn away into shadow, and at 10px of pillar width four
+   gradient stops are enough to say so. The weathering over the top is two pixels
+   on, five off, at 10% black — invisible as texture, but it stops the posts
+   reading as vector art, which is the whole of what it is for.
 
    AND NOT IN --red. At the full accent on full opacity three of these were the
    loudest thing on the page by a distance — they stopped being scenery he runs
@@ -2531,7 +2931,12 @@ body.term-stowed .sam.p-idle .sam__cel,
   width: var(--h);
   height: var(--h);
   margin-left: calc(var(--h) / -2);
-  color: #c22d42;
+  /* #c22d42 is the mid tone every gradient below is built around and it used to be
+     `color`, read by six `background: currentColor` declarations. It is not
+     `color` any more because nothing reads currentColor here now — each timber
+     needs its own three stops — and a `color` on an element with no text in it is
+     a declaration that looks live and is not. Kept as a comment instead, since the
+     number itself is still the answer to "what colour is this gate". */
   opacity: 0;
   /* Duration from JS, because the rise has to keep its proportion to a crossing
      whose length changed by 5x. cross() divides 420 by DASH and passes the result
@@ -2541,6 +2946,9 @@ body.term-stowed .sam.p-idle .sam__cel,
      number cross() divides, so a JS-less page still gets the original rise. */
   animation: sam-road-rise var(--sam-road-rise, 420ms) var(--ease) both;
   animation-delay: var(--d, 0ms);
+  /* The foot of the gate, because that is what it is being raised FROM. See the
+     rise keyframes below for why this line matters more than it looks like. */
+  transform-origin: 50% 100%;
 }
 .sam-road__torii::before,
 .sam-road__torii::after {
@@ -2549,11 +2957,88 @@ body.term-stowed .sam.p-idle .sam__cel,
   top: calc(var(--h) * .055);
   bottom: 0;
   width: calc(var(--h) * .05);
-  background: currentColor;
   transform-origin: 50% 100%;
+  background:
+    /* Grain DOWN the post, not across it. The first pass of this ran the repeat
+       `to bottom` — rings every 7px — and at 3x zoom a 10px-wide post with rings on
+       it is bamboo, or corrugated pipe. Timber grain runs the length of the timber,
+       and one pixel in four down a painted post is weathering you can feel without
+       being able to point at. */
+    repeating-linear-gradient(to right,
+      rgba(0, 0, 0, .08) 0 1px, rgba(0, 0, 0, 0) 1px 4px),
+    linear-gradient(to right,
+      #7c1a27 0 13%, #b62d41 34%, #93222f 63%, #58101a 100%);
 }
 .sam-road__torii::before { left: calc(var(--h) * .1);  transform: rotate(1.2deg); }
 .sam-road__torii::after  { right: calc(var(--h) * .1); transform: rotate(-1.2deg); }
+
+/* 亀腹 — the stone the post stands on, and the reason the gates used to look like
+   they had been dropped onto the page rather than built on it. A torii does not
+   meet the ground: it meets a plinth, and without one the pillar simply stops,
+   which is what every rectangle standing on a line looks like.
+
+   Stone-coloured rather than vermilion, from the same palette as the flagstones,
+   because it is the same material — that shared colour is what ties the gates to
+   the path instead of leaving them floating above it. Splayed by 12% either side
+   so it reads as bearing weight. Positioned off --h like everything else: the
+   pillar's centre is .125h in, the plinth is .092h wide, so it starts .079h in and
+   the two arithmetic facts cannot drift apart. */
+.sam-road__torii u {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(var(--h) * .045);
+}
+.sam-road__torii u::before,
+.sam-road__torii u::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: calc(var(--h) * .092);
+  height: 100%;
+  clip-path: polygon(13% 0, 87% 0, 100% 100%, 0 100%);
+  background: linear-gradient(to bottom, hsl(216 13% 27%), hsl(220 18% 12%));
+}
+.sam-road__torii u::before { left: calc(var(--h) * .079); }
+.sam-road__torii u::after  { right: calc(var(--h) * .079); }
+
+/* Dust at the foot of each post as the gate seats. Same keyframes the flagstones
+   use, because it is the same event at a different scale — and reusing the name
+   is not only tidiness: .preview-tools/road-build.js drives this animation by
+   name, so a second set of keyframes doing the same job is a second thing that
+   can fail to be registered there.
+
+   Delayed to 62% of the rise, which is where the overshoot in sam-road-rise
+   bottoms out — the gate is heaviest at that instant and that is when the ground
+   should answer. Wider and slower than a flagstone's puff, since something two
+   hundred pixels tall just landed on it. */
+.sam-road__torii s {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0;
+}
+.sam-road__torii s::before,
+.sam-road__torii s::after {
+  content: '';
+  position: absolute;
+  bottom: calc(var(--h) * -.03);
+  width: calc(var(--h) * .34);
+  height: calc(var(--h) * .15);
+  opacity: 0;
+  animation: sam-dust-puff calc(var(--sam-road-rise, 420ms) * 4) ease-out both;
+  animation-delay: calc(var(--d, 0ms) + var(--sam-road-rise, 420ms) * .62);
+  /* Carrying more alpha than the flagstone puffs and not because it is bigger:
+     these are inside .sam-road__torii, which settles at opacity .62, so whatever
+     is written here arrives on screen multiplied by that. .4 lands at .25 — the
+     same weight as a stone's dust, stated where the reader can check it. */
+  background: radial-gradient(46% 52% at 50% 74%,
+    rgba(212, 198, 188, .4), rgba(160, 148, 142, .16) 48%, rgba(160, 148, 142, 0) 74%);
+}
+.sam-road__torii s::before { left: calc(var(--h) * -.045); --px: -14px; }
+.sam-road__torii s::after  { right: calc(var(--h) * -.045); --px: 14px; }
 
 /* 笠木 — the top beam, overhanging both pillars, with its ends lifted. A real one
    curves; a clip-path with the mid-span dropped a couple of percent is the flat
@@ -2564,11 +3049,14 @@ body.term-stowed .sam.p-idle .sam__cel,
   right: 0;
   top: 0;
   height: calc(var(--h) * .055);
-  background: currentColor;
   clip-path: polygon(0 0, 9% 42%, 91% 42%, 100% 0, 100% 100%, 0 100%);
+  /* Lit along the top and shaded underneath, which is the one place on the whole
+     gate where the light direction is unambiguous: the sky is up. */
+  background: linear-gradient(to bottom, #cf3d51 0 26%, #ab2739 54%, #74192a);
 }
 /* 島木 under it, slightly inset — the pair is the 明神 signature — and 額束, the
-   short strut standing on the 貫 under the centre of the beams. */
+   short strut standing on the 貫 under the centre of the beams. The 島木 sits in
+   the 笠木's shadow, so it is darker than either face of the beam above it. */
 .sam-road__torii i::before {
   content: '';
   position: absolute;
@@ -2576,7 +3064,7 @@ body.term-stowed .sam.p-idle .sam__cel,
   right: 4%;
   top: 100%;
   height: calc(var(--h) * .028);
-  background: currentColor;
+  background: linear-gradient(to bottom, #8e2033, #631322);
 }
 .sam-road__torii i::after {
   content: '';
@@ -2586,23 +3074,52 @@ body.term-stowed .sam.p-idle .sam__cel,
   width: calc(var(--h) * .035);
   height: calc(var(--h) * .11);
   margin-left: calc(var(--h) * -.0175);
-  background: currentColor;
+  background: linear-gradient(to right, #851d2d 0 22%, #ae2f42 52%, #6a1522);
 }
-/* 貫 — through the pillars rather than sat on top of them, three tenths down. */
+/* 貫 — through the pillars rather than sat on top of them, three tenths down.
+   Rounded the same way as the posts, since it is the same timber. */
 .sam-road__torii b {
   position: absolute;
   left: calc(var(--h) * .06);
   right: calc(var(--h) * .06);
   top: calc(var(--h) * .2);
   height: calc(var(--h) * .035);
-  background: currentColor;
+  background: linear-gradient(to bottom, #bb3346 0 24%, #9c2536 58%, #6b1523);
 }
 
-/* Each gate is already there by the time he reaches it — js/samurai.js sets --d
-   from the same arithmetic the spar uses for the headings, minus a lead. */
+/* ── raised, not translated ───────────────────────────────────
+   Each gate is already there by the time he reaches it — js/samurai.js sets --d
+   from the same arithmetic the spar uses for the headings, minus a lead — and what
+   changed here is what "arriving" looks like.
+
+   IT USED TO BE A 16px SLIDE AND A FADE, i.e. a gate that was always that size
+   and merely somewhere else a moment ago. With transform-origin at the foot and
+   scaleY from .68, the same 84ms instead shows a torii coming up out of the ground
+   to its full height. It costs one extra number and it is the difference between
+   scenery being placed and scenery being built, which is the whole subject of
+   this animation.
+
+   The 1.035 at 72% is the overshoot the dust answers — see .sam-road__torii s,
+   which fires at 62% precisely so the kick lands while the gate is still settling
+   rather than after it has stopped. Two hundred pixels of timber does not come to
+   rest silently and the ground is the only thing here that can say so.
+
+   Settling at .62 rather than 1 is deliberate and old: at full opacity these stop
+   being scenery he runs through and become three enormous UI chevrons. */
+/* --o rather than a flat .62, and the fallback is the old number so a JS-less page
+   is unchanged. Filmed, all three gates were 210x210 at opacity .62 — literally
+   the same object three times in one frame, which is the loudest procedural tell
+   in the shot and the one thing no amount of gradient work on a single gate can
+   fix. cross() now hands each one its own --h and --o. A real 参道's gates differ
+   because they were donated at different times by different people, so the
+   variation is the truthful kind rather than perspective faked without a
+   vanishing point. Note 55% carries the same var: hard-coding .7 there would make
+   the faintest gate momentarily the brightest on its way up. */
 @keyframes sam-road-rise {
-  from { opacity: 0; transform: translate3d(0, 16px, 0); }
-  to   { opacity: .62; transform: translate3d(0, 0, 0); }
+  0%   { opacity: 0; transform: translate3d(0, 14px, 0) scaleY(.68); }
+  55%  { opacity: calc(var(--o, .62) * 1.13); }
+  72%  { transform: translate3d(0, 0, 0) scaleY(1.035); }
+  100% { opacity: var(--o, .62); transform: translate3d(0, 0, 0) scaleY(1); }
 }
 
 /* Haze along the path, and it is doing more work than it looks like. Without it
