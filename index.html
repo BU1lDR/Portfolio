@@ -81,7 +81,7 @@
      which looks exactly like a broken button. Bump the number in all five
      references — this one and the four scripts at the end of <body> —
      whenever you change css/ or js/. -->
-<link rel="stylesheet" href="css/style.css?v=7">
+<link rel="stylesheet" href="css/style.css?v=8">
 
 <!-- The boot overlay shows this ~0.7s in, so it must not be discovered
      late by the parser. 15 KB — it is on the critical path by design. -->
@@ -923,15 +923,15 @@
      not even data.js — so first is a position it can actually hold. Deleting
      this one line turns the scoreboard off and leaves all two dozen eggs
      working: every call site is guarded. -->
-<script src="js/eggs.js?v=7"></script>
-<script src="js/data.js?v=7"></script>
-<script src="js/scene.js?v=7" defer></script>
-<script src="js/terminal.js?v=7" defer></script>
-<script src="js/main.js?v=7" defer></script>
+<script src="js/eggs.js?v=8"></script>
+<script src="js/data.js?v=8"></script>
+<script src="js/scene.js?v=8" defer></script>
+<script src="js/terminal.js?v=8" defer></script>
+<script src="js/main.js?v=8" defer></script>
 <!-- After main.js, not before: samurai.js checks for window.TermWindow and
      stands down if it is missing, which is only a meaningful test once module 09
      has defined it. Deleting this one line is the samurai's kill switch — he
      stays on the roof, breathing, from CSS alone. -->
-<script src="js/samurai.js?v=7" defer></script>
+<script src="js/samurai.js?v=8" defer></script>
 </body>
 </html>
