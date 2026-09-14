@@ -3093,12 +3093,60 @@ body.term-stowed .sam.p-idle .sam__cel,
    nothing set aside for him. He exists exactly where the page reserves space
    for him — the same line §18 already draws — and nowhere else.
 
-   The height cut-off is the nav: at 600px of viewport the open window's roof is
-   close enough to the 68px nav that his sashimono would be sliced by it. A flat
-   query needs no clearance arithmetic to stay correct when an unrelated clamp
-   changes. */
+   The height cut-off is the nav. This comment used to claim 599px was that
+   cut-off and that "a flat query needs no clearance arithmetic to stay correct
+   when an unrelated clamp changes" — which had it backwards. The flat query is
+   exactly what went stale when the window's height clamp changed, and 599 turned
+   out to name where the problem STARTS rather than where it ends. Measured
+   (.preview-tools/sam-navup.js, which pulls the nav down mid-scroll because that
+   is the only moment it can reach him):
+
+       1440x600 open   his head 58px behind the nav
+       1440x640 open                39px
+       1440x660 open                 4px
+       1920x600 open                64px   <- worst width
+        861x600 expanded            46px
+       1920x700 open                clear by 10px
+        861x700 expanded            clear by 28px
+
+   So an OPEN window needs 700px of viewport, not 600. Two things stop that from
+   being another flat query.
+
+   First, the nav is not usually there. It rides at translateY(-68px) whenever you
+   have scrolled down, which is always true of the position he lives at, so the
+   overlap is only real during a scroll-up while the nav slides back down. That is
+   a transient, but a head sliding under a blur bar is exactly the artefact this
+   section exists to prevent, so it counts.
+
+   Second and decisive: a FOLDED window is fine at every height. Its roof is down
+   at the peek bar and he clears by 300-450px. 861x600 arrives folded and is clear
+   by 297; expand that same viewport and he is 46px behind the nav. One viewport,
+   two answers, and a media query cannot see which — so the gate has to name the
+   fold, not just the height. Below 600 he goes regardless: that is a viewport too
+   short to hold the window and the nav and him in any configuration.
+
+   Why visibility rather than display, for this one gate only: it can flip DURING
+   an interaction, because folding the window creates the room. display: none
+   would snap him into existence at the end of a fold, and would restart the
+   breath loop from frame 0 while it did it. Fading opacity leaves the loop running
+   and lands the appearance inside the fold's own 1070ms of motion, where nothing
+   about it reads as a pop. The two queries below never flip mid-interaction, so
+   they keep display: none.
+
+   AND THE TRANSITION IS THE ONE §14 SAYS NOT TO ADD. Read the note above the exit
+   keyframes: "no transition anywhere near .sam that could run backwards and fade
+   him IN when the window is reopened mid-fall". That hazard needs him visible with
+   an OPEN window, and in here he never is — open plus short is precisely the state
+   this query hides. So the transition cannot catch a reopen: at 700px and up it
+   does not exist, and below 700 a reopened window is an open one and he is at
+   opacity 0 either way. .preview-tools/sam-fade.js drives that reopen-mid-fall
+   case at 1440x640 rather than taking this paragraph's word for it. */
 @media (max-width: 860px) { .sam { display: none; } }
 @media (max-height: 599px) { .sam { display: none; } }
+@media (max-height: 699px) {
+  .termwin:not(.is-min) .sam { visibility: hidden; opacity: 0; }
+  .sam { transition: opacity 240ms var(--ease); }
+}
 
 
 /* ── 11 about ────────────────────────────────────────────────── */
