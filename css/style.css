@@ -2410,12 +2410,18 @@ body.term-stowed .sam.p-idle .sam__cel,
   position: fixed;
   inset: 0;
   z-index: 95;
-  /* He exits past x=0 and must not raise a bar — and since the dash, this clip is
-     load-bearing for a second reason: it is what lets the real sprite come back
-     onto his post while this overlay is still on the page fading out. The runner
-     is held off the left edge by sam-cross's `both` and clipped away here, so
-     there is no frame with two of him visible. js/samurai.js::cross() spells that
-     out where it splits restore() from tidy(). */
+  /* He exits past x=0 and must not raise a bar. That is now the ONLY thing this
+     clip is for, and the paragraph that used to be here is worth keeping as a
+     warning: it claimed the runner was "held off the left edge by sam-cross's
+     `both` and clipped away here, so there is no frame with two of him visible",
+     and named this clip as load-bearing for that. Both halves were false. cross()
+     was sending him only far enough to put his LEADING painted edge past x=0 —
+     he faces left, so that is his front — which left 84px of his 256px box inside
+     this clip with sam-run still infinite on it. He ran on the spot at the left
+     edge for over a second, and for 430ms of that the real sprite was visibly
+     running back on at the same time. A comment asserting the invariant is not the
+     same as something enforcing it. cross() now removes the runner at dur + 60, so
+     the guarantee lives in the DOM. */
   overflow: hidden;
   pointer-events: none;
   /* Duration comes from JS so that the fade and the element's removal are one
