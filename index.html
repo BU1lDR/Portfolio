@@ -520,8 +520,17 @@
           <button class="btn btn--solid termhome__open" type="button" id="termOpen" data-cursor="shell">
             <span id="termOpenLabel">Open terminal</span><i>起動</i>
           </button>
+          <!-- The count is written by js/terminal.js from the real CMDS object,
+               because a number hardcoded here is a number that goes stale: this
+               said 35 for a long time when help listed 21. The 21 below is the
+               fallback for a no-JS reader and is correct as of now; it is not
+               what a visitor with JS sees, so it cannot drift on its own.
+               Only the commands help LISTS are counted - the hidden aliases and
+               the easter eggs are deliberately excluded, which is the same
+               promise help makes when it says a few are not on the list. -->
           <p class="termhome__hint">
-            35 commands. <kbd>↹</kbd> completes, <kbd>↑</kbd> walks history,
+            <span id="termCmdCount">21</span> commands. <kbd>↹</kbd> completes,
+            <kbd>↑</kbd> walks history,
             <kbd>esc</kbd> closes the window. Start with <code>help</code>.
           </p>
         </div>

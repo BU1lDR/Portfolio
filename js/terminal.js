@@ -1120,6 +1120,21 @@
 
   /* ── first paint ──────────────────────────────────────────── */
 
+  /* Keep the "N commands" line on the terminal card honest. It is markup in
+     index.html and the commands live here, so the two drifted: the page claimed
+     35 while help listed 21. Deriving it from the same filter help uses means
+     adding a command updates the page and nobody has to remember.
+
+     Same filter, deliberately — !hidden. The aliases and the easter eggs are
+     not counted, because help does not list them either and the card is a
+     promise about what help will show you. */
+  var countEl = document.getElementById('termCmdCount');
+  if (countEl) {
+    countEl.textContent = Object.keys(CMDS).filter(function (n) {
+      return !CMDS[n].hidden;
+    }).length;
+  }
+
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   var welcome = [
