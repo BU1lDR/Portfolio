@@ -122,7 +122,7 @@ window.PORTFOLIO = {
          was never right: every version of the resume says Aug, and the four IBM
          SkillsBuild certificates in assets/certs/ are all issued 18-19 Aug 2026.
          Mirror any change here in index.html's timeline — the page carries its
-         own static copy of these three entries and only the terminal reads
+         own static copy of these two entries and only the terminal reads
          this array. */
       when: 'Aug — Sep 2026',
       what: 'Data Analytics Intern',
@@ -131,19 +131,14 @@ window.PORTFOLIO = {
             'thinking to them — which is where data analytics and AI stopped ' +
             'being two separate subjects for me.'
     },
-    {
-      /* The second SIH 2026 involvement. The resume has carried this under
-         Experience all along and the site did not know about it, which made the
-         two documents disagree for anyone who read both. Contributor, not lead
-         — the title deliberately names the work rather than a rank. */
-      when: 'Sep 2026',
-      what: 'Digital Twin — Team Project',
-      where: 'Smart India Hackathon 2026 — DRDO (SIH26054)',
-      note: 'AI-enabled real-time digital twin for health monitoring and fault ' +
-            'prediction of the aero piston engines used in MALE UAVs. Worked on ' +
-            'system architecture, telemetry and data workflows, and the ' +
-            'AI-driven fault detection concepts.'
-    },
+    /* A third entry sat here, between the two around it. Removed on request.
+       Deliberately not described: the point of taking it off the site is not to
+       publish it, and a comment in a public repo is published.
+
+       It is still in assets/resume.src.html under Experience, so the site now
+       lists one fewer role than the PDF the site links to. That gap is a choice,
+       not the silent drift the comment above warns about. To close it, edit that
+       file and rebuild resume.pdf with tools/build-resume.js. */
     {
       when: '2026',
       what: 'Backend — Lead',
