@@ -1,17 +1,62 @@
-assets/ — two files left to drop in, and the site is complete.
+assets/ — one optional file left to drop in (me.jpg, item 5).
+Everything else here is in place.
 
 ────────────────────────────────────────────────────────────────
 
-1. resume.pdf                                        ← IN PLACE ✓
+1. resume.pdf  +  resume.src.html                    ← IN PLACE ✓
    Your CV. The hero "Resume" button, the Contact sidebar, and
    the terminal's `resume` command all point at this exact path:
 
        assets/resume.pdf
 
-   Copied from ..\..\Resume_AryanVerma.pdf on 2026-09-10.
-   Re-copy it whenever you update the original:
+   DON'T EDIT THE PDF, AND DON'T COPY ONE IN OVER IT.
+   resume.src.html is the source now, and resume.pdf is built from
+   it by printing it with headless Chromium:
 
-       cp ../../Resume_AryanVerma.pdf assets/resume.pdf
+       node tools/build-resume.js          (from the repo root)
+
+   Edit the HTML, run that, done. Every number in the stylesheet
+   there is commented, including why the document sits about 9pt
+   off the bottom margin and what breaks if you add a line.
+
+   Why it works this way, and not with a `cp` from wherever the PDF
+   came from — the PDF that used to be here:
+
+     · printed a mobile number and a zone-plus-postcode address
+       across the top of a file served to anyone who asks for it,
+       forever, and archived in git besides. Neither value is
+       written out here, or in resume.src.html, or in the scripts
+       that check for them - they match the shape of an Indian
+       mobile number and of a Delhi postcode. Quoting a secret in
+       the note that says you removed it does not remove it, and
+       text in a public repo is easier to find than a PDF: GitHub
+       indexes text, and the digits inside a PDF page are glyph
+       indices that match no search;
+     · carried a signed C2PA manifest — an embedded content
+       credential naming ChatGPT as the claim generator and
+       asserting digitalSourceType trainedAlgorithmicMedia. Not a
+       stray string: a cryptographically signed attachment, and
+       none of it visible in a PDF reader;
+     · linked github.com/BU1DR, which is a 404. The username is
+       BU1lDR with a lowercase L. Arial draws that L identically to
+       a capital I, so this class of typo cannot be proofread by
+       looking at it — click the link, or extract the text.
+
+   Re-exporting from any AI writing tool puts all of that back. So
+   before you replace this file, run:
+
+       node tools/pdf-audit.js assets/resume.pdf
+
+   It reads three separate layers — raw bytes, inflated object
+   streams, and the visible text via pdftotext — because the
+   visible text is NOT greppable: the page addresses glyphs by
+   index into a subset font, so a phone number printed across the
+   top of the page is invisible to any scanner that skips
+   pdftotext. build-resume.js runs the same checks on its own
+   output and refuses to finish if one fails.
+
+   Keep a private copy with your phone number on it for actual
+   applications. Do not put that copy in this repo.
 
 
 2. pfp.jpg                                           ← IN PLACE ✓
@@ -105,8 +150,12 @@ in, so the published URL doesn't carry it.
 
 badges/ — issuer badge art
 
-Seven transparent PNGs, 600x600 (networking-basics is 650), the
-official Credly badge images. The grid shows them at 64px, muted
+Seven transparent PNGs, 128x128, the official Credly badge images
+downscaled. They arrived at 600x600 (networking-basics at 650) and
+were resampled in 859cb77, which took the seven of them from 296KB
+to 76KB for art that is never drawn above 64px.
+
+The grid shows them at 64px, muted
 with saturate(.62), and restores full colour on hover or
 keyboard focus — Cisco cyan and IBM magenta at full strength
 fight this site's palette.
@@ -122,9 +171,10 @@ name in mono instead ("cisco", "aws", "IBM", "IIT Kanpur"). A ✓
 was there first, but an empty 64px box reads as an image that
 failed to load.
 
-If you add a credential later, grab its badge from Credly at
-600px or larger, save it as PNG with transparency, and name it
-to match the PDF.
+If you add a credential later, grab its badge from Credly, resize
+it to 128x128, save it as PNG with transparency, and name it to
+match the PDF. Don't drop a 600px one straight in — it will look
+identical and cost four times the bytes.
 
 Not published, and deliberately so: the seven "Digital Sticker"
 PNGs in the source folder. They're participation stickers rather
