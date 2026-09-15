@@ -109,10 +109,60 @@
          this resume, and removed from the site's timeline and js/data.js on
          request. If it was real work, it is currently unclaimed anywhere.
 
-         Also note this resume now describes अर्थNiti TWICE — once here under
-         Experience and once under Projects. That is how the source PDF reads,
-         so it is reproduced rather than tidied, but on a one-page document it
-         spends two entries on one project.
+         The Experience entry for it is GONE, and that is the second change,
+         made on request. It described the same अर्थNiti project the Projects
+         section describes, so a one-page document was spending two of its five
+         entries on one piece of work — which reads as padding whichever half
+         you believe. Everything the Experience copy carried was folded into the
+         Projects entry instead: the ministry, the problem statement number, and
+         the architecture and UI contribution. Nothing was dropped except the
+         "Sep 2026" date, because no other Projects entry carries one and dating
+         exactly one of the three looks like an oversight rather than a fact.
+
+         The cost, stated plainly: EXPERIENCE now holds one entry. If you would
+         rather it held two, move this entry back there and cut the Projects
+         copy instead — the same merge in the other direction, and the tradeoff
+         is a fuller Experience section against a hackathon sitting next to an
+         internship as though the two were the same kind of thing.
+
+     THE CERTIFICATIONS LIST, AND WHAT WAS CHECKED BEFORE WRITING IT
+     The old list had three lines. The site lists eleven, and assets/certs/ holds
+     exactly eleven PDFs, one per entry — so the resume was under-claiming by
+     eight real certificates. All eleven are here now, grouped by issuer rather
+     than one per line: eleven separate lines cost about eleven line-heights on a
+     page that clears its bottom margin by single digits, and four grouped lines
+     cost six. Grouping also survives text extraction intact, which a two-column
+     layout would not have.
+
+     Seven of the eleven are also public badges on credly.com/users/aryan_v
+     (three Cisco, four IBM SkillsBuild), checked against the profile rather than
+     assumed. The other four — Packet Tracer, Foundations of Prompt Engineering,
+     the IBM Bob lab, and the IIT Kanpur C course — exist only as the PDFs in
+     assets/certs/. That is still a certificate; it just is not one a recruiter
+     can verify by clicking. Nothing here says or implies all eleven are on
+     Credly, and nothing should.
+
+       · ONE LINE WAS REMOVED, not moved: "Data Analyst | IBM SkillsBuild".
+         There is no such badge on Credly, no such entry in js/data.js, and no
+         file for it in assets/certs/ — it appeared only on the PDF. It was left
+         off rather than carried forward, because a certification line nobody can
+         produce a certificate for is the one kind of error on a resume that
+         costs more than the line was worth. If you hold it, add it back and put
+         the PDF in assets/certs/ with the rest.
+
+     THE EDUCATION LINE
+     It named GGSIPU alone, which is the affiliating university and not where you
+     study. It now names both: Dr Akhilesh Das Gupta Institute of Professional
+     Studies (ADGIPS), affiliated to GGSIPU — the institute's own registered
+     spelling, taken off adgips.ac.in and not from memory, because ADGIPS and
+     ADGITM are two different GGSIPU colleges with nearly the same name and the
+     wrong one is a lie you cannot see. The degree is now stated on that line
+     too. It never was before: "B.Tech, Information Technology" appeared nowhere
+     on this document, and the summary paragraph only implied it.
+
+     Note this diverges from the site, which still names GGSIPU alone in both
+     js/data.js and index.html. Those two must change together if they change at
+     all.
      ══════════════════════════════════════════════════════════════════════════ -->
 
 <!-- Reachable, because the deploy workflow uploads the whole repo root and Pages
@@ -259,15 +309,6 @@ industry experience.</p>
     <li>Create functional and technical application documents.</li>
   </ul>
 </div>
-<div class="entry">
-  <p class="role">Smart India Hackathon (SIH) 2026 - MoSJE Team Project</p>
-  <p class="when">Sep 2026</p>
-  <ul>
-    <li>Collaborated on a prototype for an AI-driven hyper-local business advisory and financial
-        structuring assistant for rural micro-entrepreneurs (Problem Statement SIH26091).</li>
-    <li>Contributed to system architecture, back-end, and UI design.</li>
-  </ul>
-</div>
 
 <h2>PROJECTS</h2>
 <div class="entry">
@@ -278,8 +319,10 @@ industry experience.</p>
 </div>
 <div class="entry">
   <p class="role">अर्थNiti (ArthNiti) - Backend - Lead</p>
-  <p>Smart India Hackathon 2026 - an AI-driven hyper-local business advisory and financial structuring
-     assistant for rural micro-entrepreneurs. Built the backend API surface and integrations.</p>
+  <p>Smart India Hackathon 2026, Ministry of Social Justice and Empowerment (MoSJE) - problem
+     statement SIH26091: an AI-driven hyper-local business advisory and financial structuring
+     assistant for rural micro-entrepreneurs. Led the backend on a team prototype, building the API
+     surface and the integrations behind it, and contributed to system architecture and UI design.</p>
   <p class="tech">Tech: Python, FastAPI, React, Tailwind CSS, Vite</p>
 </div>
 <div class="entry">
@@ -291,8 +334,8 @@ industry experience.</p>
 
 <h2>EDUCATION</h2>
 <div class="edu">
-  <p class="school">Guru Gobind Singh Indraprastha University (GGSIPU)</p>
-  <p>Aug 2025 - Aug 2029 | CGPA: 9.04</p>
+  <p class="school">Dr Akhilesh Das Gupta Institute of Professional Studies (ADGIPS), GGSIPU</p>
+  <p>Aug 2025 - Aug 2029 | B.Tech, Information Technology | CGPA: 9.04</p>
 </div>
 <div class="edu">
   <p class="school">Mother's Global School</p>
@@ -300,9 +343,12 @@ industry experience.</p>
 </div>
 
 <h2>CERTIFICATIONS</h2>
-<p class="line">Junior Cybersecurity Analyst | Cisco Networking Academy (2026)</p>
-<p class="line">Data Analyst | IBM SkillsBuild (2026)</p>
-<p class="line">Prompt Engineering | AWS Skill Builder (2026)</p>
+<p class="line">Cisco Networking Academy (2026): Junior Cybersecurity Analyst Career Path; Introduction to
+Cybersecurity; Networking Basics; Getting Started with Cisco Packet Tracer</p>
+<p class="line">IBM SkillsBuild (2026): Data Fundamentals; Getting Started with Data; Generative AI Essentials:
+Using LLMs to Work with Data; Make Agentic AI Work for You; Lab: Troubleshoot Your Code Using IBM Bob</p>
+<p class="line">Amazon Web Services (2026): Foundations of Prompt Engineering</p>
+<p class="line">E&amp;ICT Academy, IIT Kanpur (2025): Fundamentals of C Programming</p>
 
 </body>
 </html>
