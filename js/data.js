@@ -135,10 +135,12 @@ window.PORTFOLIO = {
        Deliberately not described: the point of taking it off the site is not to
        publish it, and a comment in a public repo is published.
 
-       It is still in assets/resume.src.html under Experience, so the site now
-       lists one fewer role than the PDF the site links to. That gap is a choice,
-       not the silent drift the comment above warns about. To close it, edit that
-       file and rebuild resume.pdf with tools/build-resume.js. */
+       It is not in the resume either. The gap that existed for one commit — site
+       short one role against the PDF the site links to — is closed: the Sep 2026
+       entry in assets/resume.src.html is now the same SIH project the second
+       entry below describes, so the two documents agree again. If you ever put
+       this role back, put it in both, or the drift the comment above warns about
+       is exactly what you get. */
     {
       when: '2026',
       what: 'Backend — Lead',
