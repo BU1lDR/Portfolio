@@ -5171,6 +5171,66 @@ body.term-stowed .sam.p-idle .sam__cel,
 }
 
 
+/* ── 18b touch targets ───────────────────────────────────────────
+   WCAG 2.5.8 (AA) asks for 24x24 CSS px of tappable area. Three sets of links
+   here are mono text at --t-xs or --t-sm on a line-height of 1, which renders
+   15-18px tall — fine for a mouse, and about half a fingertip.
+
+   Fixed with an invisible absolutely-positioned pseudo-element rather than with
+   padding, and that is the whole reason this block exists as its own thing:
+   padding would change the visual size, and every one of these sits in a flex
+   row or column whose spacing is part of the design. The pseudo-element grows
+   only the HIT area. It is the same idiom §10 already uses on .term__dot, an
+   11px dot that a finger meets as 27x29.
+
+   NOT in a media query, and not gated on (hover: none). Target size does not
+   depend on viewport width — a 15px link is equally awkward on a large tablet —
+   and hover media queries lie about touchscreen laptops.
+
+   The insets are derived from the boxes these links ACTUALLY have, which are
+   smaller than they look in a report that measures the anchor including its ↗
+   glyph and border: --t-xs resolves to 11.04px and --t-sm to 12.9px, so on a
+   line-height of 1 the boxes are 12, 13 and 14px. Sizing the expansion off the
+   larger figure is how a first pass at this landed .hero__social on exactly 24px
+   — passing, but with nothing in hand, one type change from regressing.
+
+     .hero__social a    14px + 12 = 26
+     .certs__act a      12px + 14 = 26
+     .contact__links a  13px + 12 = 25
+     .card__links a     14px + 12 = 26   (the projects' CODE↗ / LIVE↗ pair)
+
+   The expansion is then bounded by each component's own gap, because two
+   overlapping hit areas send the tap to whichever paints last, and for three
+   links pointing at three different profiles that is worse than a small target.
+   Two gaps had to grow to make room, and both are listed here rather than left
+   as unexplained numbers elsewhere:
+     .contact__links  .55rem -> .9rem   (8.8px could not hold two 6px halves)
+     .certs__act      row .2rem -> .9rem (only matters if PDF↓ / Verify↗ wrap,
+                       which they do not today at any width in the sweep — the
+                       gap is there so that a future longer label cannot make
+                       two rows of links overlap silently)
+
+   .hero__social uses ::before because ::after there is already the animated
+   red underline. */
+.hero__social a::before,
+.certs__act a::after,
+.contact__links a::after,
+.card__links a::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+}
+.card__links a            { position: relative; }
+.card__links a::after     { inset: -6px -4px; }
+.hero__social a::before   { inset: -6px -4px; }
+.certs__act              { row-gap: .9rem; }
+.certs__act a             { position: relative; }
+.certs__act a::after      { inset: -7px -4px; }
+.contact__links          { gap: .9rem; }
+.contact__links a         { position: relative; }
+.contact__links a::after  { inset: -6px -6px; }
+
+
 /* ── 19 reduced motion / print ───────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
