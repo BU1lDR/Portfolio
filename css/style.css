@@ -4215,7 +4215,16 @@ body.term-stowed .sam.p-idle .sam__cel,
   border-radius: var(--r-lg);
   box-shadow: var(--shadow);
   overflow: hidden;
-  transform-style: preserve-3d;
+  /* preserve-3d removed — overflow: hidden already flattens this box, and in
+     Chromium that flattening applies to paint but not to hit-testing, so the two
+     drift apart and clicks, hover and text selection all land off-target. Here
+     it showed up as the middle of .idcard__role answering as .idcard. Nothing in
+     this card is clickable so the only real cost was selecting the wrong line of
+     text, but it is the same defect that made the project cards' CODE↗ dead, and
+     the full write-up is with the fix in §13 .card__inner. Removing it here is
+     byte-identical at rest and mid-tilt: the avatar's translateZ(28px) and the
+     name's 18px were already doing nothing. The tilt on .about__card-inner is
+     unaffected — that element has no overflow and keeps its preserve-3d. */
 }
 .idcard::before {
   content: '';
@@ -4414,7 +4423,36 @@ body.term-stowed .sam.p-idle .sam__cel,
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
   overflow: hidden;
-  transform-style: preserve-3d;
+  /* No transform-style: preserve-3d here, and the reason needs writing down,
+     because the obvious reading of §07's tilt says it belongs: this element
+     rotates, its children carry translateZ, so surely they should sit at
+     different depths.
+
+     They cannot. overflow: hidden is a grouping property, which per CSS
+     Transforms 2 forces this element flat whatever transform-style says.
+     Chromium honours that when PAINTING and ignores it when HIT-TESTING, and
+     those two disagreeing is not a cosmetic problem: it moved every hit area
+     inside .card__body about 50px up from where it was drawn. A click on the
+     middle of CODE↗ landed on .card__inner and did nothing. A click on the
+     middle of the title landed on the description. Mouse and touch alike, at
+     rest, at every viewport — the most important links on the page were dead at
+     their centres, and no screenshot can show that.
+
+     Deleting the declaration costs nothing, because the flattening was already
+     happening: with it and without it the card is pixel-identical at rest bar
+     sub-pixel antialiasing, and indistinguishable mid-tilt. Measured, not
+     assumed — .preview-tools/card-3d.js shoots both at 2x and compares. The
+     depth it was supposed to buy was never there to lose: perspective is 1000px
+     against child offsets of 14-40px, so the entire effect is a 1-4% scale.
+
+     The tilt itself is untouched. That is a transform on THIS element and still
+     takes its perspective from .card; only the children's translateZ flattens,
+     which is what was already true.
+
+     Those translateZ values stay. They are inert now, but the thumb glyph
+     animates translateZ and scale as one transform on hover, and rewriting that
+     pair to drop half of it changes a working transition for no gain. §11's
+     .idcard had the same three ingredients and lost the same line. */
   transition: transform .5s var(--ease), border-color .3s var(--ease),
               box-shadow .4s var(--ease);
 }
