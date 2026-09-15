@@ -66,13 +66,36 @@
      and the bullets in your own voice is the actual fix, and it is the one thing
      in this file nobody else can do for you.
 
-     Two contradictions with the site that need YOUR answer, left alone here on
-     purpose because guessing would be worse than the inconsistency:
-       · The IBM internship runs "Aug 2026 - Sep 2026" here and "Apr — Sep 2026"
-         in js/data.js. One of them is wrong.
-       · This resume claims two separate SIH 2026 involvements — the MoSJE aero
-         piston engine digital twin (SIH26054) under Experience, and अर्थNiti
-         under Projects. The site only knows about अर्थNiti.
+     TWO DISAGREEMENTS WITH THE SITE, NOW SETTLED — AND ON WHAT EVIDENCE
+     Both were open questions here until they were checked against something
+     other than an opinion. Written down because the next person to notice the
+     mismatch will otherwise re-litigate it, and because if the conclusion is
+     wrong, the evidence is what tells you where it went wrong.
+
+       · IBM internship dates. This resume says "Aug 2026 - Sep 2026";
+         js/data.js said "Apr — Sep 2026". The resume is right and data.js was
+         corrected to match. Three separate things agree: all three earlier PDF
+         versions of this document say Aug, and the four IBM SkillsBuild
+         certificates in assets/certs/ were issued 18-19 Aug 2026 — a two-day
+         cluster, which is what the start of a short internship looks like and
+         not what a six-month one does. The "Apr" was introduced by the site's
+         own first commit (53c2751) and was never on any resume.
+
+       · The DRDO team project. This resume claims two separate SIH 2026
+         involvements — the aero piston engine digital twin (SIH26054) under
+         Experience, and अर्थNiti under Projects — while the site knew only
+         about अर्थNiti. The site was given the missing one, in js/data.js and
+         in index.html's timeline, which have to be edited together.
+
+         The ministry on that entry was wrong here and is now DRDO. The version
+         of this PDF immediately before the current one said "DRDO Team
+         Project" against a byte-identical description; a later edit changed it
+         to MoSJE, the Ministry of Social Justice and Empowerment, which does
+         not commission health monitoring for the piston engines of MALE
+         combat UAVs. CONFIRM THIS ONE — sih.gov.in allocates problem-statement
+         numbers in contiguous blocks per organisation, but the published list
+         could not be read far enough to reach SIH26054, so DRDO rests on your
+         own earlier wording plus the subject matter, not on the register.
      ══════════════════════════════════════════════════════════════════════════ -->
 
 <!-- Reachable, because the deploy workflow uploads the whole repo root and Pages
@@ -220,7 +243,7 @@ industry experience.</p>
   </ul>
 </div>
 <div class="entry">
-  <p class="role">Smart India Hackathon (SIH) 2026 - MoSJE Team Project</p>
+  <p class="role">Smart India Hackathon (SIH) 2026 - DRDO Team Project</p>
   <p class="when">Sep 2026</p>
   <ul>
     <li>Collaborated on a prototype for an AI-enabled real-time digital twin for health monitoring and
