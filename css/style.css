@@ -4164,7 +4164,8 @@ body.term-stowed .sam.p-idle .sam__cel,
 
 .about__facts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  /* min() so the track floor can never exceed the container — see .certs__list */
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
   gap: 1px;
   margin-top: 2.4rem;
   background: var(--line);
@@ -4314,7 +4315,7 @@ body.term-stowed .sam.p-idle .sam__cel,
 
 .skills {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(265px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(265px, 100%), 1fr));
   gap: 1.15rem;
 }
 .skillgroup {
@@ -4410,7 +4411,7 @@ body.term-stowed .sam.p-idle .sam__cel,
 
 .work {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
   gap: 1.15rem;
 }
 .card { perspective: 1000px; }
@@ -4648,9 +4649,27 @@ body.term-stowed .sam.p-idle .sam__cel,
   font-style: normal;
   color: var(--red);
 }
+/* min(320px, 100%), not 320px. The first argument of minmax() is a FLOOR, and
+   auto-fit will not shrink a track below it — so at a 320px viewport, where this
+   grid's content box is x19..319, a bare 320px floor rendered every one of the
+   eleven tiles at x19..339 and gave the document a 339px scrollWidth against a
+   320px clientWidth. Nineteen pixels of horizontal scroll on the whole page,
+   caused by one number in one track definition.
+
+   Worth knowing how well it hid: no media query is wrong, nothing looks broken
+   in a screenshot, and the symptom surfaces as the fixed full-bleed overlays
+   measuring 339 too — because a too-wide element expands the layout viewport and
+   every `inset: 0` layer then matches the expanded width. Those layers are the
+   loudest thing in a scan and none of them is the cause.
+
+   min() takes the floor down to the container when the container is narrower
+   than the ideal, and is inert at every width where 320px already fits, so the
+   layout above 320 is byte-identical. Same guard on the other three auto-fit
+   grids below — .work's 300px floor happened to clear by exactly 1px, which is
+   not a margin, it is luck. */
 .certs__list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
   gap: .7rem;
 }
 .certs__list li {
