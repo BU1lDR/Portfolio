@@ -118,12 +118,31 @@ window.PORTFOLIO = {
 
   experience: [
     {
-      when: 'Apr — Sep 2026',
+      /* Aug, not Apr. This said "Apr — Sep 2026" from the first commit and it
+         was never right: every version of the resume says Aug, and the four IBM
+         SkillsBuild certificates in assets/certs/ are all issued 18-19 Aug 2026.
+         Mirror any change here in index.html's timeline — the page carries its
+         own static copy of these three entries and only the terminal reads
+         this array. */
+      when: 'Aug — Sep 2026',
       what: 'Data Analytics Intern',
       where: 'IBM SkillsBuild × BharatCares — Remote',
       note: 'Worked with real-world datasets and learned to apply analytical ' +
             'thinking to them — which is where data analytics and AI stopped ' +
             'being two separate subjects for me.'
+    },
+    {
+      /* The second SIH 2026 involvement. The resume has carried this under
+         Experience all along and the site did not know about it, which made the
+         two documents disagree for anyone who read both. Contributor, not lead
+         — the title deliberately names the work rather than a rank. */
+      when: 'Sep 2026',
+      what: 'Digital Twin — Team Project',
+      where: 'Smart India Hackathon 2026 — DRDO (SIH26054)',
+      note: 'AI-enabled real-time digital twin for health monitoring and fault ' +
+            'prediction of the aero piston engines used in MALE UAVs. Worked on ' +
+            'system architecture, telemetry and data workflows, and the ' +
+            'AI-driven fault detection concepts.'
     },
     {
       when: '2026',
