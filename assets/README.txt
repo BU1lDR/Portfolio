@@ -32,20 +32,28 @@ assets/ — two files left to drop in, and the site is complete.
    behind the Certifications block. See the note at the bottom.
 
 
-4. og.png                                            ← RECOMMENDED
+4. og.png                                            ← IN PLACE ✓
    The image people see when your link is shared on WhatsApp,
-   LinkedIn, X, Slack, Discord.
+   LinkedIn, X, Slack, Discord. 1200 x 630, which is the one size
+   every platform agrees on.
 
-   Size:  1200 x 630 px, PNG (not SVG — sites won't render it)
-   Keep:  your name large, one line of role text, dark background
-          with the red accent. Leave ~80px of breathing room on
-          every edge; some platforms crop.
+   It is GENERATED, not drawn: it is rendered from this site's own
+   css/style.css and assets/samurai/idle.png, so the colours, the
+   typefaces and the samurai are the same ones the site uses and
+   cannot fall out of step with them. If you change the design,
+   regenerate it rather than retouching the PNG.
 
-   Quick way to make one: open the site, screenshot the hero at
-   1200x630, and export as PNG.
+   Two things to know if you replace it by hand instead:
+     - it must stay exactly 1200 x 630, because index.html declares
+       those numbers in og:image:width / :height and unfurlers lay
+       the card out from them before the image arrives;
+     - keep the important part away from the edges. Slack and
+       Discord crop, so anything within ~40px of an edge may be
+       cut off.
 
-   Until this file exists, shared links will show no preview
-   image. Nothing else breaks.
+   LinkedIn, Slack and WhatsApp cache preview images hard. If you
+   update this after sharing the link anywhere, run the URL through
+   LinkedIn's Post Inspector to force a re-fetch.
 
 
 5. me.jpg                                            ← OPTIONAL
