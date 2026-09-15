@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Aryan Verma — Resume</title>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     resume.src.html — the source of assets/resume.pdf.
+
+     WHY THIS FILE EXISTS
+     Until now the resume existed ONLY as a PDF. There was no .docx, no .odt,
+     nothing editable anywhere on the machine — so changing a single date meant
+     either editing a PDF by hand or starting the whole document again. This is
+     the editable original that was missing.
+
+     TO REGENERATE THE PDF
+         node tools/build-resume.js          (from the repo root)
+     It prints this file with headless Chromium at A4, writes
+     assets/resume.pdf, then re-reads the PDF it just wrote and fails if any of
+     the things listed below has come back. Nothing else in the repo reads this
+     file, and the site itself needs no build — this is the only script here.
+
+     WHAT THIS COPY DELIBERATELY LEAVES OUT, AND WHY
+     This is the PUBLIC resume. It is linked from the hero button, the contact
+     panel and the terminal's `resume` command, so it is fetchable by anyone who
+     finds the site, forever, and it is not just people who read it. So:
+
+       · No phone number. The previous PDF printed a mobile number across the
+         top of a document served to anyone who asked for it. Keep a separate
+         copy with the number on it for actual applications; do not put that
+         copy in this repo.
+       · Location is "Delhi, India". What was there before named a zone of the
+         city and a postcode, which narrows you down to a few streets.
+         Recruiters filter on city; nobody needs the rest, and the site's own
+         data.js has said plain "Delhi, India" all along.
+
+       Neither of those values is written down anywhere in this repo, including
+       in this comment and including in the build scripts that check for them —
+       tools/build-resume.js matches the SHAPE of an Indian mobile number and a
+       Delhi postcode rather than the specific ones. A file that documents a
+       secret in order to say it removed the secret has not removed it, and
+       plain text in a public repo is more findable than a PDF, not less:
+       GitHub indexes it and the digits in a PDF's page stream are glyph
+       indices that no search will match.
+
+     THINGS THAT WERE WRONG IN THE OLD PDF AND ARE FIXED HERE
+       · github.com/BU1DR was a 404 — the username is BU1lDR, with a lowercase
+         L. Worth knowing that the version before it said BU1IDR with a capital
+         I, which is also a 404 and looks correct in almost every typeface. If
+         you retype this by hand, check it by clicking it.
+       · The second project read "अर्थाNiti". data.js calls it "अर्थNiti"; the
+         PDF had an extra ा matra.
+       · "Backend(Lead)" is "Backend - Lead", the wording used on the site.
+
+     THE DEVANAGARI, AND WHY THERE IS A TRANSLITERATION NEXT TO IT
+     pdftotext extracts "अर्थNiti" as "Niti" — the Devanagari silently vanishes.
+     Applicant tracking systems read PDFs exactly that way, so on the old resume
+     the project's name reached them as the word "Niti" alone. "(ArthNiti)" is
+     there so something survives extraction. Delete it if you would rather the
+     wordmark stood alone; just know what it costs.
+
+     WHAT IS STILL YOURS TO DO
+     The prose here is unchanged from the PDF that was in the repo, and that PDF
+     carried a signed C2PA manifest naming ChatGPT as its author. Re-exporting
+     drops the manifest; it does not make the words yours. Rewriting the summary
+     and the bullets in your own voice is the actual fix, and it is the one thing
+     in this file nobody else can do for you.
+
+     Two contradictions with the site that need YOUR answer, left alone here on
+     purpose because guessing would be worse than the inconsistency:
+       · The IBM internship runs "Aug 2026 - Sep 2026" here and "Apr — Sep 2026"
+         in js/data.js. One of them is wrong.
+       · This resume claims two separate SIH 2026 involvements — the MoSJE aero
+         piston engine digital twin (SIH26054) under Experience, and अर्थNiti
+         under Projects. The site only knows about अर्थNiti.
+     ══════════════════════════════════════════════════════════════════════════ -->
+
+<!-- Reachable, because the deploy workflow uploads the whole repo root and Pages
+     has no exclude list. Nobody links here, but "nobody links it" is not the
+     same as "nobody indexes it" — a stray unstyled copy of the resume competing
+     with the real site in search results is a bad trade for a build source.
+     A per-page noindex works regardless of robots.txt, which matters because
+     robots.txt is only honoured at a domain root and this site publishes under
+     a /Portfolio/ path. -->
+<meta name="robots" content="noindex, nofollow">
+
+<style>
+/* Print geometry first. The screen view is incidental — this document exists to
+   become a PDF, and @page is the only thing that decides where the paper edge
+   falls. 20mm all round measures out to the same text block the previous PDF
+   had, which was checked against a render rather than guessed. */
+@page { size: A4; margin: 20mm; }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  /* Arial to match what the old PDF used, so this reads as the same document
+     rather than a redesign. Nirmala UI is Windows' Devanagari face and has to be
+     named explicitly — without it Chromium falls back per-glyph and the
+     wordmark's weight drifts away from the Latin text beside it. */
+  font: 10pt/1.32 Arial, Helvetica, "Nirmala UI", sans-serif;
+  color: #000;
+  background: #fff;
+  /* Mirrors @page for the on-screen preview, so what you see in a browser is
+     what the PDF will be. Dropped at print time — @page owns it there. */
+  width: 210mm;
+  padding: 20mm;
+  margin: 0 auto;
+}
+@media print { body { width: auto; padding: 0; margin: 0; } }
+
+/* ── header ──────────────────────────────────────────────── */
+h1 {
+  font-size: 18pt;
+  font-weight: bold;
+  text-align: center;
+  letter-spacing: .02em;
+  margin-bottom: 5pt;
+}
+.contact {
+  font-size: 9.5pt;
+  text-align: center;
+  line-height: 1.45;
+}
+
+/* ── section headings ────────────────────────────────────── */
+h2 {
+  font-size: 12pt;
+  font-weight: bold;
+  /* The rule under each heading is the one piece of non-text styling in the
+     document, so it should read as a division and not as an underline: hairline,
+     grey, and separated from the baseline. */
+  border-bottom: .75pt solid #8c8c8c;
+  padding-bottom: 2pt;
+  /* 9pt above, down from 13pt in the first draft. The document was overflowing
+     onto a second page by 23pt, and the 23pt came out of these six section gaps,
+     the entry gaps and the leading rather than out of the body size — dropping
+     the text to 9.5pt would also have made it fit, and would have made it worse
+     to read on the way. Every number here was measured with resume-fit.js and
+     confirmed by build-resume.js asserting the page count; none of it was
+     eyeballed, because the whole document sits within about 9pt of the bottom
+     margin and at that tolerance eyeballing is just a slower way to be wrong. */
+  margin: 9pt 0 5pt;
+}
+
+/* ── entries ─────────────────────────────────────────────── */
+.role { font-size: 10pt; font-weight: bold; }
+.when { font-size: 10pt; font-style: italic; }
+
+ul { list-style: none; margin: 2pt 0 0; }
+li {
+  /* Hanging indent by hand rather than with list-style, so the bullet is a real
+     character in the text stream. A CSS marker is generated content: it is drawn
+     on the page but it is not in the PDF's text, so a wrapped bullet loses its
+     mark the moment anything extracts the words. */
+  padding-left: 11pt;
+  text-indent: -11pt;
+  margin-top: 1pt;
+}
+li::before { content: "\2022\00a0\00a0"; }
+
+/* No :first-of-type reset. The first entry in a section needs no special case
+   because its 7pt collapses against the heading's 5pt bottom margin and 7pt
+   wins, which is exactly the gap every other entry gets. A reset here would
+   also have matched the wrong elements: :first-of-type counts among ALL sibling
+   divs, so it would have singled out the first entry on the page and nothing
+   else, leaving Experience and Projects with different opening gaps.
+
+   The page clears the bottom margin by about 9pt, so this is a tight one-pager
+   the same way the PDF it replaces was. That slack is thin enough that a missing
+   Arial, or one more certification, pushes it over — which is why
+   build-resume.js asserts the page count rather than trusting it, and why the
+   assertion is a failure and not a warning. */
+.entry { margin-top: 7pt; }
+.line { margin-top: 0; }
+.tech { margin-top: 1pt; }
+
+/* Keep an entry from being split across the page break. There is only one page
+   today, but the first thing anyone does to a resume is add to it. */
+.entry, .edu { break-inside: avoid; page-break-inside: avoid; }
+h2 { break-after: avoid; page-break-after: avoid; }
+
+.edu { margin-top: 7pt; }
+.school { font-weight: bold; }
+
+/* The opening paragraph has no heading over it, matching the PDF this replaces.
+   A "SUMMARY" bar would help an ATS find the section and it was in the first
+   draft of this file — taken out again because the brief was to fix what was
+   wrong with the document, not to redesign it, and a missing heading is a
+   choice rather than a defect. Add it if you want it. */
+.summary { margin-top: 10pt; }
+</style>
+</head>
+<body>
+
+<h1>ARYAN VERMA</h1>
+<p class="contact">
+  aryanverma102007@gmail.com | Delhi, India<br>
+  GitHub: github.com/BU1lDR | Credly: credly.com/users/aryan_v | LinkedIn: linkedin.com/in/aryanver
+</p>
+
+<p class="summary">Information Technology student at GGSIPU with a strong academic record (9.04 CGPA) and
+foundational knowledge in cybersecurity, networking, Linux, threat detection, data analysis, RAG,
+and LLMs. Completed industry-oriented learning through Cisco Networking Academy and E&amp;ICT
+Academy, IIT Kanpur. Seeking opportunities to apply technical fundamentals and gain practical
+industry experience.</p>
+
+<h2>SKILLS</h2>
+<p class="line">Cybersecurity: Cybersecurity, Ethical Hacking, Threat Detection</p>
+<p class="line">Data &amp; AI: Data Analytics, Retrieval Augmented Generation (RAG), LLMs</p>
+<p class="line">Systems: Linux Servers, Networking</p>
+
+<h2>EXPERIENCE</h2>
+<div class="entry">
+  <p class="role">IBM SkillsBuild | BharatCares Internship - Data Analytics with AI</p>
+  <p class="when">Aug 2026 - Sep 2026</p>
+  <ul>
+    <li>Conduct day-to-day project coordination, planning, and implementation across multiple teams.</li>
+    <li>Create functional and technical application documents.</li>
+  </ul>
+</div>
+<div class="entry">
+  <p class="role">Smart India Hackathon (SIH) 2026 - MoSJE Team Project</p>
+  <p class="when">Sep 2026</p>
+  <ul>
+    <li>Collaborated on a prototype for an AI-enabled real-time digital twin for health monitoring and
+        fault prediction of aero piston engines used in MALE UAVs (Problem Statement SIH26054).</li>
+    <li>Contributed to system architecture, telemetry/data workflows, and AI-driven fault detection concepts.</li>
+  </ul>
+</div>
+
+<h2>PROJECTS</h2>
+<div class="entry">
+  <p class="role">File Integrity Checker</p>
+  <p>Lightweight file integrity monitor that takes a trusted baseline once and identifies exactly what
+     was modified, added, or deleted.</p>
+  <p class="tech">Tech: Python, JSON, CLI, Git</p>
+</div>
+<div class="entry">
+  <p class="role">अर्थNiti (ArthNiti) - Backend - Lead</p>
+  <p>Smart India Hackathon 2026 - an AI-driven hyper-local business advisory and financial structuring
+     assistant for rural micro-entrepreneurs. Built the backend API surface and integrations.</p>
+  <p class="tech">Tech: Python, FastAPI, React, Tailwind CSS, Vite</p>
+</div>
+<div class="entry">
+  <p class="role">Security Scanner (In Progress)</p>
+  <p>Advanced security scanner for a website or folder of code that runs SCA, SAST, and DAST checks.
+     Optional AI explains findings in plain English and suggests fixes; the scanner determines which
+     checks fit the target.</p>
+</div>
+
+<h2>EDUCATION</h2>
+<div class="edu">
+  <p class="school">Guru Gobind Singh Indraprastha University (GGSIPU)</p>
+  <p>Aug 2025 - Aug 2029 | CGPA: 9.04</p>
+</div>
+<div class="edu">
+  <p class="school">Mother's Global School</p>
+  <p>Jan 2022 - Jan 2025 | Marks: 74.8%</p>
+</div>
+
+<h2>CERTIFICATIONS</h2>
+<p class="line">Junior Cybersecurity Analyst | Cisco Networking Academy (2026)</p>
+<p class="line">Data Analyst | IBM SkillsBuild (2026)</p>
+<p class="line">Prompt Engineering | AWS Skill Builder (2026)</p>
+
+</body>
+</html>
