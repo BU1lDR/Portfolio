@@ -798,10 +798,30 @@
            programming course is IIT *Kanpur*, and the IBM one is "Using
            LLMs *to Work* with Data".
 
-           `Verify` points at Credly where the badge PDF embeds its own
-           verification URL. The Cisco certificates carry a printed Cert
-           ID and a QR code instead, so for those the PDF *is* the
-           verification artifact and there's no second link.
+           `Verify` points at the badge on Credly. SEVEN of these eleven
+           have a public Credly badge and all seven now carry the link;
+           the other four exist only as the PDF in assets/certs/.
+
+           This used to say the Cisco certificates had no Credly badge —
+           that the printed Cert ID and QR code on the PDF were the whole
+           verification story for them. Wrong, and wrong in the direction
+           that costs something: three of the four Cisco credentials are
+           public badges on the profile, so the page was linking four
+           Verify buttons when it could link seven, and under-selling
+           three real credentials as unverifiable. The one Cisco entry
+           that genuinely has no badge is Packet Tracer.
+
+           Don't trust that list of seven, or this comment, if you add a
+           credential — read it off the profile:
+               curl -s -H 'Accept: application/json' \
+                 https://www.credly.com/users/aryan_v/badges.json
+           Every badge's `id` is its URL: credly.com/badges/<id>. All
+           seven were fetched once to confirm each returns 200 and names
+           the right credential, because a dead Verify link is worse than
+           no Verify link. Two of them used the shorter credly.com/go/…
+           share form; they now use the same /badges/<id> form as the rest
+           so there is one pattern here, and it is the one that comes
+           straight out of that JSON.
            ============================================================ -->
       <div class="certs reveal" data-reveal-delay="80">
         <h3 class="certs__head">Certifications <em>認定</em></h3>
@@ -815,6 +835,7 @@
               <span class="certs__when">Jul 2026</span>
               <p class="certs__act">
                 <a href="assets/certs/junior-cybersecurity-analyst-career-path.pdf" target="_blank" rel="noopener">PDF<i>↓</i></a>
+                <a href="https://www.credly.com/badges/109627d7-c3ec-4184-a4c6-de019bb1840d" target="_blank" rel="noopener noreferrer">Verify<i>↗</i></a>
               </p>
             </div>
           </li>
@@ -827,6 +848,7 @@
               <span class="certs__when">Aug 2026</span>
               <p class="certs__act">
                 <a href="assets/certs/introduction-to-cybersecurity.pdf" target="_blank" rel="noopener">PDF<i>↓</i></a>
+                <a href="https://www.credly.com/badges/57227256-888c-4846-900e-b15a7e832849" target="_blank" rel="noopener noreferrer">Verify<i>↗</i></a>
               </p>
             </div>
           </li>
@@ -839,6 +861,7 @@
               <span class="certs__when">Aug 2026</span>
               <p class="certs__act">
                 <a href="assets/certs/networking-basics.pdf" target="_blank" rel="noopener">PDF<i>↓</i></a>
+                <a href="https://www.credly.com/badges/62d244f1-2885-4369-a630-c5d11ad45fad" target="_blank" rel="noopener noreferrer">Verify<i>↗</i></a>
               </p>
             </div>
           </li>
@@ -873,7 +896,7 @@
               <span class="certs__when">Aug 2026</span>
               <p class="certs__act">
                 <a href="assets/certs/generative-ai-essentials-llms-with-data.pdf" target="_blank" rel="noopener">PDF<i>↓</i></a>
-                <a href="https://www.credly.com/go/MD6b8lPb" target="_blank" rel="noopener noreferrer">Verify<i>↗</i></a>
+                <a href="https://www.credly.com/badges/27460f51-2953-4813-b774-4668da8bb7ea" target="_blank" rel="noopener noreferrer">Verify<i>↗</i></a>
               </p>
             </div>
           </li>
@@ -886,7 +909,7 @@
               <span class="certs__when">Aug 2026</span>
               <p class="certs__act">
                 <a href="assets/certs/make-agentic-ai-work-for-you.pdf" target="_blank" rel="noopener">PDF<i>↓</i></a>
-                <a href="https://www.credly.com/go/oF0xxDVH" target="_blank" rel="noopener noreferrer">Verify<i>↗</i></a>
+                <a href="https://www.credly.com/badges/9d46bbd6-c44f-4745-8517-25dd925b52e3" target="_blank" rel="noopener noreferrer">Verify<i>↗</i></a>
               </p>
             </div>
           </li>
