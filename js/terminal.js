@@ -826,7 +826,7 @@
           null,
           ['So, plainly, with the aesthetic switched off for a moment:'],
           null,
-          ['I am a first-year B.Tech IT student at ADGIPS, GGSIPU — CGPA 9.04 —'],
+          ['I am a second-year B.Tech IT student at ADGIPS, GGSIPU — CGPA 9.04 —'],
           ['and I want a cybersecurity internship. Not a rotation into one: the'],
           ['actual thing. Blue team, red team, detection, tooling, I am not fussy'],
           ['about which, and I would rather be the least experienced person in a'],
