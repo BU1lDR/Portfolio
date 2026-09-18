@@ -83,6 +83,25 @@ window.PORTFOLIO = {
   /* ── projects ───────────────────────────────────────────── */
   projects: [
     {
+      /* Order matters here and on the page: the terminal prints this array in
+         order and index.html's cards are numbered 01/02/03 to match. This one
+         leads both because it is the largest finished thing — v1.0.0, MIT, a
+         public repo with 353 tests. Those figures are deliberately NOT in the
+         blurb: the `code` link is one click from the repo that proves them, and
+         a number typed here is a number that goes stale silently. */
+      name: 'Security Scanner',
+      year: '2026',
+      blurb: 'A CLI — secscan — that points three kinds of check at one target ' +
+             'and reconciles the results: dependency CVEs from OSV.dev, source ' +
+             'patterns like eval and hardcoded keys, and live-site TLS, headers, ' +
+             'cookies and exposed files. Passive by default; the intrusive probes ' +
+             'stay off until you both ask for them and confirm you’re ' +
+             'authorized to test the host.',
+      stack: ['Python', 'asyncio', 'httpx', 'cryptography', 'pytest'],
+      live: '',
+      code: 'https://github.com/BU1lDR/security-scanner'
+    },
+    {
       name: 'File Integrity Checker',
       year: '2026',
       blurb: 'A lightweight file integrity monitor. Take a trusted baseline once, ' +
