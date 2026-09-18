@@ -150,6 +150,37 @@
          costs more than the line was worth. If you hold it, add it back and put
          the PDF in assets/certs/ with the rest.
 
+     THE SECURITY SCANNER ENTRY — IT SAID "(In Progress)" AND NO LONGER IS
+     The repo went public: github.com/BU1lDR/security-scanner, v1.0.0, MIT, 95
+     files, 353 collected tests. "(In Progress)" on a finished, public, tested
+     v1.0.0 undersells it, and the title is now the tool's real name, secscan,
+     which is what `pip install -e .` puts on your PATH.
+
+     The description was also rewritten off the repo rather than off the old
+     wording. It previously described an "advanced security scanner" with an
+     optional AI advisor and no detail; it now names the three check families and
+     what each actually reads. The AI advisor came OUT, which is a real loss —
+     it exists, it is behind --ai, and it is a differentiator — but there was
+     room for one more clause and the authorization gate earned it: for a
+     security role, evidence that you gated the intrusive checks behind an
+     explicit "I am authorized" flag says more about you than a feature list.
+
+     NO REPO URL ON THIS ENTRY, DELIBERATELY. It was drafted with one and it
+     costs a line the page does not have. No other Projects entry carries a URL
+     either — File Integrity Checker has a public repo and does not link it —
+     and the contact block already prints github.com/BU1lDR two inches above.
+     If you ever want per-project URLs, that is a change to all three entries
+     and it needs a line found somewhere else first.
+
+     AND THE PAGE IS NOW TIGHTER THAN IT WAS. Measured at the real 170mm print
+     column: 965px of content against 257mm = 971px of page. Six pixels. It was
+     roughly 25 before this entry grew a Tech line. That is under half a line of
+     slack, so the next thing added here WILL push to page two — and the whole
+     point of tools/build-resume.js asserting the page count is that you find
+     that out from a failed build rather than from a recruiter. Do not treat the
+     assertion as advisory, and do not "fix" an overflow by dropping the body
+     text to 9.5pt; take a line out of the prose instead, the way this entry did.
+
      THE EDUCATION LINE
      It named GGSIPU alone, which is the affiliating university and not where you
      study. It now names both: Dr Akhilesh Das Gupta Institute of Professional
@@ -326,10 +357,11 @@ industry experience.</p>
   <p class="tech">Tech: Python, FastAPI, React, Tailwind CSS, Vite</p>
 </div>
 <div class="entry">
-  <p class="role">Security Scanner (In Progress)</p>
-  <p>Advanced security scanner for a website or folder of code that runs SCA, SAST, and DAST checks.
-     Optional AI explains findings in plain English and suggests fixes; the scanner determines which
-     checks fit the target.</p>
+  <p class="role">Security Scanner (secscan)</p>
+  <p>Scans a codebase or a live site: dependency CVEs via OSV.dev, SAST for dangerous sinks and
+     secrets, passive DAST for TLS/headers/cookies, opt-in active checks behind an authorization
+     gate.</p>
+  <p class="tech">Tech: Python, asyncio, httpx, cryptography, pytest (353 tests)</p>
 </div>
 
 <h2>EDUCATION</h2>
