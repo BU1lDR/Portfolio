@@ -59,12 +59,45 @@
      there so something survives extraction. Delete it if you would rather the
      wordmark stood alone; just know what it costs.
 
-     WHAT IS STILL YOURS TO DO
-     The prose here is unchanged from the PDF that was in the repo, and that PDF
-     carried a signed C2PA manifest naming ChatGPT as its author. Re-exporting
-     drops the manifest; it does not make the words yours. Rewriting the summary
-     and the bullets in your own voice is the actual fix, and it is the one thing
-     in this file nobody else can do for you.
+     THE SUMMARY AND THE EXPERIENCE BULLETS ARE NEW PROSE
+     They were the last text in here carried over verbatim from the PDF this file
+     replaces, and both read as template filler rather than as a description of
+     anything you did.
+
+     The summary listed seven subject areas and claimed "foundational knowledge"
+     of all of them, which is a sentence that could be pasted onto any IT student
+     in the country. It now leads with the one thing that separates you from them
+     — a finished, public, tested tool — and says what it does.
+
+     Two of those seven left the summary and are STILL CLAIMED three lines below
+     it, in SKILLS: "Threat Detection" and "Retrieval Augmented Generation (RAG)".
+     Neither is backed by anything else in this document — no project uses them
+     and none of the eleven certificates covers them — and a named skill with
+     nothing behind it is the question you least want asked in an interview. They
+     were left alone on purpose rather than quietly deleted: SKILLS here is three
+     lines that have to stay in step with js/data.js and index.html, which list
+     six richer groups (languages, the Nmap/Burp/sqlmap tooling, Linux and Bash,
+     FastAPI and pytest), and rewriting one side of that pair is how the two
+     documents drift. Fix all three together or leave all three.
+
+     Worth knowing if you do: the first SKILLS line reads "Cybersecurity:
+     Cybersecurity, Ethical Hacking, Threat Detection" — the heading and its own
+     first item are the same word.
+
+     The two EXPERIENCE bullets were worse. "Conduct day-to-day project
+     coordination, planning, and implementation across multiple teams" and
+     "Create functional and technical application documents" describe a project
+     manager, not a data analytics intern, and they are lifted phrasing — present
+     tense on a finished internship is the tell. They are replaced with what the
+     internship actually was, per your own words on the site: real datasets rather
+     than exercise data, and LLMs used inside the analysis rather than alongside
+     it. Deliberately no figures. A number on a resume invites "which dataset,
+     how many rows" and there is no honest answer written down anywhere.
+
+     Both replacements were length-checked, not eyeballed — see the note further
+     down about six pixels. Each bullet must stay on ONE line: they are indented
+     11pt, so the usable width is about 90 characters, and a bullet that wraps
+     costs a line this page does not have.
 
      TWO DISAGREEMENTS WITH THE SITE, NOW SETTLED — AND ON WHAT EVIDENCE
      Both were open questions here until they were checked against something
@@ -320,11 +353,11 @@ h2 { break-after: avoid; page-break-after: avoid; }
   GitHub: github.com/BU1lDR | Credly: credly.com/users/aryan_v | LinkedIn: linkedin.com/in/aryanver
 </p>
 
-<p class="summary">Information Technology student at GGSIPU with a strong academic record (9.04 CGPA) and
-foundational knowledge in cybersecurity, networking, Linux, threat detection, data analysis, RAG,
-and LLMs. Completed industry-oriented learning through Cisco Networking Academy and E&amp;ICT
-Academy, IIT Kanpur. Seeking opportunities to apply technical fundamentals and gain practical
-industry experience.</p>
+<p class="summary">Second-year Information Technology undergraduate (CGPA 9.04) who learns by building. Most
+recently secscan, a released Python CLI that points dependency-CVE, source-pattern and live-site
+checks at one target and keeps the intrusive probes behind an authorization gate; before that, a
+file integrity monitor. Strongest in Python and Linux. Looking for a cybersecurity internship with
+real systems in it.</p>
 
 <h2>SKILLS</h2>
 <p class="line">Cybersecurity: Cybersecurity, Ethical Hacking, Threat Detection</p>
@@ -336,8 +369,8 @@ industry experience.</p>
   <p class="role">IBM SkillsBuild | BharatCares Internship - Data Analytics with AI</p>
   <p class="when">Aug 2026 - Sep 2026</p>
   <ul>
-    <li>Conduct day-to-day project coordination, planning, and implementation across multiple teams.</li>
-    <li>Create functional and technical application documents.</li>
+    <li>Took real datasets end to end — loading, cleaning, and working out what was worth asking.</li>
+    <li>Used LLMs inside the analysis rather than alongside it, where the two stopped being separate.</li>
   </ul>
 </div>
 
