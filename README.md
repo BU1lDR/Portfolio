@@ -48,22 +48,29 @@ Search for `EDIT #` and work through them in order.
 
 | # | File | What it holds |
 |---|---|---|
-| 1 | `index.html:11` | Name, description, canonical URL, social preview, JSON-LD |
-| 2 | `index.html:145` | Hero pitch — the line under your name |
-| 3 | `index.html:163` | Social links (hero) |
-| 4 | `index.html:229` | Bio — three short paragraphs |
-| 5 | `index.html:289` | Skills — plain lists, one `article` per group |
-| 6 | `index.html:362` | Projects. Duplicate one `article.card` per project |
-| 7 | `index.html:421` | Timeline — education and experience |
-| 7b | `index.html:452` | Certifications |
-| 8 | `index.html:506` | Contact form: your email and Formspree ID |
+| 1 | `index.html:46` | Name, description, canonical URL, social preview, JSON-LD |
+| 2 | `index.html:455` | Hero pitch — the line under your name |
+| 3 | `index.html:478` | Social links (hero) |
+| 4 | `index.html:552` | Bio — three short paragraphs |
+| 5 | `index.html:612` | Skills — plain lists, one `article` per group |
+| 6 | `index.html:685` | Projects. Duplicate one `article.card` per project |
+| 7 | `index.html:765` | Timeline — education and experience |
+| 7b | `index.html:806` | Certifications |
+| 8 | `index.html:1005` | Contact form — the address it falls back to. No backend to configure |
 | 9 | `js/data.js` | **The terminal's brain** — everything `whoami`, `skills`, `projects`, `certs`, `neofetch` etc. print |
+
+Those line numbers drift every time the page grows — all eight were several
+hundred lines out before this table was last corrected. `grep -n 'EDIT #'
+index.html` is the version that cannot go stale.
 
 `js/data.js` is separate on purpose: the page and the terminal each need the
 same facts, and this way you write them once.
 
-The only placeholder left in the repo is `YOUR_FORMSPREE_ID` — see step 3.
-Everything else is real; grep for that string and you'll find the last gap.
+Nothing in the repo is a placeholder any more. There was one — a dead Formspree
+endpoint in the contact form's `action` — and it was deleted rather than filled
+in; see step 3 for why the form works regardless. The string survives in one
+comment in `js/main.js`, where it explains what the stand-in guard is guarding
+against; it is not used as a value anywhere.
 
 ### 2. Drop in three files
 
@@ -77,11 +84,24 @@ See `assets/README.txt` for the details:
 
 ### 3. Wire up the contact form
 
-The form works without a backend — it opens the visitor's mail client. For real
-inbox delivery, create a free form at [formspree.io](https://formspree.io),
-then in `index.html` replace `YOUR_FORMSPREE_ID` in the `<form action>` with
-your ID. The code detects the change and switches from `mailto:` to `fetch`
-automatically.
+Nothing to do — it already works. The form has no `action` attribute, and
+`js/main.js` §08 treats that absence as "no backend" and composes the message
+into the visitor's own mail client instead. That is a real send.
+
+For inbox delivery instead, create a free form at
+[formspree.io](https://formspree.io) and add its endpoint as the action:
+
+```html
+<form class="form reveal" id="contactForm" action="https://formspree.io/f/abcd1234" ...>
+```
+
+§08 switches from `mailto:` to `fetch` as soon as the action is an `http(s)` URL.
+Nothing else changes.
+
+Put the real ID in, not a stand-in. An action pointing at a form ID nobody owns
+is worse than no action at all — the code believes it, POSTs to it, and the
+message disappears behind a success message. §08 rejects any action containing
+the word "your" and stays on `mailto:` for exactly that reason.
 
 ### 4. Turn on GitHub Pages
 
