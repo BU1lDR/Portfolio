@@ -1003,21 +1003,46 @@
       <div class="contact">
         <!-- ============================================================
              EDIT #8 — contact form
-             1. Make a free form at https://formspree.io
-             2. Paste your form ID below (replace YOUR_FORMSPREE_ID)
 
-             Until then this form still SENDS — js/main.js §08 sees the untouched
-             placeholder in the action and composes the message into the visitor's
-             own mail client instead of POSTing it. Wiring up Formspree is an
-             upgrade (no mail app needed at the other end, and replies land in a
-             dashboard), not a repair.
+             THERE IS NO action ATTRIBUTE, AND THAT IS THE CONFIGURATION.
+             This form has no third-party backend, so it sends through the
+             visitor's own mail client: js/main.js §08 reads the action, finds
+             nothing to POST to, and composes a mailto instead. That is a real
+             send, not a stub.
 
-             data-fallback-email is where that handoff points, and it is also the
-             address printed on screen if the visitor's browser turns out to have
-             no mail handler at all. Keep it in step with the Direct block below.
+             It used to carry a formspree.io endpoint with a fill-me-in form ID in
+             it. Taken out, because that was a URL shipped on a live page: it
+             resolved to a form ID that does not exist, it was the one
+             advertisement on this site for a service I never signed up to, and a
+             placeholder that has survived deployment has stopped being a reminder
+             and become a defect. The literal string is not written down anywhere
+             in the repo now, including here — a fill-me-in value quoted in the
+             note that says it was removed is one copy-paste from being back.
+
+             TO ADD A BACKEND LATER
+             Make a form at https://formspree.io (or any service that accepts a
+             POST of form fields and answers JSON), then put its endpoint back as
+             the action:
+                 <form ... action="https://formspree.io/f/abcd1234" ...>
+             §08 switches to fetch()-ing it the moment the action is an http(s)
+             URL — nothing else to change. The upside is that the sender needs no
+             mail app and replies collect in a dashboard; it is an upgrade, not a
+             repair.
+
+             Put the REAL id in, not a stand-in. §08 refuses any action with the
+             word "your" in it and stays on mailto, precisely so a half-finished
+             edit cannot POST your visitors' messages into a form nobody owns.
+
+             Both paths need JavaScript. With JS off, a submit has no endpoint to
+             reach and the browser will just re-request this page — the same dead
+             end the placeholder gave it, minus the misleading URL.
+
+             data-fallback-email is where the mailto handoff points, and it is
+             also the address printed on screen if the visitor's browser turns out
+             to have no mail handler at all. Keep it in step with the Direct block
+             below.
              ============================================================ -->
         <form class="form reveal" id="contactForm"
-              action="https://formspree.io/f/YOUR_FORMSPREE_ID"
               method="POST" novalidate
               data-fallback-email="aryanverma102007@gmail.com">
           <div class="form__row">

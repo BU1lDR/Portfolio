@@ -433,8 +433,24 @@
 
     var status = $('#formStatus');
     var submit = $('#formSubmit');
+    /* getAttribute, not form.action. The DOM property is not the attribute: with
+       no action="" on the element it resolves to the document's own URL, so
+       form.action would report this page as the endpoint and every message would
+       be POSTed at index.html. The attribute is absent today — that absence is
+       what selects the mailto path below, and it has to stay legible as absence.
+
+       The second clause is a stand-in guard, and it is deliberately a pattern
+       rather than one constant. This used to test for the literal string
+       YOUR_FORMSPREE_ID, which was the exact placeholder that shipped in the
+       action for a while — a check that knows one wrong value and no others. Any
+       fill-me-in URL a person pastes back here will have "your" in it somewhere
+       (YOUR_ID, your-form-id, YOUR_FORMSPREE_ID), so match that instead and the
+       guard covers the family. An endpoint the code believes in but nobody owns
+       is worse than no endpoint at all: the mailto path is a working send, and a
+       POST into a dead form ID is a message that vanishes with a success face
+       on. When in doubt, fall back. */
     var action = form.getAttribute('action') || '';
-    var configured = action.indexOf('YOUR_FORMSPREE_ID') === -1 && /^https?:/.test(action);
+    var configured = /^https?:\/\//.test(action) && !/\byour[-_]?/i.test(action);
     var fallback = form.dataset.fallbackEmail || '';
 
     function say(msg, kind) {
