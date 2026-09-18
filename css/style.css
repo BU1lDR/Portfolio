@@ -4548,7 +4548,15 @@ body.term-stowed .sam.p-idle .sam__cel,
    an empty links row would just render as a stray horizontal rule. */
 .card__note {
   display: flex;
-  align-items: center;
+  /* Not align-items: center. It was, and it was fine while there were two cards
+     in this grid: the note fitted on one line, and centring a 5px dot against a
+     one-line flex item is the same thing as aligning it to that line. A third
+     card made the columns narrower, the note wrapped to two lines, and the dot
+     drifted to the midpoint BETWEEN them — reading as a bullet belonging to
+     neither. flex-start pins it to the top and the margin below drops it back to
+     the optical centre of the first line, which is where it looked like it was
+     all along. */
+  align-items: flex-start;
   gap: .5em;
   padding-top: .55rem;
   border-top: 1px solid var(--line);
@@ -4562,6 +4570,9 @@ body.term-stowed .sam.p-idle .sam__cel,
   border-radius: 99px;
   background: var(--vio);
   flex-shrink: 0;
+  /* Half the leading, less half the dot. The 1.4 is this rule's own
+     line-height, so the two stay in step if the type changes. */
+  margin-top: calc((1.4em - 5px) / 2);
 }
 
 .work__more {
