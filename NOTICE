@@ -1,0 +1,30 @@
+NOTICE — what the MIT licence in this repository does and does not cover
+
+The MIT licence in LICENSE covers the code: the HTML, the CSS, the JavaScript,
+the GitHub Actions workflow and the scripts under tools/.
+
+It does NOT cover the following, which are either not mine to relicense or are
+personal identity documents rather than reusable material.
+
+1. The samurai sprites in assets/samurai/
+   From CraftPix, "Samurai Pixel Art Sprite Sheets" (the free pack), used under
+   CraftPix's own file licence: https://craftpix.net/file-licenses/
+   They are not covered by the MIT grant above and cannot be relicensed here.
+   If you reuse this code, obtain them from CraftPix under their terms or
+   replace them.
+
+2. Personal documents and images
+   assets/certs/      certificates issued to Aryan Verma
+   assets/badges/     credential badge images
+   assets/resume.pdf  and assets/resume.src.html
+   assets/pfp.jpg     and assets/og.png
+   These identify a specific person. All rights reserved; do not redistribute
+   or reuse them.
+
+3. The written copy
+   The prose on the site — the bio, the project descriptions, the timeline and
+   the terminal's text content in js/data.js — is (c) 2026 Aryan Verma. You are
+   welcome to the structure and the code that renders it. Replace the words
+   with your own.
+
+Everything else is yours under the MIT licence.
