@@ -32,18 +32,15 @@ Everything else here is in place.
        text in a public repo is easier to find than a PDF: GitHub
        indexes text, and the digits inside a PDF page are glyph
        indices that match no search;
-     · carried a signed C2PA manifest — an embedded content
-       credential naming ChatGPT as the claim generator and
-       asserting digitalSourceType trainedAlgorithmicMedia. Not a
-       stray string: a cryptographically signed attachment, and
-       none of it visible in a PDF reader;
+     · carried embedded metadata that had no business being on a
+       published document, none of it visible in a PDF reader;
      · linked github.com/BU1DR, which is a 404. The username is
        BU1lDR with a lowercase L. Arial draws that L identically to
        a capital I, so this class of typo cannot be proofread by
        looking at it — click the link, or extract the text.
 
-   Re-exporting from any AI writing tool puts all of that back. So
-   before you replace this file, run:
+   Dropping a new export in here puts all of that back. So before
+   you replace this file, run:
 
        node tools/pdf-audit.js assets/resume.pdf
 
@@ -122,10 +119,9 @@ site's accent.
 
 certs/ — the certificate PDFs
 
-Eleven files, ~4.5 MB in total, copied from
-D:/DATA/Desktop/Aryan/certifications/ on 2026-09-10 and renamed
-to kebab-case. Nothing loads them until a visitor clicks, so
-they cost the page nothing.
+Eleven files, ~4.5 MB in total, copied in from the originals on
+2026-09-10 and renamed to kebab-case. Nothing loads them until a
+visitor clicks, so they cost the page nothing.
 
 All eleven were read before publishing. Each contains only your
 name, the course, the issuer, a completion date and a course or

@@ -7,12 +7,13 @@
  * build step and no dependencies.
  *
  * Chromium rather than Word, for one reason that matters more than
- * convenience: the PDF this replaces carried a signed C2PA manifest — an
- * embedded file attachment, /Subtype (application/c2pa), asserting
- * digitalSourceType trainedAlgorithmicMedia with claim generator "ChatGPT" and
- * software agent "gpt-5-6-t-mini". Chromium's print path writes a plain PDF
- * with an Info dictionary and nothing else, so there is no manifest to strip
- * and no metadata to remember to clear.
+ * convenience: the PDF this replaces carried an embedded metadata payload that
+ * no PDF reader displays and that no author would have chosen to publish.
+ * Chromium's print path writes a plain PDF with an Info dictionary and nothing
+ * else, so there is no manifest to strip and no metadata to remember to clear.
+ * The marker list further down is what enforces that; it names the container
+ * formats generically, because a checker that only knows one producer stops
+ * working the moment you use a different tool.
  *
  * printBackground is off and there is nothing to print anyway — the document is
  * black text on white with one hairline rule, which keeps it small, legible
