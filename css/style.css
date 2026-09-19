@@ -88,7 +88,22 @@
   --line-2:    rgba(255, 255, 255, .16);
   --txt:       #e7e9f0;
   --txt-2:     #9aa2b6;
-  --txt-3:     #626b80;
+  /* Was #626b80, which failed WCAG AA everywhere it landed — and it lands in 46
+     places, so it was one number causing 69 of the 93 failing text runs on the
+     page. Raised to relative luminance .239, chosen against the LIGHTEST surface
+     it sits on rather than against --bg: a mid-grey loses contrast as the
+     backing gets lighter, so #626b80 measured 3.79:1 on --bg but only 3.42:1 on
+     an --elev-2 card, and the card is the binding constraint. AA on that surface
+     needs luminance >= .209; #767f98 clears it by 2%, which is inside the margin
+     a future half-percent-lighter card would eat, so this takes the next step up
+     instead. Searched with .preview-tools/contrast-solve.js (TXT3= overrides the
+     token at runtime), not eyeballed.
+
+     The three-tier hierarchy survives, which was the thing at risk: by
+     luminance the tiers were --txt .816 / --txt-2 .361 / --txt-3 .147 and are
+     now .816 / .361 / .239. The dim tier moves up into the gap below --txt-2
+     without closing it, so "quieter than secondary" still reads that way. */
+  --txt-3:     #7d86a0;
 
   --red:       #ff3b53;   /* 朱 vermilion — the dominant accent */
   --red-soft:  rgba(255, 59, 83, .13);
@@ -204,7 +219,16 @@ ul, ol { list-style: none; }
   z-index: 999;
   padding: .6em 1.1em;
   background: var(--red);
-  color: #fff;
+  /* Not #fff. White on this vermilion is 3.5:1 and cannot be rescued by picking
+     a better white — AA at 14px needs a foreground luminance of 1.30 and white
+     is 1.0. The ceiling is the background: white needs bg luminance <= .183, and
+     --red's red channel alone contributes .213, so NO colour with r:255 can
+     carry white text at AA no matter what its green and blue are.
+     --bg on --red is 5.79:1, and it costs nothing here — the skip link only
+     appears on keyboard focus, so it is not a surface anyone forms an impression
+     of. The one control that exists for accessibility should not be the one that
+     fails it. */
+  color: var(--bg);
   font: 500 var(--t-sm)/1 var(--f-mono);
   border-radius: var(--r);
   transform: translateY(-160%);
@@ -1029,7 +1053,12 @@ body.cursor-sel.cursor-down .cursor-ring::before {
   font: 500 var(--t-xs)/1 var(--f-jp);
   font-style: normal;
   letter-spacing: .1em;
-  opacity: .75;
+  /* Was `opacity: .75`. On the ghost buttons that was a dimmed --txt; on
+     .btn--solid it was 75% white on vermilion, which measured 2.5:1 — the
+     faintest text in any button on the page, and inside the primary CTA.
+     Dropping it takes these to the same ratio as the button's own label, so the
+     Japanese sublabel is no longer the weakest link in a control it shares. It
+     still reads as secondary: 9-12px, uppercase, wide tracking, its own line. */
 }
 .btn i.ico-dl { font-family: var(--f-mono); }
 .btn > span, .btn > i { position: relative; z-index: 1; }
@@ -1039,7 +1068,26 @@ body.cursor-sel.cursor-down .cursor-ring::before {
 /* solid — a wipe fills from the left on hover */
 .btn--solid {
   background: var(--red);
-  color: #fff;
+  /* Was `color: #fff`, which is 3.5:1 on --red at 14.2px and fails AA — in the
+     one button on the page that matters most, the hero's primary CTA.
+
+     Worth being precise about why the obvious fixes are not available, because
+     "pick a better white" is the instinct and it cannot work. AA at this size
+     needs the foreground to reach relative luminance 1.3006 against #ff3b53, and
+     white is 1.0 — there is no lighter colour, so no foreground passes. Nor can
+     the red be nudged: white at 4.5:1 needs a background luminance <= .1833,
+     while the red channel at 255 contributes .2126 on its own. Any colour with
+     r: 255 is over the ceiling before green and blue are considered; the lightest
+     red that could carry white is about #ef0000.
+
+     So the choice was between the accent and the text colour, and this flips the
+     text. --bg on --red is 5.79:1 — a clear pass — and it keeps --red byte for
+     byte and the type scale untouched, where darkening the fill to ~#e11d38
+     would have changed the accent everywhere it is used and bumping the label to
+     18.66px bold would have bought the 3:1 large-text bar by redesigning the
+     button. It is also already this design's own idiom: :hover below set
+     `color: var(--bg)` on this button long before the audit. */
+  color: var(--bg);
   box-shadow: var(--glow);
 }
 .btn--solid::before {
@@ -1051,7 +1099,11 @@ body.cursor-sel.cursor-down .cursor-ring::before {
   transform-origin: left;
   transition: transform .38s var(--ease);
 }
-.btn--solid:hover { color: var(--bg); }
+/* No `:hover { color: var(--bg) }` any more — the resting colour is that now, so
+   the rule set a property to the value it already had. Hover still reads as a
+   state change, and a bigger one than before: ::before wipes --txt across the
+   fill, so the text goes from --bg on red at 5.79:1 to --bg on near-white at
+   16.7:1 while the glyphs themselves hold still. */
 .btn--solid:hover::before { transform: scaleX(1); }
 
 /* ghost */
@@ -1694,7 +1746,12 @@ body.term-cold .termlaunch { transition: none; }
   outline-color: var(--grn);
   outline-offset: 2px;
 }
-.term__input::placeholder { color: var(--txt-3); opacity: .6; }
+/* `opacity: 1` rather than dropping the declaration: Firefox's UA stylesheet
+   applies its own opacity to ::placeholder, so deleting the line would hand the
+   dimming back to the browser instead of removing it. The .6 that used to be
+   here was on top of --txt-3 and took the word "help" — the one hint a visitor
+   has that this terminal accepts input at all — down to 2:1. */
+.term__input::placeholder { color: var(--txt-3); opacity: 1; }
 .term__hintkey {
   flex-shrink: 0;
   font-size: var(--t-xs);
@@ -4767,7 +4824,16 @@ body.term-stowed .sam.p-idle .sam__cel,
   font: 400 var(--t-xs)/1.4 var(--f-mono);
   color: var(--txt-3);
 }
-.certs__when { opacity: .72; }
+/* This used to be `opacity: .72`, stacked on top of a colour that is already the
+   dim tier — so the date rendered at an effective 2.42:1 and was the largest
+   remaining block of sub-AA text on the page, 11 runs of it.
+   `--txt-3` is now the AA floor on this surface, which means there is no room
+   below it for a quieter sub-tier: anything dimmer than the issuer line fails.
+   The date was subordinate to the issuer only by being harder to read, and it
+   already sits on its own line, so the ranking survives the loss. If it ever
+   needs to read as metadata again, that has to come from size, tracking or
+   position — not from taking another 28% off a colour that has none to give. */
+.certs__when { letter-spacing: .04em; }
 
 /* PDF / Verify. Underlined only on hover: eleven rows × two links is a lot of
    rule if they're all drawn at rest. */
@@ -4861,8 +4927,12 @@ body.term-stowed .sam.p-idle .sam__cel,
   transition: border-color .25s var(--ease), background-color .25s var(--ease);
 }
 .field textarea { resize: vertical; min-height: 7.5em; }
+/* Same as .term__input::placeholder — explicit 1, because Firefox dims these by
+   default and an omitted value is not the same as a neutral one. The .55 put
+   every field's guidance at 1.89:1, on the one part of the page a visitor has to
+   read before they can use it. */
 .field input::placeholder,
-.field textarea::placeholder { color: var(--txt-3); opacity: .55; }
+.field textarea::placeholder { color: var(--txt-3); opacity: 1; }
 .field input:hover,
 .field textarea:hover { border-color: var(--line-2); }
 .field input:focus,
@@ -4947,8 +5017,12 @@ body.term-stowed .sam.p-idle .sam__cel,
   margin-top: auto;
   font: 400 var(--t-xs)/1.9 var(--f-jp);
   letter-spacing: .14em;
+  /* No `opacity: .6` on top of --txt-3. また会いましょう is a sign-off, not
+     texture — it is the last thing the contact panel says — and dimming an
+     already-dim colour put it at 2.03:1. The generous line-height and tracking
+     are what make it feel like a closing flourish; the contrast was never
+     carrying that. */
   color: var(--txt-3);
-  opacity: .6;
 }
 
 
