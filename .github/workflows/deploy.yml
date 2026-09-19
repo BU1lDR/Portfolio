@@ -70,6 +70,19 @@ jobs:
             echo "::error::the <base> substitution did not take"; exit 1; }
           echo "404.html base -> $root"
 
+      # Runs after the <base> rewrite, not before, so it checks the bytes that
+      # actually ship. The policy lives in a <meta> tag because Pages cannot set
+      # headers, which means it sits in the same file as the things it restricts
+      # and drifts out of step with them silently — a stale sha256 does not warn,
+      # it just stops the script running. 404.html pins two inline blocks that
+      # way, and one of them is what gives a stranger's 404 its stylesheet.
+      #
+      # Same reasoning as the substitution check above: a broken deploy is
+      # visible, a page that quietly lost a script is found months later by
+      # somebody who will not report it.
+      - name: Check the CSP still matches the pages
+        run: node tools/csp-audit.js
+
       # Static site — no build step. Upload the repo root as-is.
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
