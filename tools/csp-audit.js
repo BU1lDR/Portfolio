@@ -11,7 +11,7 @@
  * it just refuses to run the script. So the page keeps loading, looks fine on
  * the machine of whoever made the change, and quietly stops working.
  *
- * Two shapes of that failure are live in this repo right now:
+ * Three shapes of that failure are live in this repo right now:
  *
  *   1. A hash goes stale. 404.html pins two inline <script> blocks by sha256
  *      because neither can become a file — the first has to run before the
@@ -28,6 +28,16 @@
  *      policy, and nothing about adding an onclick= tells you it is about to be
  *      ignored. So this asserts the property instead of trusting the comment
  *      that claims it.
+ *
+ *   3. The contact form gets a backend. index.html's own instructions for that
+ *      said to put an endpoint in the action and that there was "nothing else to
+ *      change" — while connect-src 'self' and form-action 'self' sat at the top
+ *      of the same file, blocking both submit paths. Following the instruction
+ *      exactly produced a form that told every visitor "Network error. Email me
+ *      directly," because a fetch CSP refuses rejects like an unreachable host.
+ *      No tag changed, so nothing above this would have noticed: connect-src
+ *      governs JavaScript rather than markup, and was the one directive in either
+ *      policy with no check behind it at all.
  *
  * Both directions are checked, because both are drift: a hash in the policy
  * that matches no script on the page is as much a bug as a script with no hash
@@ -347,6 +357,78 @@ function auditFile(file) {
     });
     if (!bad) ok(urls.length + ' url() in ' + r.url.split('?')[0] + ' all permitted');
   });
+
+  /* ---- the requests no markup can show you ----------------------------------
+     Everything above walks tags. connect-src governs neither a tag nor a file
+     path — it governs fetch(), XHR, WebSocket, EventSource and sendBeacon, which
+     live in JavaScript, so it was the one directive in either policy with
+     nothing checking it. That is also the directive with the live trap, and the
+     trap is written down in index.html as an instruction:
+
+         "put its endpoint back as the action: <form ... action="https://…">
+          §08 switches to fetch()-ing it the moment the action is an http(s) URL
+          — nothing else to change."
+
+     Nothing else to change is false. connect-src 'self' blocks that POST and
+     form-action 'self' blocks the no-JS one, and the same file's CSP comment says
+     so thirty lines from the top while the instruction next to the form does not.
+     Follow the instruction and the fetch rejects, main.js's .catch() prints
+     "Network error. Email me directly at …", and the only account of why is a
+     console line nobody is watching — on the one path a stranger uses to reach
+     a person. The policy would still "match the pages": no tag changed.
+
+     So: a form action and a literal URL in the page's own scripts both count as
+     requests, and both get checked here. */
+  const netCalls = [];
+
+  const formRe = /<form\b([^>]*)>/gi;
+  let f;
+  while ((f = formRe.exec(bare)) !== null) {
+    const action = attr(f[0], 'action');
+    if (!action || !originOf(action)) continue; // absent or relative: same origin
+    const at = lineOf(bare, f.index);
+    // Two directives, two submit paths. fetch() is what §08 does with JS on;
+    // form-action is what the browser does with JS off, and a policy that allows
+    // one without the other half-works in a way nobody tests.
+    netCalls.push({ url: action, directive: 'connect-src', at, what: 'form action (fetch path)' });
+    netCalls.push({ url: action, directive: 'form-action', at, what: 'form action (no-JS submit)' });
+  }
+
+  /* Literal URLs handed to a network API in the local scripts this page loads.
+     Deliberately only literals: main.js calls fetch(action) through a variable,
+     which is the case the form check above resolves properly. Guessing at
+     variables would mean either false alarms or a confident wrong answer, and
+     this file exists because of a confident wrong answer. */
+  const NET_API = /(?:\bfetch\s*\(|\.open\s*\(\s*["'][A-Z]+["']\s*,|new\s+WebSocket\s*\(|new\s+EventSource\s*\(|sendBeacon\s*\()\s*(["'])([^"']+)\1/g;
+  refs.filter((r) => r.directive === 'script-src' && !originOf(r.url)).forEach((r) => {
+    const p = path.join(path.dirname(file), r.url.split('?')[0]);
+    if (!fs.existsSync(p)) return;
+    const js = fs.readFileSync(p, 'utf8');
+    let c;
+    NET_API.lastIndex = 0;
+    while ((c = NET_API.exec(js)) !== null) {
+      const url = c[2];
+      if (!originOf(url)) continue; // relative: same origin, and 'self' covers it
+      netCalls.push({ url, directive: 'connect-src', at: null, what: r.url.split('?')[0] });
+    }
+  });
+
+  let refused = 0;
+  netCalls.forEach((c) => {
+    if (permits(sources(policy, c.directive), c.url)) return;
+    refused++;
+    fail(c.directive + ' blocks ' + c.url + ' — ' + c.what +
+         (c.at ? ' (line ' + c.at + ')' : ''),
+         c.directive === 'connect-src'
+           ? 'The request never leaves the page. It rejects like a network error,\n' +
+             'so the handler shows one, and the real reason is console-only.'
+           : 'With JavaScript off the browser refuses the submit outright.');
+  });
+  if (!refused) {
+    ok(netCalls.length
+      ? netCalls.length + ' outbound request target(s) permitted'
+      : 'no cross-origin request target in the markup or scripts');
+  }
 
   console.log('');
 }

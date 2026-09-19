@@ -60,16 +60,27 @@
      jobs: googleapis.com serves the stylesheet, gstatic.com serves the font
      files it points at. Miss either and the type falls back mid-load.
 
-     Three entries are load-bearing in ways that are easy to "tidy" into a bug:
+     Two entries are load-bearing in ways that are easy to "tidy" into a bug:
        object-src 'self'  the résumé viewer is an <object type=application/pdf>,
                           not an iframe. 'none' here blanks it.
        img-src   data:    the grain overlay in css/style.css is an inline SVG.
-       connect-src 'self' the contact form's fetch() path. There is no backend
-                          today so nothing uses it, but re-add a form service and
-                          this line blocks the POST until its origin is named —
-                          a second lock on the same door as the 'your' guard in
-                          §08, and the more honest of the two, since this one
-                          fails loudly. -->
+
+     And two are load-bearing in the other direction — they restrict something
+     this page will want to do later. connect-src 'self' and form-action 'self'
+     are the contact form's two submit paths: §08's fetch() with JavaScript on,
+     the browser's own POST with it off. There is no backend today so neither is
+     exercised, and adding a form service means naming its origin in both. Both,
+     or the form half-works for a subset of visitors nobody tests as.
+
+     The thing to know is that they refuse *quietly*. A fetch() that CSP blocks
+     rejects exactly like an unreachable host, so §08's .catch() says "Network
+     error. Email me directly" and the actual reason is a console line nobody is
+     watching — on the one path a stranger uses to reach a person. §08's own
+     "add a backend later" note walked straight into that for months by saying
+     there was nothing to change but the action. tools/csp-audit.js now reads the
+     form action, and any literal request URL in the scripts this page loads, and
+     fails the build when these two do not permit them. That check is the part of
+     this comment that still works once nobody is reading it. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <!-- Dark only. Telling the browser so stops it tinting form controls
@@ -1078,15 +1089,33 @@
              in the repo now, including here — a fill-me-in value quoted in the
              note that says it was removed is one copy-paste from being back.
 
-             TO ADD A BACKEND LATER
+             TO ADD A BACKEND LATER — TWO EDITS, NOT ONE
              Make a form at https://formspree.io (or any service that accepts a
-             POST of form fields and answers JSON), then put its endpoint back as
-             the action:
-                 <form ... action="https://formspree.io/f/abcd1234" ...>
-             §08 switches to fetch()-ing it the moment the action is an http(s)
-             URL — nothing else to change. The upside is that the sender needs no
-             mail app and replies collect in a dashboard; it is an upgrade, not a
-             repair.
+             POST of form fields and answers JSON), then:
+
+             1. Put its endpoint back as the action:
+                    <form ... action="https://formspree.io/f/abcd1234" ...>
+                §08 switches to fetch()-ing it the moment the action is an http(s)
+                URL. Nothing else in the JavaScript changes.
+
+             2. Name that origin in the CSP at the top of this file. Both of
+                these, because there are two submit paths:
+                    connect-src 'self' https://formspree.io     ← §08's fetch()
+                    form-action 'self' https://formspree.io     ← a no-JS submit
+
+             Step 2 is not optional, and this instruction used to say it was. It
+             read "nothing else to change," which is the kind of wrong that looks
+             right: step 1 alone leaves a form that reports "Network error. Email
+             me directly" to every visitor who uses it, because the fetch is
+             refused by our own policy before it leaves the page, and a refused
+             fetch rejects exactly like an unreachable host. The reason appears in
+             the console and nowhere a stranger would look. tools/csp-audit.js now
+             fails the build on step 1 without step 2, so this paragraph is no
+             longer the only thing standing between the next edit and a contact
+             form that silently cannot be contacted.
+
+             The upside is still real: the sender needs no mail app and replies
+             collect in a dashboard. It is an upgrade, not a repair.
 
              Put the REAL id in, not a stand-in. §08 refuses any action with the
              word "your" in it and stays on mailto, precisely so a half-finished
