@@ -38,6 +38,40 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<!-- ── Content-Security-Policy ───────────────────────────────────────────────
+     A meta tag rather than a response header because GitHub Pages does not let
+     you set headers at all. That costs three directives, which are silently
+     ignored when the policy arrives this way and are therefore deliberately not
+     listed below: frame-ancestors, sandbox and report-uri. So this page is
+     framable and violations go to the console and nowhere else. Worth knowing
+     before trusting the list; neither matters much on a page with no login and
+     no authenticated action to clickjack.
+
+     It is strict — no 'unsafe-inline', no 'unsafe-eval', not even for styles —
+     and that is only possible because the page earns it: every script is an
+     external file, the one inline <script> is application/ld+json (data, which
+     script-src does not govern), and there are no inline style attributes and no
+     on* handlers anywhere in the markup. tools/csp-audit.js asserts all of that
+     on every run, so the day someone adds an inline handler the build says so
+     instead of the page quietly dying in front of a visitor.
+
+     The two non-'self' origins are Google Fonts, split because they do different
+     jobs: googleapis.com serves the stylesheet, gstatic.com serves the font
+     files it points at. Miss either and the type falls back mid-load.
+
+     Three entries are load-bearing in ways that are easy to "tidy" into a bug:
+       object-src 'self'  the résumé viewer is an <object type=application/pdf>,
+                          not an iframe. 'none' here blanks it.
+       img-src   data:    the grain overlay in css/style.css is an inline SVG.
+       connect-src 'self' the contact form's fetch() path. There is no backend
+                          today so nothing uses it, but re-add a form service and
+                          this line blocks the POST until its origin is named —
+                          a second lock on the same door as the 'your' guard in
+                          §08, and the more honest of the two, since this one
+                          fails loudly. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <!-- Dark only. Telling the browser so stops it tinting form controls
      and scrollbars for a light theme this site does not have. -->
 <meta name="color-scheme" content="dark">

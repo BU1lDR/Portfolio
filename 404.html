@@ -8,6 +8,40 @@
 <title>404 — nothing here | Aryan Verma</title>
 <meta name="robots" content="noindex">
 
+<!-- ── Content-Security-Policy ───────────────────────────────────────────────
+     Same policy as index.html with four differences. Two are tighter, because
+     this page does less: object-src and form-action are 'none' rather than
+     'self', as there is no PDF viewer and no form. Two are looser. script-src
+     carries two sha256 hashes, and style-src keeps 'unsafe-inline' — this page
+     has a <style> block and one style attribute on the $ cat line, and unlike
+     the scripts below, neither is worth hashing. Hashes do not cover style
+     attributes at all, so that one would have to go first, and the payoff is
+     nil: inline CSS is not an injection route on a page with no input, no
+     query-string read and nothing to exfiltrate.
+
+     The hashes are the price of the two inline <script> blocks below. Neither
+     can become a file. The first one has to run before the stylesheet <link>
+     resolves — and it resolves against the <base> that script is there to
+     correct — so an external src would itself be requested against the wrong
+     root and 404, which is precisely the failure it exists to prevent. The
+     second has to run after eggs.js, which is not deferred.
+
+     A hash is a fragile thing to leave lying around: edit either block by one
+     character and the browser silently refuses to run it, so the base never gets
+     corrected and a stranger's 404 loses its stylesheet — months later, found by
+     nobody. That is the same drift this file's <base> comment warns about, so it
+     gets the same treatment: tools/csp-audit.js recomputes both hashes from the
+     file and fails the build if they have moved. Do not hand-edit the digests;
+     run the tool and paste what it prints.
+
+     It hashes with LF line endings because that is what Pages serves — git
+     stores LF and the runner checks out LF. On a Windows clone with
+     core.autocrlf=true the working copy can be CRLF, which hashes differently:
+     the deployed page is still correct, but these two blocks will be blocked
+     when you open the local file. That is the one false alarm to expect. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'sha256-JQwflJqi3ghkm2/vWtXqsgdkjZfGTIvG3S0sILxNFc0=' 'sha256-FdbJ/WbFNR569No0fKoygJddPL/rDxBxpp1+RmEzztg='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; form-action 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
 <!-- ── the one thing this page has to get right before anything else loads ──
      GitHub Pages serves this file for any missing path under the site root and
      LEAVES THE URL ALONE. So a relative href here resolves against the path that
