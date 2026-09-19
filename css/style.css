@@ -1755,8 +1755,22 @@ body.term-cold .termlaunch { transition: none; }
 .term__hintkey {
   flex-shrink: 0;
   font-size: var(--t-xs);
+  /* No `opacity: .6` — it was --txt-3 dimmed a second time, at 2.6:1. This one
+     only showed up once the probe started driving the terminal open instead of
+     reading it stowed, which is the argument for driving it. */
   color: var(--txt-3);
-  opacity: .6;
+}
+/* "↹ tab  ↑ history" names two keys, so like .term__peek's verb above it belongs
+   to the input device and not to the width. §18's `max-width: 860px` block also
+   hides it, and that rule stays — but width alone got both edges backwards, and
+   measurably so (.preview-tools/help-pointer.js reports the computed display):
+   a 1280px touchscreen was shown a Tab key it has not got, while an 860px
+   desktop window that has one was not told. The two rules answer two different
+   questions and both are worth answering — this one "are there keys?", that one
+   "is there room on the input row?" — and since a hint is only ever hidden,
+   never restored, they compose without either having to know about the other. */
+@media (hover: none), (pointer: coarse) {
+  .term__hintkey { display: none; }
 }
 
 /* ── the terminal's home base, in the page ──────────────────────
