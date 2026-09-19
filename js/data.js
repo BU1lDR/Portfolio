@@ -31,7 +31,7 @@ window.PORTFOLIO = {
       "be made harder to break.",
       "",
       "Alongside that I'm working through data analysis and system design,",
-      "while reading for a B.Tech at GGSIPU in Delhi."
+      "while reading for a B.Tech at ADGIPS (GGSIPU) in Delhi."
     ]
   },
 
@@ -102,6 +102,31 @@ window.PORTFOLIO = {
       code: 'https://github.com/BU1lDR/security-scanner'
     },
     {
+      /* The capstone from the internship at the top of experience[] — same
+         programme, same two months, so the two entries corroborate each other
+         instead of each being one unsupported line.
+
+         It sits second, not last, because the evidence behind it is strong:
+         public repo, MIT, a notebook that re-runs end to end, and a dataset
+         anyone can download and check the numbers against. The figures are the
+         exception to the rule in the comment above, and only because they cannot
+         go stale the way a test count can — Online Retail II is a frozen public
+         dataset and these are the notebook's own outputs over it, recorded in
+         outputs/facts.json. Keep "identifies": the 683 are what the segmentation
+         flags, not a confirmed count of customers who are gone. */
+      name: 'Retail Customer Segmentation',
+      year: '2026',
+      blurb: 'The IBM SkillsBuild × BharatCares capstone — an end-to-end analysis ' +
+             'of 1,067,371 UCI Online Retail II transaction lines in a single ' +
+             'notebook: a cleaning audit that accounts for every row it drops, ' +
+             'RFM segmentation cross-checked against K-Means, CLV estimation and ' +
+             'cohort retention. It identifies 683 high-value accounts, £1.69M of ' +
+             'revenue, that had stopped ordering.',
+      stack: ['Python', 'pandas', 'NumPy', 'scikit-learn', 'Matplotlib', 'Jupyter'],
+      live: '',
+      code: 'https://github.com/BU1lDR/retail-customer-segmentation'
+    },
+    {
       name: 'File Integrity Checker',
       year: '2026',
       blurb: 'A lightweight file integrity monitor. Take a trusted baseline once, ' +
@@ -130,7 +155,13 @@ window.PORTFOLIO = {
     {
       when: '2025 — 2029',
       what: 'B.Tech — Information Technology',
-      where: 'Guru Gobind Singh Indraprastha University (GGSIPU) — Delhi, India',
+      /* The college, then the affiliating university — in that order and not
+         GGSIPU alone, which is what this said for a long time. GGSIPU is who
+         awards the degree; ADGIPS is where the four years actually happen, and
+         naming only the second one disagreed with both the resume and the
+         profile README. Keep this string, index.html's timeline row and the
+         JSON-LD alumniOf in step; they are three copies of one fact. */
+      where: 'Dr Akhilesh Das Gupta Institute of Professional Studies (ADGIPS), GGSIPU — Delhi, India',
       note: 'CGPA 9.04.'
     }
   ],

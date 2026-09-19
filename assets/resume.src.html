@@ -69,20 +69,24 @@
      in the country. It now leads with the one thing that separates you from them
      — a finished, public, tested tool — and says what it does.
 
-     Two of those seven left the summary and are STILL CLAIMED three lines below
-     it, in SKILLS: "Threat Detection" and "Retrieval Augmented Generation (RAG)".
-     Neither is backed by anything else in this document — no project uses them
-     and none of the eleven certificates covers them — and a named skill with
-     nothing behind it is the question you least want asked in an interview. They
-     were left alone on purpose rather than quietly deleted: SKILLS here is three
-     lines that have to stay in step with js/data.js and index.html, which list
-     six richer groups (languages, the Nmap/Burp/sqlmap tooling, Linux and Bash,
-     FastAPI and pytest), and rewriting one side of that pair is how the two
-     documents drift. Fix all three together or leave all three.
+     Two of those seven outlived the summary for a while and are now gone from
+     SKILLS too: "Threat Detection" and "Retrieval Augmented Generation (RAG)".
+     Neither was backed by anything else in this document — no project used them
+     and none of the eleven certificates covered them — and a named skill with
+     nothing behind it is the question you least want asked in an interview. The
+     reason they survived one round was a worry about drift: SKILLS here is three
+     lines that have to stay in step with js/data.js and index.html. That worry
+     turned out to be backwards. Neither of those files ever claimed either one
+     — data.js lists Data & AI as Pandas, NumPy, prompt engineering, LLM
+     workflows and IBM Project Bob — so the resume was the one document out of
+     step, and cutting the two claims is what brought the three into agreement.
 
-     Worth knowing if you do: the first SKILLS line reads "Cybersecurity:
-     Cybersecurity, Ethical Hacking, Threat Detection" — the heading and its own
-     first item are the same word.
+     What replaced them is drawn from the projects rather than from a subject
+     list: SAST, DAST and dependency scanning are literally what secscan's three
+     scanners do, Nmap and Burp are in data.js's Security & Recon group, and
+     Pandas carried the capstone. The old first line also read "Cybersecurity:
+     Cybersecurity, Ethical Hacking, Threat Detection" — heading and first item
+     the same word — which the rename to "Security:" fixes on the way past.
 
      The two EXPERIENCE bullets were worse. "Conduct day-to-day project
      coordination, planning, and implementation across multiple teams" and
@@ -91,8 +95,26 @@
      tense on a finished internship is the tell. They are replaced with what the
      internship actually was, per your own words on the site: real datasets rather
      than exercise data, and LLMs used inside the analysis rather than alongside
-     it. Deliberately no figures. A number on a resume invites "which dataset,
-     how many rows" and there is no honest answer written down anywhere.
+     it.
+
+     THE FIRST BULLET NOW NAMES THE CAPSTONE, AND CARRIES FIGURES
+     It said "real datasets rather than exercise data", which was true and
+     unverifiable — the sort of line a reader has to take on trust. The reason it
+     carried no figures was that there was no honest answer written down anywhere
+     to "which dataset, how many rows". There is now: the capstone is a public
+     MIT repo, github.com/BU1lDR/retail-customer-segmentation, whose notebook
+     re-runs end to end over a dataset anyone can download, and every number in
+     it is recorded in outputs/facts.json. 1.07M is raw_rows = 1,067,371;
+     £1.69M and the 683 accounts behind it are at_risk_revenue and
+     at_risk_customers, the union of the "At risk" and "Cannot lose them"
+     segments. Keep the word "identified": those are the accounts the
+     segmentation flags, not a confirmed count of customers who have left.
+
+     The capstone is NOT a fourth PROJECTS entry, and not only because of the six
+     pixels below — it is the internship's own output, so a PROJECTS entry would
+     be the same work billed twice. The second bullet is unchanged and stays: the
+     role is titled "with AI", and dropping the one line that speaks to that in
+     order to say more about the notebook would cost more than it buys.
 
      Both replacements were length-checked, not eyeballed — see the note further
      down about six pixels. Each bullet must stay on ONE line: they are indented
@@ -224,9 +246,11 @@
      too. It never was before: "B.Tech, Information Technology" appeared nowhere
      on this document, and the summary paragraph only implied it.
 
-     Note this diverges from the site, which still names GGSIPU alone in both
-     js/data.js and index.html. Those two must change together if they change at
-     all.
+     The site used to diverge here, naming GGSIPU alone. It no longer does: the
+     ADGIPS-then-GGSIPU wording is now in js/data.js's education entry, the
+     timeline row in index.html, the about paragraph, the meta description and
+     the JSON-LD alumniOf (where ADGIPS is the college and GGSIPU its
+     parentOrganization). Five places plus this one, all saying the same thing.
      ══════════════════════════════════════════════════════════════════════════ -->
 
 <!-- Reachable, because the deploy workflow uploads the whole repo root and Pages
@@ -360,16 +384,16 @@ file integrity monitor. Strongest in Python and Linux. Looking for a cybersecuri
 real systems in it.</p>
 
 <h2>SKILLS</h2>
-<p class="line">Cybersecurity: Cybersecurity, Ethical Hacking, Threat Detection</p>
-<p class="line">Data &amp; AI: Data Analytics, Retrieval Augmented Generation (RAG), LLMs</p>
-<p class="line">Systems: Linux Servers, Networking</p>
+<p class="line">Security: Ethical Hacking, SAST, DAST, Dependency Scanning, Nmap, Burp Suite</p>
+<p class="line">Data &amp; AI: Data Analytics, Pandas, LLM Workflows, Prompt Engineering</p>
+<p class="line">Systems: Linux, Bash, Git, Networking</p>
 
 <h2>EXPERIENCE</h2>
 <div class="entry">
   <p class="role">IBM SkillsBuild | BharatCares Internship - Data Analytics with AI</p>
   <p class="when">Aug 2026 - Sep 2026</p>
   <ul>
-    <li>Took real datasets end to end — loading, cleaning, and working out what was worth asking.</li>
+    <li>Capstone: segmented 1.07M Online Retail II lines; identified £1.69M of revenue at risk.</li>
     <li>Used LLMs inside the analysis rather than alongside it, where the two stopped being separate.</li>
   </ul>
 </div>
