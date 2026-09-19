@@ -97,6 +97,65 @@ function blankComments(s) {
   return s.replace(/<!--[\s\S]*?-->/g, (m) => m.replace(/[^\n]/g, ' '));
 }
 
+/* The same treatment for JavaScript, and for the same reason. The style-attribute
+   scan near the bottom reads the page's scripts, and js/samurai.js explains its
+   own fix in a comment that spells out `style="` in prose. A scanner that reads
+   comments fails on the very file that proves it works.
+
+   Strings and template literals are tracked so that `//` inside a URL is not read
+   as the start of a comment. That direction matters more than it looks: mistaking
+   a string for a comment blanks live code, and blanked code cannot be found to be
+   wrong — the error would be a silent miss, which is exactly the failure this
+   check was written to end. Regex literals get the usual heuristic (a `/` in a
+   value position opens one) because a regex is the other place a stray `/*` can
+   hide. Known limit: a backtick nested inside a `${}` would end a template early
+   here. Nothing in js/ does that, and there is a standing rule against it. */
+function blankJsComments(s) {
+  const out = s.split('');
+  const n = s.length;
+  let i = 0;
+  let prev = ''; // last non-space char, for the regex-versus-divide decision
+  while (i < n) {
+    const c = s[i];
+    const d = s[i + 1];
+    if (c === '/' && d === '/') {
+      while (i < n && s[i] !== '\n') { out[i] = ' '; i++; }
+      continue;
+    }
+    if (c === '/' && d === '*') {
+      while (i < n && !(s[i] === '*' && s[i + 1] === '/')) { if (s[i] !== '\n') out[i] = ' '; i++; }
+      if (i < n) { out[i] = ' '; out[i + 1] = ' '; i += 2; }
+      continue;
+    }
+    if (c === '"' || c === "'" || c === '`') {
+      i++;
+      while (i < n && s[i] !== c) { if (s[i] === '\\') i++; i++; }
+      i++;
+      prev = 'x';
+      continue;
+    }
+    if (c === '/' && /[(,=:[!&|?{};+\-*%~^<>]/.test(prev)) {
+      i++;
+      let inClass = false;
+      while (i < n) {
+        const r = s[i];
+        if (r === '\\') { i += 2; continue; }
+        if (r === '[') inClass = true;
+        else if (r === ']') inClass = false;
+        else if (r === '\n') break;       // unterminated: it was a divide after all
+        else if (r === '/' && !inClass) break;
+        i++;
+      }
+      i++;
+      prev = 'x';
+      continue;
+    }
+    if (!/\s/.test(c)) prev = c;
+    i++;
+  }
+  return out.join('');
+}
+
 function lineOf(s, idx) {
   return s.slice(0, idx).split('\n').length;
 }
@@ -357,6 +416,78 @@ function auditFile(file) {
     });
     if (!bad) ok(urls.length + ' url() in ' + r.url.split('?')[0] + ' all permitted');
   });
+
+  /* ---- the style attributes no file contains --------------------------------
+     The inline-CSS check above reads THIS FILE for `<style>` and `style="`. Both
+     of its regexes run over markup that exists on disk — which is precisely the
+     set of inline styles that were never going to be the problem, because they
+     are sitting there to be counted. The ones that break a page are the ones a
+     script writes at runtime, and js/samurai.js wrote fifty-one of them: the `sl`
+     road built its stones, torii and runner as a single innerHTML string with a
+     style attribute on every element. style-src carries no 'unsafe-inline', so
+     the browser refused to parse all fifty-one. Every stone landed at left:0, the
+     bed at top:0, the gates in a pile, and the runner fell back to the slow
+     walking cadence that --sam-run-dur exists to override.
+
+     This audit printed `ok  inline CSS and style-src agree` on that run, and it
+     was not lying. The file's own markup did agree. There were three CSP checks
+     here and all three looked at the page as LOADED; none looked at the page as
+     USED. That is the gap, and it is what the scan below closes.
+
+     Two things need 'unsafe-inline' and are worth naming separately, because they
+     fail against different directives:
+
+       - a style attribute in an HTML string, or setAttribute('style', …)
+             → style-src-attr, refused when the attribute value is parsed
+       - a <style> element in an HTML string
+             → style-src-elem, refused unless its hash is pinned
+
+     Both fall back to style-src when the -attr/-elem forms are absent, which they
+     are in both policies here and should stay that way: Firefox never implemented
+     either form, so reaching for `style-src-attr 'unsafe-inline'` to make a road
+     appear fixes Chrome and leaves the page broken in the browser you did not
+     check.
+
+     el.style.setProperty(…) and el.style.foo = … are deliberately NOT flagged.
+     CSSOM writes are governed by no directive at all, which is why the fix was to
+     move the values there rather than to loosen the policy. */
+  const STYLE_WRITERS = [
+    { re: /(^|[^.\w$])style\s*=\s*\\?["'`]/g, what: 'builds a style attribute' },
+    { re: /\.setAttribute\s*\(\s*\\?["'`]style\\?["'`]/g, what: "calls setAttribute('style', …)" },
+    { re: /<style[\s>]/gi, what: 'builds a <style> element' },
+  ];
+
+  const styleWrites = [];
+  refs.filter((r) => r.directive === 'script-src' && !originOf(r.url)).forEach((r) => {
+    const p = path.join(path.dirname(file), r.url.split('?')[0]);
+    if (!fs.existsSync(p)) return;
+    const code = blankJsComments(fs.readFileSync(p, 'utf8').replace(/\r\n/g, '\n'));
+    const name = r.url.split('?')[0];
+    STYLE_WRITERS.forEach((w) => {
+      w.re.lastIndex = 0;
+      let h;
+      while ((h = w.re.exec(code)) !== null) {
+        styleWrites.push({ file: name, at: lineOf(code, h.index), what: w.what });
+      }
+    });
+  });
+
+  if (styleWrites.length && !styleInline) {
+    fail(styleWrites.length + " inline-style site(s) in this page's scripts, and style-src has no 'unsafe-inline'.",
+         styleWrites.map((s) => s.file + ':' + s.at + '  ' + s.what).join('\n') +
+         '\nSites, not attributes: a site inside a loop counts once here and produces one\n' +
+         'blocked attribute per iteration. The six above are the sl road before the fix,\n' +
+         'and they were fifty-one refusals on every run.\n' +
+         'Nothing in the page source shows any of it. Move the values to the CSSOM —\n' +
+         'el.style.setProperty(name, value) — which no directive governs. Do not add\n' +
+         "'unsafe-inline' to make this pass: index.html has no inline CSS of its own, so\n" +
+         'that trades away a protection currently in full force, and style-src-attr does\n' +
+         'not exist in Firefox.');
+  } else if (styleWrites.length) {
+    ok(styleWrites.length + " inline-style site(s) in scripts, and style-src allows 'unsafe-inline'");
+  } else {
+    ok('no script builds an inline style this policy would drop');
+  }
 
   /* ---- the requests no markup can show you ----------------------------------
      Everything above walks tags. connect-src governs neither a tag nor a file
