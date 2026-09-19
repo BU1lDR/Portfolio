@@ -85,12 +85,17 @@ window.PORTFOLIO = {
     {
       /* Order matters here and on the page: the terminal prints this array in
          order and index.html's cards are numbered 01/02/03 to match. This one
-         leads both because it is the largest finished thing — v1.0.0, MIT, a
-         public repo with 355 tests. Those figures are deliberately NOT in the
-         blurb: the `code` link is one click from the repo that proves them, and
-         a number typed here is a number that goes stale silently. This comment
-         said 353 until two regression tests were added to that repo, which is
-         the argument making itself. */
+         leads both because it is the largest finished thing — tagged, MIT, a
+         public repo with a real test suite.
+
+         No release number and no test count, here or in the blurb. The `code`
+         link is one click from the repo that proves both, and a figure typed
+         here is a figure that goes stale silently. This comment used to carry
+         them and it was wrong about the test count twice in one afternoon —
+         each time because tests were added, which is the most routine thing
+         that can happen to that repo. The argument made itself, so the numbers
+         are gone. The repo's own CI now asserts the count it publishes; that is
+         where a number belongs, next to something that can check it. */
       name: 'Security Scanner',
       year: '2026',
       blurb: 'A CLI — secscan — that points three kinds of check at one target ' +

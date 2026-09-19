@@ -206,10 +206,23 @@
          the PDF in assets/certs/ with the rest.
 
      THE SECURITY SCANNER ENTRY — IT SAID "(In Progress)" AND NO LONGER IS
-     The repo went public: github.com/BU1lDR/security-scanner, v1.0.0, MIT, 95
-     files, 355 collected tests. "(In Progress)" on a finished, public, tested
-     v1.0.0 undersells it, and the title is now the tool's real name, secscan,
-     which is what `pip install -e .` puts on your PATH.
+     The repo went public: github.com/BU1lDR/security-scanner, MIT, tagged
+     releases. "(In Progress)" on a finished, public, tested tool undersells it,
+     and the title is now the tool's real name, secscan, which is what
+     `pip install -e .` puts on your PATH.
+
+     THE ONE NUMBER IN THAT ENTRY — KEEP IT IN STEP OR TAKE IT OUT
+     The test count in that entry's Tech line is the only figure on this resume
+     that changes whenever the repo improves, and it has been wrong twice. It is
+     kept because a specific, checkable count is worth more to a reader than
+     "well tested" — but only while it is right. secscan's CI asserts the count
+     quoted in its own decisions.md against what pytest collects, so that file is
+     the source of truth: when it changes, change that line and rebuild this PDF.
+     build-resume.js fails if the PDF and this file disagree, so a forgotten
+     rebuild cannot ship. Nothing can tell you the figure is stale in BOTH at
+     once — if keeping it in step stops happening, delete the parenthetical
+     rather than leave a wrong one. The number is written once in this file, on
+     purpose; do not repeat it here.
 
      The description was also rewritten off the repo rather than off the old
      wording. It previously described an "advanced security scanner" with an
@@ -418,7 +431,7 @@ real systems in it.</p>
   <p>Scans a codebase or a live site: dependency CVEs via OSV.dev, SAST for dangerous sinks and
      secrets, passive DAST for TLS/headers/cookies, opt-in active checks behind an authorization
      gate.</p>
-  <p class="tech">Tech: Python, asyncio, httpx, cryptography, pytest (355 tests)</p>
+  <p class="tech">Tech: Python, asyncio, httpx, cryptography, pytest (357 tests)</p>
 </div>
 
 <h2>EDUCATION</h2>

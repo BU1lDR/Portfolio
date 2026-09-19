@@ -135,7 +135,7 @@
      404.html loads the same stylesheet and its own subset of the scripts, so
      leaving it behind gives you a shell on the 404 page running against last
      week's CSS. -->
-<link rel="stylesheet" href="css/style.css?v=20">
+<link rel="stylesheet" href="css/style.css?v=21">
 
 <!-- The boot overlay shows this ~0.7s in, so it must not be discovered
      late by the parser. 15 KB — it is on the critical path by design. -->
@@ -1193,15 +1193,15 @@
      not even data.js — so first is a position it can actually hold. Deleting
      this one line turns the scoreboard off and leaves all two dozen eggs
      working: every call site is guarded. -->
-<script src="js/eggs.js?v=20"></script>
-<script src="js/data.js?v=20"></script>
-<script src="js/scene.js?v=20" defer></script>
-<script src="js/terminal.js?v=20" defer></script>
-<script src="js/main.js?v=20" defer></script>
+<script src="js/eggs.js?v=21"></script>
+<script src="js/data.js?v=21"></script>
+<script src="js/scene.js?v=21" defer></script>
+<script src="js/terminal.js?v=21" defer></script>
+<script src="js/main.js?v=21" defer></script>
 <!-- After main.js, not before: samurai.js checks for window.TermWindow and
      stands down if it is missing, which is only a meaningful test once module 09
      has defined it. Deleting this one line is the samurai's kill switch — he
      stays on the roof, breathing, from CSS alone. -->
-<script src="js/samurai.js?v=20" defer></script>
+<script src="js/samurai.js?v=21" defer></script>
 </body>
 </html>

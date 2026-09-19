@@ -149,6 +149,27 @@ const REQUIRED = [
   const pages = (raw.match(/\/Type\s*\/Page[^s]/g) || []).length;
   check(pages === 1, 'one page (' + pages + ')');
 
+  /* The test count in the secscan entry is the only figure here that goes stale
+     on its own — it changes whenever that repo gains a test, and it has been
+     wrong twice. Deliberately not a literal in this file, which would just be a
+     fourth copy of the number: the source is read and the PDF is required to
+     carry the same figure. That catches the failure that actually happens —
+     resume.src.html edited and the PDF not rebuilt, or rebuilt from a stale
+     source — and it will start failing the moment the parenthetical is removed,
+     which is the point at which this check should be deleted too.
+
+     Whether the number is TRUE is not knowable from here. That is checked in the
+     repo it describes: security-scanner's CI compares the count in its
+     decisions.md against what pytest collects. This only keeps the two copies in
+     this repo honest with each other. */
+  console.log('\n  ── the one figure that goes stale ──');
+  const srcCount = (fs.readFileSync(SRC, 'utf8')
+                      .match(/pytest \((\d+) tests\)/) || [])[1];
+  check(srcCount !== undefined, 'the source states a test count');
+  if (srcCount !== undefined)
+    check(text.includes('pytest (' + srcCount + ' tests)'),
+          'the PDF carries the count the source states (' + srcCount + ')');
+
   console.log('\n  ' + (fail ? fail + ' FAILED' : 'ALL PASS'));
   process.exit(fail ? 1 : 0);
 })();
