@@ -1,3 +1,36 @@
+# READ THIS BEFORE ADDING A RULE HERE: AT THIS PATH, THIS FILE DOES NOTHING.
+#
+# robots.txt is defined per ORIGIN, at the root path, and nowhere else. Crawlers
+# fetch exactly https://bu1ldr.github.io/robots.txt — which is a 404, because
+# that would have to come from a `bu1ldr.github.io` user-pages repo and there
+# isn't one. This site is a PROJECT site, published under /Portfolio/, so what
+# you are reading lives at
+#
+#     https://bu1ldr.github.io/Portfolio/robots.txt      (200, and unread)
+#
+# and no crawler has ever requested it. Two things follow, and the second is the
+# reason this comment is longer than the file:
+#
+#   1. The Sitemap: line below has never been seen. sitemap.xml itself is served
+#      fine, but robots.txt is the only thing that was advertising it, so it is
+#      effectively undiscoverable. Submit the sitemap URL directly in Google
+#      Search Console instead — that is the supported route and needs no
+#      robots.txt at all.
+#
+#   2. A `Disallow:` added here will not keep anything out. It will LOOK like it
+#      did: the file is valid, the syntax is right, the file is reachable, and
+#      nothing anywhere reports an error. That is the trap. If you need a page
+#      kept out of search results, use a per-page tag in the document itself:
+#
+#          <meta name="robots" content="noindex, nofollow">
+#
+#      which works regardless of path. assets/resume.src.html already does this,
+#      and the comment above its tag explains why it had to.
+#
+# Kept rather than deleted because it costs nothing and becomes live the moment
+# this site moves to a custom domain or a user-pages repo. Until then, treat the
+# two directives below as aspirational.
+
 User-agent: *
 Allow: /
 
