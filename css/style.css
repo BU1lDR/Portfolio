@@ -5190,6 +5190,38 @@ body.term-stowed .sam.p-idle .sam__cel,
   .idcard__meta { grid-template-columns: repeat(2, 1fr); }
 }
 
+/* Phone widths: give the rotating phrase its own line, always.
+
+   .hero__role is a wrapping flex row with `min-height: 1.4em` — one line
+   reserved, wrapping permitted. That is fine when every phrase fits beside
+   "I'm into" and fine when none of them do. It is only wrong in between, and in
+   between is where the popular phones are: measured at 375, 384, 393 and 402px
+   the row fits 15 characters, `ethical hacking.` is 16, so that one phrase wraps
+   and the row grows 38-39px — which pushes the lede, both buttons and the social
+   row down, then pulls them back when it deletes. Every few seconds, forever.
+   406px is the narrowest width that holds all four phrases on one line; below
+   about 366px all four wrap, so the row is a stable two lines again.
+
+   A screenshot cannot see this and neither can an overflow check: nothing
+   overflows, nothing clips, every frame is individually correct. It is only
+   visible as motion, which is why it survived a desktop review.
+
+   `flex-basis: 100%` makes the phrase unable to share a line, so the row is
+   exactly two lines at every width here — no jitter and no reserved slack.
+   Reserving 3.05em of min-height instead would also stop the movement, but
+   would leave 38px of dead space under the short phrases.
+
+   Applied at 430px rather than at the measured 405px on purpose. The boundary is
+   a function of font metrics, so a visitor whose browser falls back off the mono
+   webface moves it, and 406-430 is exactly where it would land — the widths of
+   iPhone Pro Max and 14 Plus. Two lines is also the more coherent result: every
+   phone portrait width from 320 to 430 now sets the phrase the same way, instead
+   of Pro Max being the one phone that does it differently. There is no cost in
+   vertical space at these widths; a 430px screen is 932px tall. */
+@media (max-width: 430px) {
+  .hero__role .type { flex-basis: 100%; }
+}
+
 
 /* ── 18b touch targets ───────────────────────────────────────────
    WCAG 2.5.8 (AA) asks for 24x24 CSS px of tappable area. Three sets of links
