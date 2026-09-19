@@ -1028,7 +1028,43 @@
     /* Order is the stacking: haze behind everything, then the bed, the stones, the
        sheen and the build front, then the gates standing up through all of it, then
        him, last and in front. */
-    html += '<div class="sam-road__at" style="top:' + Math.round(r.bottom) + 'px">' +
+    /* ── why none of the geometry below is a style attribute ─────────────────
+       Everything in this overlay is positioned per-load: the bed sits at his
+       measured feet, every stone takes its own left and width off one seeded
+       draw, the gates are placed from the distance still to run, and the runner
+       carries the crossing distance and the cadence. All of it used to be
+       written as style="left:...", and the shipped CSP blocked every single one —
+       51 declarations on one `sl`, reported against style-src-attr, which left 34
+       stones stacked at left:0, the bed at top:0, the gates in a pile and
+       --sam-run-dur falling back to the 440ms walking cadence while the rig was
+       supposed to cross in 88. The glide, in other words: exactly the failure
+       --sam-run-dur is set here to prevent, reintroduced by the policy.
+
+       It was invisible because nothing looked at the page while it was being
+       USED. tools/csp-audit.js is static and reads files for inline <style>
+       blocks; a style attribute written by JS at runtime is in none of them.
+
+       No hash can fix it — the values differ every run, so there is nothing
+       stable to hash. 'unsafe-inline' would, and would also hand back inline
+       <style> injection across a document that currently has no inline style at
+       all, so it pays for one animation with a protection that is fully in force.
+       style-src-attr 'unsafe-inline' is narrower, but Firefox has never
+       implemented the -attr/-elem forms and so ignores it and falls back to
+       style-src, leaving the road flat there and nowhere else — the worst kind of
+       fix, the kind that looks green in the browser you tested.
+
+       So the values go on through the CSSOM, which no CSP directive governs: the
+       road.style.setProperty calls further down were never blocked even while
+       every attribute beside them was. Build order is document order, so each
+       list below zips onto its own querySelectorAll after the markup lands. */
+    var bedS = { top: Math.round(r.bottom) + 'px' };
+    var stoneS = [], dustS = [], gateS = [], ghostS = [], runnerS = null;
+    function applyGeom(el, o) {
+      if (!el || !o) return;
+      for (var p in o) if (Object.prototype.hasOwnProperty.call(o, p)) el.style.setProperty(p, o[p]);
+    }
+
+    html += '<div class="sam-road__at">' +
             '<div class="sam-road__haze"></div>' +
             '<div class="sam-road__band"></div>';
 
@@ -1062,13 +1098,16 @@
          away. */
       var n = rand();
       var sink = n < .3 ? 2 : (n < .58 ? 1 : 0);
-      html += '<div class="sam-road__stone" style="left:' + x + 'px;width:' +
-                (w - STONE_GAP) + 'px;--n:' + n.toFixed(3) + ';--j:' + sink +
-                ';--d:' + Math.round((span - (x + w)) / front) + 'ms">' +
-              (k % DUSTY === 1
-                 ? '<b style="--px:' + (Math.round(rand() * 15) - 11) + 'px"></b>'
-                 : '') +
-              '</div>';
+      stoneS.push({ left: x + 'px', width: (w - STONE_GAP) + 'px',
+                    '--n': n.toFixed(3), '--j': String(sink),
+                    '--d': Math.round((span - (x + w)) / front) + 'ms' });
+      /* The dust draw stays inside the condition it was already in. It is the
+         third call on a seeded generator, so hoisting it — or calling it
+         unconditionally to keep the branch tidier — reshuffles every stone after
+         it and the road comes out a different road. */
+      var dusty = k % DUSTY === 1;
+      if (dusty) dustS.push({ '--px': (Math.round(rand() * 15) - 11) + 'px' });
+      html += '<div class="sam-road__stone">' + (dusty ? '<b></b>' : '') + '</div>';
       k++;
     }
     html += '</div>' +
@@ -1101,11 +1140,10 @@
          dimension and every delay is already stated in §10b as a fraction of --h
          or of --sam-road-rise, and adding names here would be adding a second place
          for that arithmetic to live. */
-      html += '<div class="sam-road__torii" style="left:' +
-                Math.round(r.left + TIP - away) + 'px;--h:' + gate.h +
-                'px;--o:' + gate.o + ';--d:' +
-                Math.max(0, Math.round(away / CROSS_SPEED) - lead) + 'ms">' +
-              '<i></i><b></b><u></u><s></s></div>';
+      gateS.push({ left: Math.round(r.left + TIP - away) + 'px',
+                   '--h': gate.h + 'px', '--o': String(gate.o),
+                   '--d': Math.max(0, Math.round(away / CROSS_SPEED) - lead) + 'ms' });
+      html += '<div class="sam-road__torii"><i></i><b></b><u></u><s></s></div>';
     }
     html += '</div>';
 
@@ -1135,18 +1173,41 @@
        and this stays a loop over a depth. */
     var GHOST = '<div class="sam__flip"><div class="sam__cel"></div></div>';
     var stack = '';
-    for (var g = GHOSTS; g >= 1; g--)
-      stack += '<div class="sam__stage sam__stage--ghost" style="--g:' + g + '">' +
-                 GHOST + '</div>';
+    for (var g = GHOSTS; g >= 1; g--) {
+      ghostS.push({ '--g': String(g) });
+      stack += '<div class="sam__stage sam__stage--ghost">' + GHOST + '</div>';
+    }
     stack += '<div class="sam__stage">' + GHOST + '</div>';
 
-    html += '<div class="sam sam--road p-run" style="left:' + Math.round(r.left) +
-              'px;top:' + Math.round(r.top) + 'px;--sam-cross-x:' + cells(travel) +
-              'px;--sam-cross-dur:' + dur + 'ms;--sam-run-dur:' + CROSS_CYCLE + 'ms">' +
+    runnerS = { left: Math.round(r.left) + 'px', top: Math.round(r.top) + 'px',
+                '--sam-cross-x': cells(travel) + 'px', '--sam-cross-dur': dur + 'ms',
+                '--sam-run-dur': CROSS_CYCLE + 'ms' };
+    html += '<div class="sam sam--road p-run">' +
               '<div class="sam__zoom"><div class="sam__rig">' + stack + '</div></div>' +
             '</div>';
 
     road.innerHTML = html;
+
+    /* ── the geometry, now that the markup carries none of it ────────────────
+       Generation order is document order, so each list lines up with its own
+       query. Synchronous and in the same task as the innerHTML above, which is
+       what makes this safe: there is no frame in which the road exists unplaced,
+       so the stones never paint at left:0 on the way to being positioned, and
+       every animation begins from the values it is supposed to begin from. */
+    applyGeom(road.querySelector('.sam-road__at'), bedS);
+    var stoneEls = road.querySelectorAll('.sam-road__stone');
+    for (var si = 0; si < stoneEls.length; si++) applyGeom(stoneEls[si], stoneS[si]);
+    /* Only the dusty stones have a <b>, and they were pushed in the same order
+       they were emitted, so a direct child selector zips without an index map. */
+    var dustEls = road.querySelectorAll('.sam-road__stone > b');
+    for (var di = 0; di < dustEls.length; di++) applyGeom(dustEls[di], dustS[di]);
+    var gateEls = road.querySelectorAll('.sam-road__torii');
+    for (var gi = 0; gi < gateEls.length; gi++) applyGeom(gateEls[gi], gateS[gi]);
+    /* --ghost, not .sam__stage: the real stage is a .sam__stage too and carries
+       no --g, so matching on the base class would hand it a ghost's depth. */
+    var ghostEls = road.querySelectorAll('.sam__stage--ghost');
+    for (var hi = 0; hi < ghostEls.length; hi++) applyGeom(ghostEls[hi], ghostS[hi]);
+    applyGeom(road.querySelector('.sam--road'), runnerS);
 
     /* ── everything the stylesheet is not allowed to guess ────────
        The construction runs at 1.4x his ground speed so the stones are always

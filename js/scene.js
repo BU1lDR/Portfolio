@@ -159,10 +159,33 @@
       // Shrink the model on small screens so the gate always fits.
       this.scale = Math.min(1, Math.max(.42, Math.min(this.w / 1180, this.h / 760)));
 
-      // Keep the gate clear of the headline. On wide screens the hero copy
-      // is left-aligned, so push the model into the right third; on narrow
-      // screens there is no room beside the text, so drop it below instead.
-      if (this.w >= 900) {
+      /* Keep the gate clear of the headline. On wide screens the hero copy is
+         left-aligned, so push the model into the right third; on narrow screens
+         there is no room beside the text, so drop it below instead.
+
+         The branch is decided by the SAME media query the stylesheet uses, and
+         that is the point rather than a detail. This used to read `this.w >= 900`
+         and it disagreed with the stylesheet twice over. style.css dims
+         .hero__canvas to .38 inside `@media (max-width: 860px)`, with a comment
+         saying exactly why — "no room to sit beside the copy at this width, the
+         gate drops behind it as texture, scene.js also shifts the model down".
+         Two files, one decision, two different numbers: the dimming stopped at
+         861 while the dropping continued to 900. And `this.w` is the CANVAS
+         width, which is a gutter narrower than the viewport, so 900 here was
+         really ~910 there.
+
+         The result was a band from 861 to 909 where the gate sat behind the copy
+         — the arrangement the .38 exists to make readable — at full .85 opacity.
+         Measured with a canvas pixel read inside the text's own box: 5.3% of the
+         lede covered in bright gate strokes at 861x600, and 3.6-4.3% of the CTA
+         buttons all the way up to 909, against ~1% either side of the band.
+
+         asking matchMedia the stylesheet's own question removes the class of bug
+         rather than this instance of it: there is now one threshold, it is
+         written once, and the browser evaluates it the same way for both files.
+         If 861 ever moves in style.css, the string here is the only thing that
+         has to move with it. */
+      if (window.matchMedia('(min-width: 861px)').matches) {
         this.offX = this.w * 0.19;
         this.offY = 0;
       } else {

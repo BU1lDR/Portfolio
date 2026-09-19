@@ -133,7 +133,26 @@
           out(kv(n, '<span class="tl-out">' + CMDS[n].desc + '</span>'));
         });
         gap();
-        out('↑/↓ history · Tab complete · Ctrl+L clear · Esc closes the window', 'tl-dim');
+        /* Tell people about controls they actually have. All four of the
+           keyboard hints below are keyboard-only: a phone has no arrow keys,
+           no Tab, no Ctrl and no Esc, so on touch that line advertised four
+           things that do not exist while the two that do — the `clear` button
+           and the red dot — went unmentioned.
+
+           The markup already draws this distinction: the ↹/↑ hint beside the
+           input (.term__hintkey) is display:none under 860px, and .term__peek
+           picks its English half from (hover: hover) rather than from a width.
+           Only this JS-printed line was unguarded.
+
+           Asked per call, not cached at load, because the answer can change
+           under the page's feet — a 2-in-1 folding into tablet mode, or a
+           desktop window being driven by touch. `help` is typed rarely enough
+           that one matchMedia call costs nothing. */
+        if (window.matchMedia('(pointer: coarse)').matches) {
+          out('Tap <b>clear</b> to wipe the screen · the red dot closes this window · the amber one folds it', 'tl-dim');
+        } else {
+          out('↑/↓ history · Tab complete · Ctrl+L clear · Esc closes the window', 'tl-dim');
+        }
         out('A few commands are not on this list. Poke around.', 'tl-dim');
       }
     },
