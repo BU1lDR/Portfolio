@@ -82,9 +82,9 @@
      https://bu1ldr.github.io/Portfolio/
      ============================================================ -->
 <title>Aryan Verma — Cybersecurity Analyst &amp; Ethical Hacker</title>
-<meta name="description" content="Aryan Verma — cybersecurity and ethical hacking, based in Delhi, India. B.Tech at GGSIPU. Projects, certifications, and an interactive terminal.">
+<meta name="description" content="Aryan Verma — cybersecurity and ethical hacking, based in Delhi, India. B.Tech at ADGIPS (GGSIPU). Projects, certifications, and an interactive terminal.">
 <meta name="author" content="Aryan Verma">
-<meta name="keywords" content="Aryan Verma, cybersecurity, ethical hacking, penetration testing, data analysis, portfolio, GGSIPU, Delhi, India, Python, Linux">
+<meta name="keywords" content="Aryan Verma, cybersecurity, ethical hacking, penetration testing, data analysis, portfolio, ADGIPS, GGSIPU, Delhi, India, Python, Linux">
 <link rel="canonical" href="https://bu1ldr.github.io/Portfolio/">
 
 <meta property="og:type" content="website">
@@ -135,7 +135,7 @@
      404.html loads the same stylesheet and its own subset of the scripts, so
      leaving it behind gives you a shell on the 404 page running against last
      week's CSS. -->
-<link rel="stylesheet" href="css/style.css?v=18">
+<link rel="stylesheet" href="css/style.css?v=19">
 
 <!-- The boot overlay shows this ~0.7s in, so it must not be discovered
      late by the parser. 15 KB — it is on the critical path by design. -->
@@ -158,7 +158,11 @@
   },
   "alumniOf": {
     "@type": "CollegeOrUniversity",
-    "name": "Guru Gobind Singh Indraprastha University"
+    "name": "Dr Akhilesh Das Gupta Institute of Professional Studies (ADGIPS)",
+    "parentOrganization": {
+      "@type": "CollegeOrUniversity",
+      "name": "Guru Gobind Singh Indraprastha University"
+    }
   },
   "knowsAbout": [
     "Cybersecurity", "Ethical Hacking", "Penetration Testing",
@@ -594,7 +598,7 @@
             reading traffic in Wireshark, mapping a host with Nmap, or writing a
             small Python tool because the manual version got tedious.</p>
           <p>Alongside that I'm working through data analysis and system design,
-            while reading for a B.Tech at GGSIPU in Delhi. Right now I'm looking
+            while reading for a B.Tech at ADGIPS (GGSIPU) in Delhi. Right now I'm looking
             for internships where I can put this to work on real systems.</p>
 
           <ul class="about__facts">
@@ -748,6 +752,27 @@
             <span class="card__index" aria-hidden="true">02</span>
             <div class="card__thumb" aria-hidden="true"><span>弐</span></div>
             <div class="card__body">
+              <h3 class="card__title">Retail Customer Segmentation</h3>
+              <p class="card__desc">The IBM SkillsBuild × BharatCares capstone — an
+                end-to-end analysis of 1,067,371 UCI Online Retail II transaction
+                lines in a single notebook: a cleaning audit that accounts for every
+                row it drops, RFM segmentation cross-checked against K-Means, CLV
+                estimation and cohort retention. It identifies 683 high-value
+                accounts, £1.69M of revenue, that had stopped ordering.</p>
+              <ul class="card__stack"><li>Python</li><li>pandas</li><li>NumPy</li><li>scikit-learn</li><li>Matplotlib</li><li>Jupyter</li></ul>
+              <div class="card__links">
+                <a href="https://github.com/BU1lDR/retail-customer-segmentation"
+                   target="_blank" rel="noopener noreferrer">Code<i>↗</i></a>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card reveal" data-reveal-delay="160" data-tilt>
+          <div class="card__inner">
+            <span class="card__index" aria-hidden="true">03</span>
+            <div class="card__thumb" aria-hidden="true"><span>参</span></div>
+            <div class="card__body">
               <h3 class="card__title">File Integrity Checker</h3>
               <p class="card__desc">A lightweight file integrity monitor. Take a
                 trusted baseline once, run a check whenever you need one, and it
@@ -762,10 +787,10 @@
           </div>
         </article>
 
-        <article class="card reveal" data-reveal-delay="160" data-tilt>
+        <article class="card reveal" data-reveal-delay="240" data-tilt>
           <div class="card__inner">
-            <span class="card__index" aria-hidden="true">03</span>
-            <div class="card__thumb" aria-hidden="true"><span>参</span></div>
+            <span class="card__index" aria-hidden="true">04</span>
+            <div class="card__thumb" aria-hidden="true"><span>肆</span></div>
             <div class="card__body">
               <h3 class="card__title">अर्थNiti</h3>
               <p class="card__desc">Smart India Hackathon 2026 — an AI-driven
@@ -831,7 +856,7 @@
           <span class="tl__dot" aria-hidden="true"></span>
           <p class="tl__when">2025 — 2029</p>
           <h3 class="tl__what">B.Tech — Information Technology</h3>
-          <p class="tl__where">Guru Gobind Singh Indraprastha University (GGSIPU) — Delhi, India</p>
+          <p class="tl__where">Dr Akhilesh Das Gupta Institute of Professional Studies (ADGIPS), GGSIPU — Delhi, India</p>
           <p class="tl__note">CGPA 9.04.</p>
         </li>
       </ol>
@@ -1168,15 +1193,15 @@
      not even data.js — so first is a position it can actually hold. Deleting
      this one line turns the scoreboard off and leaves all two dozen eggs
      working: every call site is guarded. -->
-<script src="js/eggs.js?v=18"></script>
-<script src="js/data.js?v=18"></script>
-<script src="js/scene.js?v=18" defer></script>
-<script src="js/terminal.js?v=18" defer></script>
-<script src="js/main.js?v=18" defer></script>
+<script src="js/eggs.js?v=19"></script>
+<script src="js/data.js?v=19"></script>
+<script src="js/scene.js?v=19" defer></script>
+<script src="js/terminal.js?v=19" defer></script>
+<script src="js/main.js?v=19" defer></script>
 <!-- After main.js, not before: samurai.js checks for window.TermWindow and
      stands down if it is missing, which is only a meaningful test once module 09
      has defined it. Deleting this one line is the samurai's kill switch — he
      stays on the roof, breathing, from CSS alone. -->
-<script src="js/samurai.js?v=18" defer></script>
+<script src="js/samurai.js?v=19" defer></script>
 </body>
 </html>

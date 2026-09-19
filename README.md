@@ -14,7 +14,7 @@ HTML, CSS and JavaScript — no framework, no build step, no dependencies. Open
 | Feature | Where |
 |---|---|
 | Wireframe torii gate in real 3D (hand-written perspective projection, canvas 2D) | `js/scene.js` |
-| Interactive shell — 33 commands, history, tab completion, typo suggestions | `js/terminal.js` |
+| Interactive shell — 21 commands, history, tab completion, typo suggestions | `js/terminal.js` |
 | Matrix rain (`matrix` command, or the Konami code) | `js/scene.js` |
 | Custom cursor, 3D card tilt, glitch text, scroll reveals, boot sequence | `js/main.js` |
 | Contact form with validation and a `mailto:` fallback | `js/main.js` |
@@ -99,8 +99,9 @@ For inbox delivery instead, create a free form at
 Nothing else changes.
 
 Put the real ID in, not a stand-in. An action pointing at a form ID nobody owns
-is worse than no action at all — the code believes it, POSTs to it, and the
-message disappears behind a success message. §08 rejects any action containing
+is worse than no action at all — the code believes it and POSTs to it, and
+Formspree answers 404, so the visitor gets an error for a message that had a
+working `mailto:` route until you edited this. §08 rejects any action containing
 the word "your" and stays on `mailto:` for exactly that reason.
 
 ### 4. Turn on GitHub Pages
@@ -119,11 +120,16 @@ than `/Portfolio/`, update the canonical URL and the `og:image` URL in
 Type `help` in the terminal on the site, or:
 
 ```
-help  whoami  about  skills  projects  work  experience  education  certs
-path  contact  socials  links  email  resume  ls  cat  neofetch  banner
-matrix  goto  date  echo  history  pwd  uname  clear  exit  sudo  hack
-vim  coffee  42
+about  banner  cat  certs  clear  contact  education  eggs  exit
+experience  goto  help  ls  matrix  minimise  neofetch  path  projects
+resume  skills  whoami
 ```
+
+Those are the 21 `help` lists, which is the same number the card on the site
+shows — both come from the one filter in `js/terminal.js` (`!hidden`), so
+adding a command updates all three at once. `CMDS` holds 51 names in total;
+the other 30 are aliases and easter eggs, and they stay off this list for the
+same reason they stay off `help`.
 
 It also understands a few things that aren't commands — `rm -rf /`, `cd ..`,
 "hello", "thanks". Try them.

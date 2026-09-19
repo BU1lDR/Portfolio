@@ -5001,8 +5001,17 @@ body.term-stowed .sam.p-idle .sam__cel,
   opacity: 1;
   transform: none;
 }
-/* Never leave content hidden if JS fails to load. */
+/* Never leave content hidden if JS fails to load. Both halves of that matter
+   and only one of them used to be here. Unhiding .reveal is pointless while
+   §05's curtain is still drawn over it: .boot is fixed, inset 0, opaque, at
+   z-index 500, and the only thing that ever clears it is main.js adding
+   .is-done. No JS, or a main.js that 404s or throws before that line, and the
+   page underneath is perfect and completely invisible — a black screen reading
+   AWAITING SUBJECT, forever, with no way out. The scroll lock is not a problem
+   here for once: body.is-locked is added by the same function, so it never
+   lands either. */
 .no-js .reveal { opacity: 1; transform: none; }
+.no-js .boot { display: none; }
 
 
 /* ── 18 responsive ───────────────────────────────────────────── */

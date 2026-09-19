@@ -693,8 +693,9 @@
         egg('recon');
         out('Proxy listening on 127.0.0.1:8080. <span class="tl-dim">Intercept is on.</span>');
         out('You will find: one GET for the page, one for the CSS, five sprite sheets,');
-        out('and a POST to Formspree if you use the contact form. That is the whole');
-        out('conversation. <span class="tl-dim">Repeater will be very quiet.</span>');
+        out('and nothing at all from the contact form — it hands off to your mail');
+        out('client, so there is no request to catch. That is the whole conversation.');
+        out('<span class="tl-dim">Repeater will be very quiet.</span>');
       }
     },
 

@@ -447,8 +447,10 @@
        (YOUR_ID, your-form-id, YOUR_FORMSPREE_ID), so match that instead and the
        guard covers the family. An endpoint the code believes in but nobody owns
        is worse than no endpoint at all: the mailto path is a working send, and a
-       POST into a dead form ID is a message that vanishes with a success face
-       on. When in doubt, fall back. */
+       POST into a dead form ID is a 404 the sender reads as an error — the
+       submit handler below only prints the success line inside `if (res.ok)`,
+       so nothing is silently swallowed, but a message that would have gone out
+       via the mail client does not go out at all. When in doubt, fall back. */
     var action = form.getAttribute('action') || '';
     var configured = /^https?:\/\//.test(action) && !/\byour[-_]?/i.test(action);
     var fallback = form.dataset.fallbackEmail || '';

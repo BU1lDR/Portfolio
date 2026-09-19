@@ -3,8 +3,10 @@
 #
 #  This is a static portfolio on GitHub Pages. There is no backend, no
 #  database, no session, and no user data — so the honest answer to "what
-#  is the attack surface here" is: the contact form posts to Formspree,
-#  and everything else is bytes on a CDN.
+#  is the attack surface here" is: nothing but bytes on a CDN. The contact
+#  form has no action attribute and no endpoint; it composes a mailto: in
+#  the visitor's own mail client, so there is no POST target to attack and
+#  nothing of theirs is ever held anywhere.
 #
 #  It is here anyway, for two reasons. One, a security portfolio that
 #  does not publish a contact route for security reports is a security
