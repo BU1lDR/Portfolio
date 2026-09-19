@@ -5222,6 +5222,49 @@ body.term-stowed .sam.p-idle .sam__cel,
   .hero__role .type { flex-basis: 100%; }
 }
 
+/* Short and wide: a phone held sideways, or a window someone has squashed.
+
+   --t-hero is `clamp(2.7rem, 1.4rem + 8.5vw, 8.5rem)` — width, and only width.
+   Turning a phone sideways swaps the two axes, so the type scales UP on the
+   measurement that just stopped being the constraint while the one that now is
+   gets no say. At 844x390 the title renders at 94px, the same as on an 860px
+   desktop window, inside 390px of screen. Measured result: the title alone eats
+   171-333, the lede starts at 436, and the first screen is the wordmark and
+   nothing else — 229px of scrolling before "View work" exists. Nothing overflows
+   and nothing overlaps, which is why the layout checks all passed it; the failure
+   is that the hero stops making its argument.
+
+   So give the title a height term and tighten the vertical rhythm. Every value
+   below is a measured one, not a guess: the block is sized so that the eyebrow,
+   the title, the rotator, the lede, both buttons AND the social row all land
+   inside 390px, which is the shortest landscape phone worth targeting.
+
+   The lede gets a wider measure rather than a smaller font. 46ch is the right
+   line length when the page is tall and reading comfort is the only concern; on
+   a screen this short the third line costs more than the extra characters do,
+   and 72ch of 19px text is 698px inside 774px of available width, so it wraps to
+   two lines without shrinking the type anyone has to read.
+
+   No width bound on the query. A short viewport is the problem whether it is
+   844px across or 1400px, and the two existing short-screen blocks above are
+   both `min-width: 861px`, so nothing here is fighting them. */
+@media (orientation: landscape) and (max-height: 480px) {
+  .hero {
+    padding-top: calc(var(--nav-h) + 1rem);
+    padding-bottom: 2rem;
+  }
+  .hero__title {
+    /* 7vh keeps two lines of caps to ~75px at 390px tall, and the ceiling stops
+       it outgrowing the width-driven value on a taller landscape screen. */
+    font-size: clamp(2rem, 1rem + 7vh, 3.2rem);
+    margin-bottom: .5rem;
+  }
+  .hero__eyebrow { margin-bottom: .5rem; }
+  .hero__role    { margin-bottom: .5rem; }
+  .hero__lede    { max-width: 72ch; margin-bottom: 1rem; }
+  .hero__cta     { margin-bottom: 1rem; }
+}
+
 
 /* ── 18b touch targets ───────────────────────────────────────────
    WCAG 2.5.8 (AA) asks for 24x24 CSS px of tappable area. Three sets of links
