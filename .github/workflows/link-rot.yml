@@ -1,0 +1,67 @@
+name: Link rot
+
+# Asks the other end of every external link whether it is still there.
+#
+# WHY THIS IS A SCHEDULE AND NOT A DEPLOY STEP
+#
+# Link rot is time-based, not commit-based. Nothing about the bytes in this repo
+# changes when a repo on a server somewhere is renamed or deleted — the href is
+# still a well-formed string, the anchor still renders, the page still throws
+# nothing. The only thing that detects it is a request, and the answer depends on
+# the date rather than on the diff.
+#
+# That is not a hypothetical here. The Work card and the terminal's `projects`
+# command both pointed into a monorepo that was split up and deleted. Both were
+# 404s through a merge, two deploys and a verification pass that reported zero
+# failures, because not one check asked the other end of a link anything.
+#
+# So the deterministic half runs on every deploy (deploy.yml, --offline) and this
+# runs the network half on its own clock. Keeping it off the deploy path is the
+# point rather than a compromise: a Credly rate-limit or a GitHub blip must not be
+# able to block publishing a typo fix.
+#
+# WHAT "FAILING" MEANS HERE
+#
+# There is no build to fail — this repo has no build step, and a scheduled run
+# cannot block anything that is already published. What a red run does is notify:
+# GitHub emails the owner when a scheduled workflow fails on the default branch,
+# and the run stays red in the Actions tab until someone looks. That is the whole
+# mechanism, and it is worth being exact about, because "a link checker that fails
+# the build on a dead link" is a sentence that was written about this tool before
+# anything ran it at all.
+#
+# The tool separates a dead link from a blocked one and only the first is a
+# failure: 404, 410 and a domain that does not resolve are FAILURES, while 403,
+# 429, 5xx and a timeout are notes. LinkedIn answers unknown clients with 999
+# every single time, so without that distinction this would be red every week and
+# a check that cries wolf is worse than no check — its green run would be evidence
+# of nothing.
+
+on:
+  schedule:
+    # Mondays, 06:14 UTC. Not on the hour: GitHub queues scheduled runs and the
+    # top of the hour is the most contended slot, so an odd minute starts sooner.
+    - cron: '14 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: link-rot
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # The local pass runs here too, even though deploy.yml already ran it. It
+      # costs a second and it means a red run from this workflow is never ambiguous
+      # about which half found the problem — and a scheduled check that quietly
+      # skipped the cheap deterministic part would be the kind of gap this file's
+      # whole comment is about.
+      - name: Every link, on disk and over the network
+        run: node tools/link-check.js

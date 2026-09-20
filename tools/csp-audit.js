@@ -402,6 +402,47 @@ function auditFile(file) {
     ok('inline CSS and style-src agree');
   }
 
+  /* ---- the strictness claim, for the pages that make it ----------------
+     MUST_STAY_STRICT is checked against inline <script> only, which is half of
+     what index.html's CSP comment claims. The other half is "not even for styles",
+     and nothing asserted it — because the agreement check immediately above is
+     satisfied by a page that adds inline CSS AND adds 'unsafe-inline' to match. So
+     index.html could acquire both and every line of this audit would still print
+     ok, while its own CSP comment and my profile README went on saying the policy
+     has no 'unsafe-inline' anywhere, styles included. Same shape of drift this file
+     already catches for hashes, one directive across.
+
+     Asserted over every directive rather than over style-src, because the claim is
+     about the policy and not about one line of it.
+
+     404.html is deliberately not on the list: it keeps style-src 'unsafe-inline'
+     for a <style> block and one style attribute, the comment above its policy
+     argues why, and hashes do not cover style attributes at all — so it could not
+     comply without losing the attribute first, for no gain on a page with no input
+     and nothing to exfiltrate. Which page is on this list is therefore a decision
+     rather than an oversight, and keeping it explicit is what makes the claim
+     checkable in both directions: put a page on the list and it must comply, leave
+     it off and no sentence anywhere may say it does. */
+  if (MUST_STAY_STRICT.has(base)) {
+    const loose = [];
+    policy.forEach((srcs, directive) => {
+      srcs.forEach((s) => {
+        const v = s.toLowerCase();
+        if (v === "'unsafe-inline'" || v === "'unsafe-eval'") loose.push('  ' + directive + ' ' + s);
+      });
+    });
+    if (loose.length) {
+      fail(base + " is required to carry no 'unsafe-' source in any directive, but has " +
+           loose.length + '.',
+           loose.join('\n') + '\nThe CSP comment in ' + base + ' itself says there is none, "not even for\n' +
+           'styles", and my profile README says it of this site. Either move the\n' +
+           'inline CSS into css/, or drop ' + base + ' from MUST_STAY_STRICT and\n' +
+           'rewrite both of those sentences — not just the policy.');
+    } else {
+      ok(base + " carries no 'unsafe-' source in any directive, styles included");
+    }
+  }
+
   /* ---- subresources actually referenced ------------------------------- */
   const refs = [];
   const tagRe = /<(script|link|img|object|source)\b([^>]*)>/gi;

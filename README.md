@@ -156,24 +156,44 @@ css/style.css           19 numbered sections, design tokens at the top
 js/data.js              your facts, in one object (loaded first, not deferred)
 js/scene.js             3D torii + matrix rain
 js/terminal.js          the shell
+js/eggs.js              the easter-egg scoreboard (not deferred — 404.html pins
+                        an inline block's hash against running after it)
+js/samurai.js           the guard on the terminal window's roof; decides when he
+                        breathes and when he cuts, the rest is CSS
 js/main.js              boot, nav, cursor, tilt, reveals, form
 assets/                 resume, favicon, social image, portrait
-tools/                  the checks the deploy runs, and the resume build
-.github/workflows/      GitHub Pages deploy
+tools/                  five checks and the resume build; three run on deploy
+.github/workflows/      GitHub Pages deploy, and the weekly link-rot check
 .nojekyll               stops Pages from running Jekyll over the files
 ```
 
-`tools/` was missing from that list until the list was checked, which is its own
-small version of the problem two of the files in it exist to solve. Five files,
-and what matters about them is which ones a deploy runs — a check nobody triggers
-is documentation.
+Three entries have been missing from that list at some point: `tools/`, and then
+`js/eggs.js` and `js/samurai.js` — two files the page loads on every visit, absent
+from the structure block while the same README explained at length how copies of a
+fact drift apart. A hand-written list of files is a copy of the directory, and it
+goes stale the same way every other copy does; this one has no check behind it and
+is not worth one, so it gets the honest version instead, which is an admission
+rather than a guarantee.
 
-The deploy runs two, and both assert something this README claims:
+What matters about `tools/` is which of the five a deploy runs, because a check
+nobody triggers is documentation.
+
+The deploy runs three, and each asserts something claimed somewhere a reader can
+see:
 
 - `csp-audit.js` — the Content-Security-Policy against the pages it guards, in
   both directions, plus the sentence at the top of this file: every host the
   policy admits has to be one of the two Google font origins, so "the only thing
-  the page loads from anyone else" cannot quietly stop being true.
+  the page loads from anyone else" cannot quietly stop being true. It also holds
+  `index.html` to carrying no `'unsafe-inline'` or `'unsafe-eval'` in *any*
+  directive, which is what that file's own CSP comment claims and what the audit
+  did not check until now: it verified that inline CSS and `style-src` agree with
+  each other, and a page that gained a `style` attribute and gained
+  `'unsafe-inline'` to match satisfies that perfectly. `404.html` is deliberately
+  exempt and keeps it for styles — hashes do not cover `style` attributes at all,
+  and the comment above its policy argues the case. The point of the exemption
+  being a named list is that the difference between the two pages is a decision
+  rather than something nobody noticed.
 - `check-commands.js` — the command counts. `js/terminal.js` is the only thing
   that knows how many commands there are; the two numbers further down, the one in
   the feature table above, the placeholder in `index.html` and the first sentence
@@ -182,10 +202,25 @@ The deploy runs two, and both assert something this README claims:
   it advertised "40+ commands" against a table of 51. Not false — which is
   precisely why it lasted. A floor claim is satisfied by any number above it, so
   it cannot go stale in a way a reader can see.
+- `link-check.js --offline` — the half of the link checker that is a function of
+  the bytes being deployed: local `href`s and `src`s pointing at no file, in-page
+  anchors matching no `id`, a `target="_blank"` without `rel="noopener"`, and any
+  surviving reference to the deleted `my_projects` monorepo. Those went unchecked
+  entirely until this was wired up; the tool had existed for a while and nothing
+  ran it, which is the same as not having it, except that by then a README
+  elsewhere had started describing it.
 
-The other three are run by hand, and say so here rather than implying a
-guarantee: `link-check.js` (every link still resolves, with an `--offline` mode),
-`pdf-audit.js` (what a PDF discloses about itself beyond its text), and
+The network half of that checker runs weekly instead, in `link-rot.yml`, and not
+on the deploy path — on purpose. Link rot is time-based, not commit-based: a repo
+deleted last Tuesday is not a fact about today's diff, and a Credly rate-limit or
+a LinkedIn `999` must not be able to block publishing a typo fix. Nothing is
+"failed" by that workflow in the sense a deploy gate fails something — there is
+no build here, and the site is already published. What a red scheduled run does is
+notify, and that is worth stating plainly, because the sentence written about this
+tool before anything ran it said it failed builds.
+
+The remaining two are run by hand and say so here rather than implying a
+guarantee: `pdf-audit.js` (what a PDF discloses about itself beyond its text) and
 `build-resume.js`, which builds `assets/resume.pdf` and is the one thing in the
 repository that needs installing anything.
 

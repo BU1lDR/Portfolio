@@ -102,6 +102,24 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: node tools/check-commands.js
 
+      # --offline, deliberately: the half of the link checker that is a function of
+      # the bytes in this checkout. Local hrefs pointing at no file, in-page anchors
+      # matching no id, a target="_blank" without rel="noopener", and any surviving
+      # reference to the deleted my_projects monorepo — all deterministic, all
+      # caused by the commit being deployed, so all of them belong on the deploy
+      # path. Those four went unchecked entirely until now: the tool existed and
+      # nothing ran it, which is the same as not having it, except that the profile
+      # README had started describing it.
+      #
+      # The network half is NOT here, and that is the tool's own argument rather
+      # than a concession. Link rot is time-based: a repo deleted last Tuesday is
+      # not a fact about today's diff, and putting the network on the deploy path
+      # means a Credly rate-limit or a LinkedIn 999 can block publishing a typo
+      # fix. A gate that fails for reasons unrelated to the change is a gate people
+      # learn to skip. It runs weekly instead — see link-rot.yml.
+      - name: Check every local link, anchor and rel=noopener
+        run: node tools/link-check.js --offline
+
       # Static site — no build step. Upload the repo root as-is.
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
