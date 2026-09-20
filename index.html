@@ -135,13 +135,30 @@
      which looks exactly like a broken button. Bump the number EVERYWHERE it
      appears whenever you change css/ or js/, and do not count them by hand:
 
-         grep -n '?v=' index.html 404.html      # 7 real refs here, 2 in 404.html
-         sed -i 's/?v=N"/?v=M"/g' index.html 404.html    # N = current, M = N + 1
+         grep -n '?v=' index.html 404.html js/data.js   # 7 here, 2 in 404, 1 in data.js
+         sed -i 's/?v=N/?v=M/g' index.html 404.html js/data.js   # N = current, M = N + 1
 
      N and M rather than the actual numbers, because this line used to carry them
      literally — which meant the example matched ITSELF. grep -c counted 8 and not
      7, and running the sed rewrote the search half of its own pattern into the
      replacement, leaving `s/?v=11"/?v=11"/g` behind for whoever came next.
+     Keep it that way: write N and M, never the live number.
+
+     The closing quote came off the sed pattern because js/data.js is now in the
+     list and quotes its strings with '. That is only safe BECAUSE of the rule
+     above — an unquoted ?v=N matches nothing in this comment, so the pattern
+     still cannot eat itself.
+
+     js/data.js is in the list for assets/resume.pdf. It is the only ?v= that is
+     not css or js, and it is there because the PDF is rebuilt by
+     tools/build-resume.js whenever the resume changes, at the same URL, so a
+     returning visitor can otherwise be handed the previous one. It rides the
+     same number rather than its own: one number to bump is the whole point, and
+     the cost is one redundant PDF fetch on a deploy that only touched CSS.
+     resumeUrl is the single place it belongs — module 12 in main.js rewrites
+     every resume link on the page from it, so the four hrefs in this file are
+     overwritten at runtime and must NOT carry a version of their own. Two
+     sources would drift, and the stale one would win for anyone with JS off.
 
      404.html loads the same stylesheet and its own subset of the scripts, so
      leaving it behind gives you a shell on the 404 page running against last
