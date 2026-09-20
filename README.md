@@ -2,9 +2,19 @@
 
 A personal portfolio site for **Aryan Verma** — cybersecurity and ethical
 hacking, based in Delhi. Dark, Japanese-influenced, terminal-flavoured. Plain
-HTML, CSS and JavaScript — no framework, no build step, no npm. A Google-hosted
-webfont is the only thing the page loads from anyone else, and the CSP is what
-holds that line. Open `index.html` and it runs, webfont or not.
+HTML, CSS and JavaScript — no framework, no build step, nothing to install to
+serve it. A Google-hosted webfont is the only thing the page loads from anyone
+else, and the CSP is what holds that line. Open `index.html` and it runs, webfont
+or not.
+
+"Nothing to install to serve it" rather than "no dependencies", which is what this
+line used to say and which was false in two directions. The page fetches a webfont
+from Google, so it does have a runtime dependency on somebody else's server; and
+`tools/build-resume.js` needs playwright and poppler's `pdftotext` to turn
+`assets/resume.src.html` into the committed PDF, so the repository is not
+npm-free either. Neither affects serving the site — there is no `package.json`,
+no `node_modules`, and nothing is compiled — but a blanket "no dependencies"
+claimed both, and only one of the two was ever true.
 
 **Live:** https://bu1ldr.github.io/Portfolio/
 
@@ -148,9 +158,36 @@ js/scene.js             3D torii + matrix rain
 js/terminal.js          the shell
 js/main.js              boot, nav, cursor, tilt, reveals, form
 assets/                 resume, favicon, social image, portrait
+tools/                  the checks the deploy runs, and the resume build
 .github/workflows/      GitHub Pages deploy
 .nojekyll               stops Pages from running Jekyll over the files
 ```
+
+`tools/` was missing from that list until the list was checked, which is its own
+small version of the problem two of the files in it exist to solve. Five files,
+and what matters about them is which ones a deploy runs — a check nobody triggers
+is documentation.
+
+The deploy runs two, and both assert something this README claims:
+
+- `csp-audit.js` — the Content-Security-Policy against the pages it guards, in
+  both directions, plus the sentence at the top of this file: every host the
+  policy admits has to be one of the two Google font origins, so "the only thing
+  the page loads from anyone else" cannot quietly stop being true.
+- `check-commands.js` — the command counts. `js/terminal.js` is the only thing
+  that knows how many commands there are; the two numbers further down, the one in
+  the feature table above, the placeholder in `index.html` and the first sentence
+  of the repository's GitHub description are all copies of its answer. The
+  description is the copy no commit can reach, and it is the one that was wrong:
+  it advertised "40+ commands" against a table of 51. Not false — which is
+  precisely why it lasted. A floor claim is satisfied by any number above it, so
+  it cannot go stale in a way a reader can see.
+
+The other three are run by hand, and say so here rather than implying a
+guarantee: `link-check.js` (every link still resolves, with an `--offline` mode),
+`pdf-audit.js` (what a PDF discloses about itself beyond its text), and
+`build-resume.js`, which builds `assets/resume.pdf` and is the one thing in the
+repository that needs installing anything.
 
 ## Notes on a couple of decisions
 

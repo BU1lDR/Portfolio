@@ -43,6 +43,17 @@
  * that matches no script on the page is as much a bug as a script with no hash
  * — it means an edit happened and only half of it landed.
  *
+ * One check here is not about the pages at all. Everything above runs from the
+ * markup towards the policy: does the policy permit what the page asks for. The
+ * README and this repository's GitHub description both make a claim in the
+ * opposite direction — that a Google-hosted webfont is the only thing the page
+ * loads from anyone else — and a second third-party origin added to the policy
+ * AND to the markup satisfies every check above while falsifying it. So the
+ * policy's own host sources are held against a named allowlist, and adding an
+ * origin means editing that list, which is a diff somebody reads. A sentence in
+ * a README describing what the site does not do is otherwise guarded by nothing
+ * but whoever wrote it remembering they wrote it.
+ *
  * Line endings. Hashes are computed over LF, which is what Pages serves: git
  * stores LF and the Linux runner checks out LF. A Windows clone with
  * core.autocrlf=true can have CRLF in the working copy, which hashes to
@@ -263,6 +274,54 @@ function auditFile(file) {
       fail("'" + d + "' is ignored in a <meta> policy; remove it or it reads as protection that is not there");
     }
   });
+
+  /* ---- who the policy lets in at all ---------------------------------- */
+  /* The README and this repository's GitHub description both say the page loads
+     one thing from someone else: a Google-hosted webfont. Every other check in
+     this file runs from the pages towards the policy — does the policy permit
+     what the markup asks for. None of them runs the other way, so a second
+     third-party origin added to both the policy and the markup would satisfy
+     every one of them and quietly falsify the sentence a visitor reads first.
+
+     This is that direction. Any source that is not a CSP keyword, a hash, a
+     nonce, or data:/blob: is a host somebody else operates, and it has to be
+     named here. Adding one is then a diff through this list — which a reviewer
+     sees, and which is the point: the list is small enough to read, and the
+     claim it enforces is one sentence long.
+
+     A bare scheme source is deliberately NOT exempt. `https:` permits every
+     origin on the internet and looks almost identical to a hostname in a policy
+     you are skimming; it would make the allowlist below decorative. */
+  const THIRD_PARTY_ALLOWED = new Set([
+    'https://fonts.googleapis.com', // the @font-face stylesheet
+    'https://fonts.gstatic.com',    // the font files it points at
+  ]);
+  const CSP_KEYWORD =
+    /^'(?:self|none|unsafe-inline|unsafe-eval|unsafe-hashes|strict-dynamic|report-sample|wasm-unsafe-eval|inline-speculation-rules|nonce-.*|sha(?:256|384|512)-.*)'$/i;
+
+  const external = [];
+  policy.forEach((srcs, directive) => {
+    srcs.forEach((src) => {
+      const lower = src.toLowerCase();
+      if (CSP_KEYWORD.test(src) || lower === 'data:' || lower === 'blob:') return;
+      external.push({ directive, origin: lower.replace(/\/$/, '') });
+    });
+  });
+
+  const unexpected = external.filter((e) => !THIRD_PARTY_ALLOWED.has(e.origin));
+  if (unexpected.length) {
+    unexpected.forEach((e) => {
+      fail(e.directive + ' admits ' + e.origin + ', which is not in this file\'s allowlist',
+           'Either it should not be there, or the README and the repo description\n' +
+           'have stopped being true and need editing along with THIRD_PARTY_ALLOWED\n' +
+           'in this file. Both sentences claim exactly one third-party origin.');
+    });
+  } else {
+    const origins = Array.from(new Set(external.map((e) => e.origin))).sort();
+    ok(origins.length
+      ? 'third-party origins: ' + origins.join(', ') + ' — nothing outside the allowlist'
+      : 'no third-party origin anywhere in the policy');
+  }
 
   const scriptSrc = sources(policy, 'script-src') || [];
   ['unsafe-inline', 'unsafe-eval'].forEach((bad) => {

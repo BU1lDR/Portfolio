@@ -83,6 +83,25 @@ jobs:
       - name: Check the CSP still matches the pages
         run: node tools/csp-audit.js
 
+      # The counts in README.md, in index.html's card and in this repository's
+      # GitHub description are all copies of one answer js/terminal.js owns. The
+      # description is the interesting one: it is the first sentence a visitor
+      # reads, and it is the only copy that no commit touches, so no diff and no
+      # review was ever going to catch it drifting. It advertised "40+ commands"
+      # against a table of 51 — true, and useless, because a floor claim cannot
+      # look stale.
+      #
+      # Runs here rather than in a separate workflow because a wrong number is not
+      # worth blocking a deploy over twice: this job is the only thing that runs on
+      # a push, and a publish that ships a false claim is the failure to prevent.
+      - name: Check the documented command counts
+        env:
+          # Not for access — the description is public — but for the rate limit,
+          # and because anonymous reads come off a CDN cache that can lag a
+          # description edit by a minute. Scoped by the permissions block above.
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node tools/check-commands.js
+
       # Static site — no build step. Upload the repo root as-is.
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
