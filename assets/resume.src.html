@@ -416,7 +416,14 @@ real systems in it.</p>
   <p class="role">File Integrity Checker</p>
   <p>Lightweight file integrity monitor that takes a trusted baseline once and identifies exactly what
      was modified, added, or deleted.</p>
-  <p class="tech">Tech: Python, JSON, CLI, Git</p>
+  <!-- Git came out and SHA-256 went in. Git was never a technology this project
+       uses — the repo is standard-library-only — and it now has a public repo of
+       its own that a reader can open in one click, so the Tech line is checkable
+       in a way it was not when it lived in a monorepo directory. SHA-256 is the
+       thing the tool is actually built on and is the lead badge in its README.
+       Same edit is on the Work card in index.html and in js/data.js; all three
+       render this list and they must not disagree. -->
+  <p class="tech">Tech: Python, SHA-256, JSON, CLI</p>
 </div>
 <div class="entry">
   <p class="role">अर्थNiti (ArthNiti) - Backend - Lead</p>

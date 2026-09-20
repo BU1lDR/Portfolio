@@ -139,9 +139,16 @@ window.PORTFOLIO = {
       blurb: 'A lightweight file integrity monitor. Take a trusted baseline once, ' +
              'run a check whenever you need one, and it names exactly what was ' +
              'modified, added or deleted — no manual diffing, no guesswork.',
-      stack: ['Python', 'JSON', 'CLI', 'Git'],
+      stack: ['Python', 'SHA-256', 'JSON', 'CLI'],
       live: '',
-      code: 'https://github.com/BU1lDR/my_projects/tree/main/file_integrity_checker'
+      /* The monorepo this used to point into (my_projects/tree/main/
+         file_integrity_checker) was deleted, so both surfaces that render
+         projects[] — the Work cards and the terminal's `projects` — were
+         serving a 404. Each project is its own repo now. A deep tree URL is
+         also the fragile kind of link: it 404s on a branch rename or a
+         directory move, silently, and nothing in this repo can detect that.
+         tools/link-check.js now walks these and asserts 200. */
+      code: 'https://github.com/BU1lDR/file-integrity-checker'
     },
     {
       name: 'अर्थNiti',
