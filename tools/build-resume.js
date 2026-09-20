@@ -150,8 +150,8 @@ const REQUIRED = [
   check(pages === 1, 'one page (' + pages + ')');
 
   /* The test count in the secscan entry is the only figure here that goes stale
-     on its own — it changes whenever that repo gains a test, and it has been
-     wrong twice. Deliberately not a literal in this file, which would just be a
+     on its own — it changes whenever that repo gains a test, and it has gone
+     stale six times so far. Deliberately not a literal in this file, which would just be a
      fourth copy of the number: the source is read and the PDF is required to
      carry the same figure. That catches the failure that actually happens —
      resume.src.html edited and the PDF not rebuilt, or rebuilt from a stale

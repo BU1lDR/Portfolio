@@ -9,7 +9,9 @@
  * only number on the resume that changes without anybody editing the resume —
  * secscan gains a test and this figure is wrong, with no diff here to review.
  *
- * It was wrong three times that way. The third time it read 396 against a real
+ * It was wrong five times that way before this file existed, and once more after
+ * (the git log of assets/resume.src.html is the record: 353, then 355, 357, 367,
+ * 396, 446, 448). The fifth time it read 396 against a real
  * 446, and it read 396 in BOTH assets/resume.src.html AND the committed
  * assets/resume.pdf — the two in perfect agreement with each other and both
  * wrong. build-resume.js already compares those two, so it passed. Its own
