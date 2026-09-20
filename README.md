@@ -163,7 +163,7 @@ js/samurai.js           the guard on the terminal window's roof; decides when he
 js/main.js              boot, nav, cursor, tilt, reveals, form
 assets/                 resume, favicon, social image, portrait
 tools/                  five checks and the resume build; three run on deploy
-.github/workflows/      GitHub Pages deploy, and the weekly link-rot check
+.github/workflows/      GitHub Pages deploy, and two weekly checks
 .nojekyll               stops Pages from running Jekyll over the files
 ```
 
@@ -175,8 +175,12 @@ goes stale the same way every other copy does; this one has no check behind it a
 is not worth one, so it gets the honest version instead, which is an admission
 rather than a guarantee.
 
-What matters about `tools/` is which of the five a deploy runs, because a check
-nobody triggers is documentation.
+What matters about `tools/` is which of the six a deploy runs, because a check
+nobody triggers is documentation. Worth saying that the line above used to read
+"five checks and the resume build" over a directory holding five files in total,
+while the sentence you are reading said "the five" and the two paragraphs below
+accounted for exactly five. Six files makes the first count right by accident;
+it is right on purpose now, and the arithmetic below is the part to trust.
 
 The deploy runs three, and each asserts something claimed somewhere a reader can
 see:
@@ -219,10 +223,28 @@ no build here, and the site is already published. What a red scheduled run does 
 notify, and that is worth stating plainly, because the sentence written about this
 tool before anything ran it said it failed builds.
 
+`check-resume-count.js` is on a clock too, in `resume-claims.yml`, for the same
+reason and about a different fact. `assets/resume.src.html` names a test count for
+secscan, and that is the only figure on the resume that goes wrong without anybody
+editing the resume — the other repo gains a test and there is no diff here for
+anyone to review. It went wrong that way three times. The third time it read 396
+against a real 446 in *both* the source and the committed PDF, which is why
+`build-resume.js` reported clean: the only thing it can compare is those two
+against each other, and they agreed. Its own comment names that exact case and
+prescribes deleting the parenthetical rather than carrying a wrong number. This is
+the option that comment did not have. The check reads the figure secscan
+publishes, where that repo's CI holds it to what `pytest` actually collects, so
+the chain now runs from a test run to the PDF a stranger downloads without an
+unguarded link in the middle. It is a separate workflow from the link check rather
+than a step inside it because a run that goes red should not need investigating to
+find out what it was about.
+
 The remaining two are run by hand and say so here rather than implying a
 guarantee: `pdf-audit.js` (what a PDF discloses about itself beyond its text) and
-`build-resume.js`, which builds `assets/resume.pdf` and is the one thing in the
-repository that needs installing anything.
+`build-resume.js`, which builds `assets/resume.pdf` and is the one thing here that
+needs an `npm install` — playwright, for headless Chromium. It also wants poppler's
+`pdftotext`, and so do the other two tools that read the PDF, which is why the
+weekly workflow installs it rather than assuming the runner has it.
 
 ## Notes on a couple of decisions
 

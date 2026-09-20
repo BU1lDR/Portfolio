@@ -1,0 +1,84 @@
+name: Resume claims
+
+# Checks the one number on the resume that goes stale without anybody editing the
+# resume.
+#
+# assets/resume.src.html names a test count for secscan. That repo gains a test
+# and this figure is wrong, with no diff here for anyone to review — the same
+# shape as link rot, and the same reason it belongs on a clock rather than on a
+# push.
+#
+# WHY IT IS NOT IN link-rot.yml
+#
+# It could have been a step there and it very nearly was: both are weekly,
+# both need the network, and a second cron for one number is more machinery than
+# the problem looks like it needs. The reason it is separate is what a red run
+# means. "Link rot" going red because a test count drifted is a workflow whose
+# name does not describe its failure, and the argument that keeps the network off
+# the deploy path — a gate that fails for reasons unrelated to its subject is a
+# gate people learn to skip — applies to a scheduled gate exactly as much. Two
+# workflows, two subjects, and a red run that needs no investigating to
+# understand.
+#
+# WHY NOT ON THE DEPLOY PATH
+#
+# Half of this check is deterministic — assets/resume.pdf is committed, so
+# whether it agrees with its source is a fact about the commit, which is normally
+# the test for belonging on the deploy path. It stays off anyway, for two
+# reasons. It needs pdftotext, a binary nothing else in the deploy depends on, so
+# putting it there means a publish that can fail on an apt mirror. And a wrong
+# number on the resume is not worth blocking the site over: the failure that
+# actually happened was going three revisions without noticing, and noticing
+# within a week fixes that.
+#
+# WHAT A FAILURE MEANS
+#
+# Same as link-rot.yml: there is no build to fail. A red scheduled run on the
+# default branch emails the owner and stays red in the Actions tab. That is the
+# whole mechanism.
+#
+# The tool separates the three answers that must not look alike — the figure
+# disagrees (failure), the figure could not be fetched because GitHub answered
+# 429 (note), and pdftotext is missing so the PDF was never read at all (exit 2,
+# not a green run). A checker that cannot look and reports clean is worse than no
+# checker, because its green run is then evidence of nothing while looking like
+# evidence of something.
+
+on:
+  schedule:
+    # Mondays, 06:41 UTC. Off the hour for the same reason link-rot.yml is —
+    # GitHub queues scheduled runs and the top of the hour is the most contended
+    # slot — and off link-rot.yml's minute so two red runs arrive as two emails
+    # about two things.
+    - cron: '41 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: resume-claims
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # poppler-utils for pdftotext. Installed explicitly rather than relied on:
+      # the runner image has carried it, images change, and the tool's answer to
+      # a missing pdftotext is exit 2 — which would be a red run about the
+      # toolchain rather than about the resume, every Monday, until someone
+      # looked. Cheap here, where a slow apt costs nothing; this is the same cost
+      # that keeps it off the deploy path.
+      - name: pdftotext
+        run: sudo apt-get install -y poppler-utils
+
+      # Both halves: the two copies in this repo (source against the committed
+      # PDF's extracted text) and the claim itself, against the decisions.md
+      # secscan publishes — where that repo's own CI holds the number to what
+      # pytest collects.
+      - name: The resume's test count agrees with the repo it describes
+        run: node tools/check-resume-count.js
