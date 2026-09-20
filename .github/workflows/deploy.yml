@@ -120,6 +120,22 @@ jobs:
       - name: Check every local link, anchor and rel=noopener
         run: node tools/link-check.js --offline
 
+      # README.md's setup checklist cites nine index.html line numbers, one per
+      # EDIT # block. They only ever move in one direction — anything added above
+      # a block pushes it down — so the table is wrong by default and right only
+      # by coincidence. All nine have been wrong twice; the second time by 45 to
+      # 92 lines each, which put every reference in the middle of whatever had
+      # moved up to take its place. Near enough to look plausible, far enough to
+      # be useless, and invisible to every check here because nothing had read
+      # index.html and the README in the same breath.
+      #
+      # Belongs on the deploy path rather than on a clock: no network, no binary,
+      # no dependence on the date. Every failure it can report is caused by the
+      # commit being deployed, which is the same test that put link-check
+      # --offline here and kept its network half in link-rot.yml.
+      - name: Check the setup table's line numbers against the page
+        run: node tools/check-edit-blocks.js
+
       # Static site — no build step. Upload the repo root as-is.
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

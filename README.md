@@ -59,20 +59,39 @@ Search for `EDIT #` and work through them in order.
 
 | # | File | What it holds |
 |---|---|---|
-| 1 | `index.html:46` | Name, description, canonical URL, social preview, JSON-LD |
-| 2 | `index.html:455` | Hero pitch — the line under your name |
-| 3 | `index.html:478` | Social links (hero) |
-| 4 | `index.html:552` | Bio — three short paragraphs |
-| 5 | `index.html:612` | Skills — plain lists, one `article` per group |
-| 6 | `index.html:685` | Projects. Duplicate one `article.card` per project |
-| 7 | `index.html:765` | Timeline — education and experience |
-| 7b | `index.html:806` | Certifications |
-| 8 | `index.html:1005` | Contact form — the address it falls back to. No backend to configure |
+| 1 | `index.html:94` | Name, description, canonical URL, social preview, JSON-LD |
+| 2 | `index.html:524` | Hero pitch — the line under your name |
+| 3 | `index.html:547` | Social links (hero) |
+| 4 | `index.html:621` | Bio — three short paragraphs |
+| 5 | `index.html:681` | Skills — plain lists, one `article` per group |
+| 6 | `index.html:754` | Projects. Duplicate one `article.card` per project |
+| 7 | `index.html:860` | Timeline — education and experience |
+| 7b | `index.html:901` | Certifications |
+| 8 | `index.html:1100` | Contact form — the address it falls back to. No backend to configure |
 | 9 | `js/data.js` | **The terminal's brain** — everything `whoami`, `skills`, `projects`, `certs`, `neofetch` etc. print |
 
-Those line numbers drift every time the page grows — all eight were several
-hundred lines out before this table was last corrected. `grep -n 'EDIT #'
-index.html` is the version that cannot go stale.
+All nine of those line numbers drift every time the page grows, and all nine have
+now been wrong twice — the second time by between 45 and 92 lines each, which put
+every reference in the middle of whatever had moved up to take its place. Near
+enough to look plausible, far enough to be useless. `grep -n 'EDIT #' index.html`
+is the version that cannot go stale, and it is still the better habit.
+
+They are checked now, on every deploy, which is the part that was missing rather
+than the numbers themselves: `tools/check-edit-blocks.js` re-derives all nine from
+`index.html` and fails if this table disagrees, in either direction — a block that
+grew a line and a block added to the page but never added here are the same defect
+from a reader's point of view. It also reads the count in this paragraph, because
+the sentence above used to say "all eight" over a table of nine rows, and a
+hand-written count of the rows directly beneath it is no more reliable than a
+hand-written copy of anything else.
+
+It earned itself immediately, which is the part worth recording. The same commit
+that corrected these nine numbers also rewrote a comment near the top of
+`index.html` — three lines longer than what it replaced, so every block below it
+moved down by three and all nine numbers were wrong again before the commit was
+finished. That is the whole failure mode in one commit: not carelessness, but a
+number in one file that depends on the length of another. The check caught it and
+printed the corrected table; the drift never left this machine.
 
 `js/data.js` is separate on purpose: the page and the terminal each need the
 same facts, and this way you write them once.
@@ -162,7 +181,7 @@ js/samurai.js           the guard on the terminal window's roof; decides when he
                         breathes and when he cuts, the rest is CSS
 js/main.js              boot, nav, cursor, tilt, reveals, form
 assets/                 resume, favicon, social image, portrait
-tools/                  five checks and the resume build; three run on deploy
+tools/                  six checks and the resume build; four run on deploy
 .github/workflows/      GitHub Pages deploy, and two weekly checks
 .nojekyll               stops Pages from running Jekyll over the files
 ```
@@ -175,14 +194,16 @@ goes stale the same way every other copy does; this one has no check behind it a
 is not worth one, so it gets the honest version instead, which is an admission
 rather than a guarantee.
 
-What matters about `tools/` is which of the six a deploy runs, because a check
-nobody triggers is documentation. Worth saying that the line above used to read
-"five checks and the resume build" over a directory holding five files in total,
-while the sentence you are reading said "the five" and the two paragraphs below
-accounted for exactly five. Six files makes the first count right by accident;
-it is right on purpose now, and the arithmetic below is the part to trust.
+What matters about `tools/` is which of the seven a deploy runs, because a check
+nobody triggers is documentation. And these counts are themselves a copy of a fact
+`ls tools/` owns, so: the line above read "five checks and the resume build" over a
+directory holding five files in total, while the sentence you are reading said "the
+five" and the paragraphs below accounted for exactly five — three claims about one
+directory, two of which could not both be right. Seven files now, six of them
+checks. The breakdown below is the part to trust, because it is the part that had
+to be correct for anything else here to be true.
 
-The deploy runs three, and each asserts something claimed somewhere a reader can
+The deploy runs four, and each asserts something claimed somewhere a reader can
 see:
 
 - `csp-audit.js` — the Content-Security-Policy against the pages it guards, in
@@ -213,6 +234,12 @@ see:
   entirely until this was wired up; the tool had existed for a while and nothing
   ran it, which is the same as not having it, except that by then a README
   elsewhere had started describing it.
+- `check-edit-blocks.js` — the setup checklist above, against the page it sends
+  you into. Nine `index.html:N` references, re-derived rather than trusted, in
+  both directions: a number that moved, and a block added to the page that never
+  got a row, which a reader working the list in order simply never edits. It reads
+  the spelled-out count in that paragraph too, since "all eight" over nine rows is
+  the kind of claim that is falsifiable by looking down and was wrong anyway.
 
 The network half of that checker runs weekly instead, in `link-rot.yml`, and not
 on the deploy path — on purpose. Link rot is time-based, not commit-based: a repo
@@ -260,8 +287,10 @@ definition, so it can only be discounted or disbelieved; the projects and the
 certifications are the actual evidence. The section is plain grouped lists now.
 
 **The 3D is hand-rolled.** No Three.js. Vertices are rotated in model space and
-projected through a pinhole camera every frame, which keeps the promise of zero
-dependencies intact for the sake of about 60 lines of maths.
+projected through a pinhole camera every frame — about 60 lines of maths, and the
+reason the webfont is still the only thing this page fetches from anybody else.
+This said "keeps the promise of zero dependencies intact", which was a promise the
+top of this same file spends a paragraph explaining was never true.
 
 **The theme is aesthetic.** "Black hat" here means the visual language —
 terminal, glitch, katakana rain. There is nothing offensive in the code, and
