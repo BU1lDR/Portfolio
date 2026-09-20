@@ -1512,10 +1512,10 @@
   })();
 
   /* ── read the source ──────────────────────────────────────────
-     The console half of the view-source breadcrumb; index.html carries the other
-     half in a comment at the top of the file. Between them they name `unmask`,
-     which appears nowhere in the UI, is excluded from tab-completion and from
-     did-you-mean, and is therefore findable exactly one way: by looking.
+     The console half of the view-source breadcrumb; index.html carries another
+     in a comment at the top of the file, and /.well-known/security.txt a third.
+     Between them they name `unmask`, which the UI itself never prints — not in
+     help, tab-completion, did-you-mean or the eggs list — so it is found by looking.
 
      Deferred to a macrotask so it lands after everything else this file logs, and
      wrapped because a console with %c support is not guaranteed — a browser that
@@ -1530,7 +1530,7 @@
         '%c零と壱より生まれる%c\n' +
         'You opened the console. That is the kind of thing I hire for.\n\n' +
         '  Open the terminal on this page and run %cunmask%c — it is not in help,\n' +
-        '  it is not in tab-completion, and this is the only place it is written down.\n' +
+        '  it is not in tab-completion, and the shell itself will never print it.\n' +
         (total ? '  Then run %ceggs%c. ' + (left ? left + ' of ' + total + ' still hidden.' : 'You have all ' + total + '.') + '\n' : '%c%c') +
         '\n  aryanverma102007@gmail.com · /.well-known/security.txt',
         'color:#ff3b53;font:600 15px/1.6 ui-monospace,monospace;letter-spacing:.18em',

@@ -64,7 +64,7 @@
     { id: 'fortune',   where: 'shell',   name: 'a proverb',       how: 'fortune', cmd: 'fortune' },
     { id: 'sl',        where: 'shell',   name: 'not a locomotive', how: 'sl — the ls typo', cmd: 'sl' },
     { id: 'spar',      where: 'shell',   name: 'the whole page',  how: 'spar', cmd: 'spar' },
-    { id: 'unmask',    where: 'shell',   name: 'read the source', how: 'unmask — the name is only in the page source' },
+    { id: 'unmask',    where: 'shell',   name: 'read the source', how: 'the name is only in the page source' },
     /* the page */
     { id: 'konami',    where: 'page',    name: 'the old code',    how: '↑ ↑ ↓ ↓ ← → ← → b a' },
     { id: 'name',      where: 'page',    name: 'say the name',    how: 'type aryan anywhere outside a text field' },

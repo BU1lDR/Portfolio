@@ -830,10 +830,12 @@
 
     /* ── the name that is only in the source ────────────────────
        Not in `help`, not in tab completion's useful range, and not guessable:
-       the only place the string "unmask" appears to a visitor is the comment at
-       the top of index.html and the console banner. Anyone running it opened the
-       source of a security portfolio, which is the exact behaviour worth
-       rewarding, so this is the one egg that answers with something real. */
+       the string "unmask" reaches a visitor only through the comment at the top
+       of index.html, the console banner and /.well-known/security.txt — never
+       through this shell, whose eggs list carries no hint naming it. Anyone
+       running it read the source of a security portfolio, which is the exact
+       behaviour worth rewarding, so this is the one egg that answers with
+       something real. */
 
     unmask: {
       desc: '',
@@ -989,10 +991,12 @@
   }
 
   /* Commands the shell will run but will never NAME. `unmask` is only worth
-     anything if the string is genuinely findable in one place — the comment at
-     the top of index.html — and two perfectly innocent features were leaking
-     it: Tab on "un" completed it, and the typo suggester offers anything within
-     two edits, which includes `mask` and `unmark`. Both now skip this list.
+     anything while the shell itself never prints the string — it lives in the
+     page source, the console banner and security.txt, all outside the UI — and
+     two perfectly innocent features were leaking it: Tab on "un" completed it,
+     and the typo suggester offers anything within two edits, which includes
+     `mask` and `unmark`. Both now skip this list, and the eggs list's hint for
+     it names no command.
 
      Kept to commands whose secrecy is the point. The other eggs are hidden from
      `help` but findable by poking around, which is what they are for. */
