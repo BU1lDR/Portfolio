@@ -47,11 +47,23 @@ const TERMINAL = path.join(ROOT, 'js/terminal.js');
 const IN_CI = process.env.GITHUB_ACTIONS === 'true';
 const TIMEOUT = 15000;
 
+/* Two kinds of failure, counted apart. A figure that disagrees with the table is
+   a wrong number somebody can go and fix. A surface that could not be read at
+   all — the API unreachable, the repository unidentifiable, a sentence reworded
+   out from under its pattern — is not a wrong number, it is an unknown one, and
+   the summary at the bottom has to say which it found. Both exit 1; only one of
+   them tells you what to edit. Printing the same line for "we looked and it
+   disagrees" and "we could not look" is how a check quietly stops being one. */
 let failures = 0;
+let blind = 0;
 function fail(msg, detail) {
   failures++;
   console.log('  FAIL  ' + msg);
   if (detail) console.log(detail.split('\n').map((l) => '        ' + l).join('\n'));
+}
+function unchecked(msg, detail) {
+  blind++;
+  fail(msg, detail);
 }
 function ok(msg) {
   console.log('  ok    ' + msg);
@@ -201,7 +213,7 @@ function checkText(surface, text, counts, claims, locate) {
       );
     }
     if (!found) {
-      fail(
+      unchecked(
         surface + ' no longer contains ' + claim.re.source,
         'Either the wording changed, in which case fix the pattern in\n' +
         'tools/check-commands.js, or the sentence is gone — and this check is\n' +
@@ -286,8 +298,8 @@ function fetchDescription(slug) {
 async function checkDescription(counts) {
   const slug = repoSlug();
   if (!slug) {
-    fail('could not work out which GitHub repository this is, so the description went unchecked',
-         'No GITHUB_REPOSITORY and no github.com origin remote.');
+    unchecked('could not work out which GitHub repository this is, so the description went unchecked',
+              'No GITHUB_REPOSITORY and no github.com origin remote.');
     return;
   }
   const { description, error } = await fetchDescription(slug);
@@ -298,7 +310,8 @@ async function checkDescription(counts) {
     // "We found nothing" and "we could not look" must not print the same thing.
     // In CI that also has to be a failure, or a network blip publishes a green
     // tick over a check that did not run.
-    if (IN_CI) fail(msg, detail); else { console.log('  ----  ' + msg); console.log('        ' + detail.split('\n').join('\n        ')); }
+    if (IN_CI) unchecked(msg, detail);
+    else { console.log('  ----  ' + msg); console.log('        ' + detail.split('\n').join('\n        ')); }
     return;
   }
 
@@ -342,12 +355,19 @@ async function main() {
   await checkDescription(counts);
 
   console.log('');
-  if (failures) {
-    console.log(failures + ' failure(s) — something quotes a count the table does not support.');
-    process.exitCode = 1;
+  const wrong = failures - blind;
+  if (wrong && blind) {
+    console.log(wrong + ' figure(s) disagree with the table, and ' + blind +
+                ' surface(s) could not be checked at all.');
+  } else if (wrong) {
+    console.log(wrong + ' figure(s) quote a count the table does not support.');
+  } else if (blind) {
+    console.log(blind + ' surface(s) could not be checked at all. Nothing that was\n' +
+                'read disagreed with the table — which is not the same as agreeing.');
   } else {
     console.log('every quoted count matches the table.');
   }
+  if (failures) process.exitCode = 1;
 }
 
 main().catch((e) => {
