@@ -182,7 +182,8 @@ js/samurai.js           the guard on the terminal window's roof; decides when he
 js/main.js              boot, nav, cursor, tilt, reveals, form
 assets/                 resume, favicon, social image, portrait
 tools/                  six checks and the resume build; four run on deploy
-.github/workflows/      GitHub Pages deploy, and two weekly checks
+.github/workflows/      GitHub Pages deploy, two weekly checks, and a ping to the
+                        profile README on every push (see BU1lDR/BU1lDR)
 .nojekyll               stops Pages from running Jekyll over the files
 ```
 
@@ -254,8 +255,9 @@ tool before anything ran it said it failed builds.
 reason and about a different fact. `assets/resume.src.html` names a test count for
 secscan, and that is the only figure on the resume that goes wrong without anybody
 editing the resume — the other repo gains a test and there is no diff here for
-anyone to review. It went wrong that way three times. The third time it read 396
-against a real 446 in *both* the source and the committed PDF, which is why
+anyone to review. It went wrong that way five times before this check existed and
+once since — 355, 357, 367, 396, 446 and 448 in turn, from a first 353 — and the
+fifth time it read 396 against a real 446 in *both* the source and the committed PDF, which is why
 `build-resume.js` reported clean: the only thing it can compare is those two
 against each other, and they agreed. Its own comment names that exact case and
 prescribes deleting the parenthetical rather than carrying a wrong number. This is
