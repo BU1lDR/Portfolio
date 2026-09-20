@@ -2,8 +2,9 @@
 
 A personal portfolio site for **Aryan Verma** — cybersecurity and ethical
 hacking, based in Delhi. Dark, Japanese-influenced, terminal-flavoured. Plain
-HTML, CSS and JavaScript — no framework, no build step, no dependencies. Open
-`index.html` and it runs.
+HTML, CSS and JavaScript — no framework, no build step, no npm. A Google-hosted
+webfont is the only thing the page loads from anyone else, and the CSP is what
+holds that line. Open `index.html` and it runs, webfont or not.
 
 **Live:** https://bu1ldr.github.io/Portfolio/
 
