@@ -9,9 +9,9 @@
  * only number on the resume that changes without anybody editing the resume —
  * secscan gains a test and this figure is wrong, with no diff here to review.
  *
- * It was wrong five times that way before this file existed, and once more after
- * (the git log of assets/resume.src.html is the record: 353, then 355, 357, 367,
- * 396, 446, 448). The fifth time it read 396 against a real
+ * It was wrong five times that way before this file existed, and three times
+ * after (the git log of assets/resume.src.html is the record: 353, then 355, 357,
+ * 367, 396, 446, 448, 577). The fifth time it read 396 against a real
  * 446, and it read 396 in BOTH assets/resume.src.html AND the committed
  * assets/resume.pdf — the two in perfect agreement with each other and both
  * wrong. build-resume.js already compares those two, so it passed. Its own
@@ -23,6 +23,27 @@
  * checkable count is worth more to a reader than "well tested"; it is worth that
  * only while it is right, and "keeping it in step" is not a thing to remember if
  * something asks.
+ *
+ * WHY THE FIGURE IS NOW A FLOOR
+ *
+ * Because this file asking was not enough. Every time it asked, a person still had
+ * to edit the number, install chromium, rebuild the PDF and commit — and secscan
+ * kept growing: 448 on 2026-09-20, 577 that evening, 618 and then 642 within the
+ * next few hours of 2026-09-21. An exact copy of a number that moves several times
+ * a day is stale between the fix and the push, so the weekly run was going to be
+ * red more often than green, and a check that is usually red is a check nobody
+ * reads.
+ *
+ * So the resume states "pytest (600+ tests)" and this file asserts what that
+ * claim actually says: the published figure is at least 600. It stays true while
+ * the suite grows, and it can only become false by tests being deleted — which is
+ * worth a failure. When the floor gets embarrassingly modest (the published figure
+ * more than double it) that is a note, not a failure: raising it is an edit worth
+ * making at leisure, not an outage.
+ *
+ * An exact count still works: write "pytest (642 tests)" and this file goes back
+ * to demanding equality. The floor is the default because nobody has to remember
+ * it.
  *
  * THE CHAIN, AND WHICH LINK WAS MISSING
  *
@@ -82,7 +103,15 @@ const UPSTREAM =
 /* The same pattern secscan's own tools/check_test_count.py uses, so the two
    tools cannot disagree about where the number lives or what counts as one. */
 const QUOTED = /\b(\d+) tests\b/g;
-const IN_RESUME = /pytest \((\d+) tests\)/g;
+/* The trailing + is what makes it a floor; without it the claim is an exact count
+   and is checked as one. Both forms are read by build-resume.js the same way. */
+const IN_RESUME = /pytest \((\d+\+?) tests\)/g;
+
+/* A round floor strictly BELOW the published figure: one equal to it would break on
+   the first test anybody deletes, which is the treadmill this is here to end. Under a
+   couple of hundred tests there is no round floor worth having, so the suggestion
+   falls back to the exact count. */
+const suggestClaim = (n) => (n >= 200 ? Math.floor((n - 1) / 100) * 100 + '+' : String(n));
 
 let fails = 0;
 let notes = 0;
@@ -223,6 +252,30 @@ function get(url, depth) {
              'that repo changed its wording — in which case fix the pattern in this\n' +
              'file and in secscan\'s tools/check_test_count.py, which reads it the same\n' +
              'way — or the figure was removed there and should come off the resume.');
+      } else if (typeof upstream === 'string' && claimed.endsWith('+')) {
+        const floor = parseInt(claimed, 10);
+        const real = parseInt(upstream, 10);
+        if (real >= floor) {
+          ok('the resume claims ' + claimed + ' and secscan publishes ' + upstream +
+             ', which its CI holds to pytest');
+          /* Not a failure: the claim is still true, only modest. Left as a note so
+             raising it is something done on purpose rather than under a red run. */
+          if (real >= 2 * floor)
+            note('the floor of ' + floor + ' is now less than half of the published ' + upstream,
+                 'Still true, so this is not a failure. Worth raising when convenient:\n\n' +
+                 '    assets/resume.src.html   pytest (' + suggestClaim(real) + ' tests)\n' +
+                 '    node tools/build-resume.js');
+        } else {
+          fail('the resume claims at least ' + floor + ' tests; secscan publishes ' + upstream,
+               'A floor can only break by the suite shrinking, so either tests were\n' +
+               'deleted upstream -- worth knowing -- or the floor was set above the\n' +
+               'real figure. secscan is the authority: its CI compares that number\n' +
+               'against what pytest collects.\n\n' +
+               'Fix it in one place and rebuild, or the PDF will disagree with itself:\n\n' +
+               '    assets/resume.src.html   pytest (' + suggestClaim(real) + ' tests)\n' +
+               '    node tools/build-resume.js\n\n' +
+               'The figure is written once in that file on purpose. Do not add a second.');
+        }
       } else if (typeof upstream === 'string') {
         if (upstream === claimed) {
           ok('secscan\'s decisions.md says ' + upstream + ' too, and its CI holds that to pytest');
@@ -233,7 +286,9 @@ function get(url, depth) {
                'Fix it in one place and rebuild, or the PDF will disagree with itself:\n\n' +
                '    assets/resume.src.html   pytest (' + upstream + ' tests)\n' +
                '    node tools/build-resume.js\n\n' +
-               'The figure is written once in that file on purpose. Do not add a second.');
+               'The figure is written once in that file on purpose. Do not add a second.\n' +
+               'Or write it as a floor -- pytest (' + suggestClaim(parseInt(upstream, 10)) +
+               ' tests) -- which stays true as that suite grows.');
         }
       }
     }

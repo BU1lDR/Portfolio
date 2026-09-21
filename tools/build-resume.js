@@ -150,8 +150,11 @@ const REQUIRED = [
   check(pages === 1, 'one page (' + pages + ')');
 
   /* The test count in the secscan entry is the only figure here that goes stale
-     on its own — it changes whenever that repo gains a test, and it has gone
-     stale six times so far. Deliberately not a literal in this file, which would just be a
+     on its own — it changes whenever that repo gains a test, and it went stale
+     eight times before it was written as a floor ("600+"), twice in one
+     afternoon at the end. A floor is read here exactly like an exact number:
+     whatever the source says between "pytest (" and " tests)", the PDF has to
+     say too. Deliberately not a literal in this file, which would just be a
      fourth copy of the number: the source is read and the PDF is required to
      carry the same figure. That catches the failure that actually happens —
      resume.src.html edited and the PDF not rebuilt, or rebuilt from a stale
@@ -164,7 +167,7 @@ const REQUIRED = [
      this repo honest with each other. */
   console.log('\n  ── the one figure that goes stale ──');
   const srcCount = (fs.readFileSync(SRC, 'utf8')
-                      .match(/pytest \((\d+) tests\)/) || [])[1];
+                      .match(/pytest \((\d+\+?) tests\)/) || [])[1];
   check(srcCount !== undefined, 'the source states a test count');
   if (srcCount !== undefined)
     check(text.includes('pytest (' + srcCount + ' tests)'),
