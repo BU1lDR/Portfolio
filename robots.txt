@@ -27,9 +27,27 @@
 #      which works regardless of path. assets/resume.src.html already does this,
 #      and the comment above its tag explains why it had to.
 #
-# Kept rather than deleted because it costs nothing and becomes live the moment
-# this site moves to a custom domain or a user-pages repo. Until then, treat the
-# two directives below as aspirational.
+# Kept rather than deleted — but NOT for the reason that used to be written
+# here, which was wrong and worth correcting in place.
+#
+# It said these directives "become live the moment this site moves to a custom
+# domain or a user-pages repo", and called them aspirational. Only the third
+# line is. `User-agent: *` with `Allow: /` and no `Disallow` is semantically
+# identical to having no robots.txt at all: a 404 already means crawl
+# everything. Serving this file from an origin root would therefore change
+# nothing whatsoever about how this site is crawled. `Sitemap:` is the one line
+# that would start having an effect — and submitting the sitemap URL in Search
+# Console does that job directly, without needing this file to be read at all.
+#
+# Which means there is no version of "fixing the delivery path" that pays for
+# itself. Standing up a bu1ldr.github.io user-pages repo purely to serve this
+# would buy one line that is already covered, and would leave a 404 sitting at
+# the root of the domain for anyone who trims the URL.
+#
+# What the file is genuinely worth keeping for is the warning at the top of it,
+# sitting at the exact path where someone would naturally add a `Disallow:` and
+# then believe it worked. Delete the file and that tripwire goes with it, and
+# the mistake becomes available again to the next person who tries.
 
 User-agent: *
 Allow: /
