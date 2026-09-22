@@ -1,8 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- One page, one URL, and deliberately nothing else.
+
+     <changefreq> and <priority> used to sit below the <loc>. Google ignores
+     both outright, and has said so publicly for years, so they were tuning
+     precisely nothing while reading as though this file had been tuned. That is
+     the worse failure of the two: config that does nothing but looks deliberate
+     invites the next person to adjust it instead of fixing what actually ranks.
+
+     <lastmod> IS read — but only counts while it stays accurate, and a date
+     typed in here by hand is wrong from the very next commit onward. Google
+     discounts a sitemap whose lastmod it has learned not to trust, which leaves
+     you worse off than omitting it. So <loc> alone is both the complete and the
+     honest form for a single-page site. If this ever serves more than one URL,
+     that is the point to stamp lastmod at deploy time from the commit date —
+     automatically, never by hand.
+
+     Note that nothing currently advertises this file to anyone: robots.txt is
+     read per ORIGIN, and this is a project site published under /Portfolio/, so
+     the Sitemap: line in it has never been fetched. The comment in robots.txt
+     has the full explanation. Submit this URL in Search Console directly. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://bu1ldr.github.io/Portfolio/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>1.0</priority>
   </url>
 </urlset>
