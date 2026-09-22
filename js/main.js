@@ -965,13 +965,24 @@
          enough to watch the window flash into the hero's corner and then be
          taken away again.
 
-         Synchronous isn't sufficient on its own, though. `is-open` ships in the
-         markup, so stowing at boot reads as a state change and the exit
-         transition plays: the window fades down out of the corner over .34s,
-         which is the same flash by a slower route. So the first one is a cold
-         start — transitions off (see §10 in the stylesheet), reflow to commit
-         the hidden values as the resting state, transitions back on at the next
-         frame. Everything after this animates.
+         Synchronous was never sufficient on its own, and the reason has changed.
+         It used to be that `is-open` shipped in the markup with nothing on
+         <body>, so stowing here read as a state change and played the exit
+         transition — the same flash by a slower route. That is gone: <body> now
+         ships term-stowed, this stow(true) agrees with it, and nothing moves.
+
+         What no amount of synchronous work in here could ever fix is the frames
+         BEFORE this file runs. It is `defer`. On a throttled load the first paint
+         landed at 33ms and this line at ~400ms, and for that whole third of a
+         second the stylesheet's answer was `body:not(.term-stowed)
+         .termwin.is-open` — the window and the samurai drawn over the hero and
+         then withdrawn. A deferred script cannot beat the first paint, so the
+         starting state has to be in the document. See the comment on the <body>
+         tag in index.html. Do not try to solve that class of bug from here.
+
+         The cold start is still needed for the other direction — transitions off
+         (see §10 in the stylesheet), reflow to commit the values as the resting
+         state, transitions back on at the next frame. Everything after animates.
 
          The reflow is what makes one frame enough: style is resolved while
          term-cold still applies, so by the time the class comes off there is no

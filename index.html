@@ -208,7 +208,39 @@
 </script>
 </head>
 
-<body>
+<!-- term-stowed ships HERE, in the markup, and has to stay here.
+
+     The terminal window is stowed above #terminal, and that state lived only in
+     a class js/main.js put on <body>. But main.js is `defer`, so on any load
+     where a frame gets painted before it runs, the stylesheet's answer for the
+     first paint is `body:not(.term-stowed) .termwin.is-open` — visible. The
+     window and the samurai standing on it were drawn over the hero's torii and
+     then taken away the moment the script caught up.
+
+     Nothing covered that, and the reason is worth knowing before you "simplify"
+     either half of it: the boot overlay is the full-screen curtain that would
+     have hidden the gap, and `.no-js .boot { display: none }` deliberately does
+     not render it until main.js removes no-js — otherwise a browser with no JS,
+     or one where main.js 404s, is trapped behind an opaque overlay forever. So
+     the one thing that could have masked this is switched off for exactly the
+     window of time in which it was needed.
+
+     Measured on the live site, throttled to 150ms RTT: exposed from 33ms to
+     368ms. It reads worst on a refresh, because sessionStorage.booted skips the
+     boot sequence, so the flash is the only thing that moves.
+
+     The fix is to stop asking a script to establish a resting state. Stowed is
+     what the top of the page looks like, so the document says so, and main.js's
+     stow(true) at boot is now a no-op that agrees with the markup instead of a
+     change that corrects it. Land below #terminal and stow(false) removes it,
+     cold, on the same frame — see the term-cold note in css/style.css §10.
+
+     The cost is that with no JS at all the window never appears. That is the
+     right trade here and only here: without JS it is a dead box with no input,
+     no output and no samurai, parked over the lower-right of every screen. The
+     .no-js fallback for .reveal is NOT the same case and must stay — that one
+     keeps real text content readable. -->
+<body class="term-stowed">
 
 <!-- ── boot overlay ──────────────────────────────────────────── -->
 <div id="boot" class="boot" role="status" aria-label="Loading">

@@ -1376,8 +1376,12 @@ body.cursor-sel.cursor-down .cursor-ring::before {
   width: min(var(--term-w), calc(100vw - 1.6rem));
   transform-origin: 100% 100%;
 
-  /* Closed is the resting state in CSS; index.html ships `is-open` on the
-     element so the window is there whether or not a script ever runs.
+  /* Closed is the resting state in CSS, and it is now also the state the
+     document ships: index.html carries `is-open` on this element but
+     `term-stowed` on <body>, so the very first paint is the stowed one whether
+     or not a script ever runs. This used to say the window "is there whether or
+     not a script ever runs", and that was the bug rather than the feature — the
+     comment on the <body> tag in index.html has the measurements.
 
      `visibility 0s linear .34s` on the way out, `0s` on the way in. That
      asymmetry is the point: hiding waits for the fade to finish, revealing
@@ -1399,8 +1403,10 @@ body.cursor-sel.cursor-down .cursor-ring::before {
    The window used to be on screen from the first paint, and in this corner
    that meant it sat on the lower-right quadrant of the hero's torii — the
    right pillar and the near end of the kasagi. So above #terminal the shell
-   is *stowed*, and module 09 in js/main.js puts `term-stowed` on <body> to
-   say so.
+   is *stowed*, which index.html declares on <body> in the served markup and
+   module 09 in js/main.js maintains from there on. The markup is not a
+   belt-and-braces duplicate of the script: it is the only thing that can get
+   the FIRST paint right, because main.js is deferred and cannot run before it.
 
    Note what this does and doesn't do. It gates the state class rather than
    restating the hidden values: `is-open` and `is-min` still mean exactly what
@@ -1413,8 +1419,12 @@ body.cursor-sel.cursor-down .cursor-ring::before {
    `visibility` delay and all.
 
    :not() on <body> and not on <html> because that's where this file's other
-   body-level state lives (is-locked, cursor-ready). With no JS the class is
-   never added, the selector matches, and the window is simply always there. */
+   body-level state lives (is-locked, cursor-ready). With no JS the class now
+   ships and is never removed, so this selector never matches and the window
+   stays away — deliberately. Without a script it is a dead box with no input,
+   no output and no samurai, parked over the lower-right of every screen. Note
+   that the .no-js fallback for .reveal in §17 is the opposite call on purpose:
+   that one keeps real text content readable, so it has to stay. */
 body:not(.term-stowed) .termwin.is-open {
   opacity: 1;
   visibility: visible;
@@ -1423,13 +1433,23 @@ body:not(.term-stowed) .termwin.is-open {
               width .34s var(--ease-io), visibility 0s;
 }
 
-/* Cold start: the very first stow is a starting condition, not something the
-   visitor did, so it must not animate. `is-open` ships in the markup, which
-   means adding term-stowed at boot is a state *change* as far as the engine is
-   concerned — it dutifully plays the exit transition, and the window fades down
-   out of the hero's corner over .34s. Under the boot overlay nobody sees that;
-   on a second visit in the same session the overlay is skipped and you watch
-   the whole thing.
+/* Cold start: whatever the first frame decides is a starting condition, not
+   something the visitor did, so it must not animate. DO NOT DELETE THIS ON THE
+   GROUNDS THAT term-stowed NOW SHIPS IN THE MARKUP — that only retired one of
+   the three jobs it was doing.
+
+   The retired one: stowing at boot used to be a state *change* as far as the
+   engine was concerned, so it dutifully played the exit transition and the
+   window faded down out of the hero's corner over .34s. Now the markup already
+   says stowed and module 09's stow(true) agrees with it, so there is nothing to
+   interpolate and nothing to silence.
+
+   The two that remain, both of which still need it:
+     · land BELOW #terminal — a #contact link, a restored scroll position — and
+       module 09 calls stow(false) on that first frame instead. That IS a change,
+       from the shipped stowed state to visible, and without this the window
+       would fade up out of the corner as though someone had asked for it;
+     · the fold, below.
 
    Held for one frame while module 09 forces a reflow, then dropped, so every
    later stow animates normally. No !important needed: 0,2,1 beats the .termwin
