@@ -31,7 +31,29 @@
   /* type */
   --f-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --f-sans: 'Space Grotesk', system-ui, -apple-system, Segoe UI, sans-serif;
-  --f-jp:   'Shippori Mincho', 'Yu Mincho', serif;
+  /* This used to be 'Shippori Mincho', 'Yu Mincho', serif — two names and a
+     generic — and it ran off its own end. Yu Mincho is NOT on a stock Windows 11
+     install (only Yu Gothic and MS Gothic are), so the chain reached `serif`,
+     which resolves to Times, which has no kanji, so Chromium picked its own
+     last resort: Microsoft YaHei — a SIMPLIFIED CHINESE face. Japanese rendered
+     in Chinese glyph forms. Measured, not guessed: CSS.getPlatformFontsForNode
+     reported YaHei on 37 of 42 CJK elements with the webfont blocked.
+     getComputedStyle is no use here — it echoes the declared stack whether or
+     not the font loaded, so it cheerfully reports "Shippori Mincho" either way.
+
+     And this is not only the blocked case. display=swap paints fallback text
+     first by design, so EVERY cold visit shows this stack until the woff2
+     lands — 4.3s on a Fast-3G profile. The fallback is what most visitors
+     actually read, which makes it worth more than two names.
+
+     Ordered mincho-first (the design intent), then Japanese gothic, then the
+     generic. Yu Gothic and Hiragino Sans are the wrong STYLE — gothic is sans,
+     mincho is serif — but they carry the right GLYPH FORMS, and a Japanese sans
+     beats a Chinese serif for text that is meant to read as Japanese. The
+     generic stays `serif` because it states the intent; for CJK it changes
+     nothing, since both generics dead-end at a latin face with no kanji. */
+  --f-jp:   'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho',
+            'Noto Serif JP', 'MS PMincho', 'Yu Gothic', 'Hiragino Sans', serif;
 
   /* fluid scale */
   --t-xs:   clamp(.69rem, .66rem + .12vw, .76rem);
