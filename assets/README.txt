@@ -98,16 +98,30 @@ Everything else here is in place.
    LinkedIn's Post Inspector to force a re-fetch.
 
 
-5. me.jpg                                            ← OPTIONAL
-   A photo of you for the ID card in the About section.
-   Square crop, 400x400 or larger.
+5. me.jpg                                            ← IN USE
+   The photo on the ID card in the About section. Wired up
+   already, so there is nothing to do unless you are replacing it.
 
-   To use it, open index.html, find the idcard__avatar block,
-   and swap the placeholder for:
+   It ships at 276x276. That is three times the 92px box the card
+   draws it in, so it stays sharp at a device pixel ratio of 3.
+   This note used to ask for 400x400 or larger, which was written
+   before anyone measured the box — bigger buys nothing here.
 
-       <img src="assets/me.jpg" alt="Aryan Verma">
+   The markup in the idcard__avatar block:
 
-   Delete the <span>零</span> line when you do.
+       <img src="assets/me.jpg" alt="" width="276" height="276"
+            loading="lazy" decoding="async">
+
+   alt is empty on purpose. The wrapper is aria-hidden and
+   idcard__name gives the name as text directly underneath, so a
+   description here would only be read out twice.
+
+   To replace it: square crop, re-export at 276x276, keep the file
+   small — this one is 12K, in the same range as pfp.jpg. Strip the
+   metadata before it goes in. A camera JPEG carries EXIF, which
+   can carry GPS coordinates, and a generated one can carry a
+   signed provenance manifest; anything that rebuilds the file from
+   raw pixels drops both.
 
 ────────────────────────────────────────────────────────────────
 
