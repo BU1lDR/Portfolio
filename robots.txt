@@ -1,53 +1,20 @@
-# READ THIS BEFORE ADDING A RULE HERE: AT THIS PATH, THIS FILE DOES NOTHING.
+# robots.txt is read per ORIGIN, from the root path only:
 #
-# robots.txt is defined per ORIGIN, at the root path, and nowhere else. Crawlers
-# fetch exactly https://bu1ldr.github.io/robots.txt — which is a 404, because
-# that would have to come from a `bu1ldr.github.io` user-pages repo and there
-# isn't one. This site is a PROJECT site, published under /Portfolio/, so what
-# you are reading lives at
+#     https://bu1ldr.github.io/robots.txt
 #
-#     https://bu1ldr.github.io/Portfolio/robots.txt      (200, and unread)
+# This is a project site published under /Portfolio/, so the copy you are
+# reading is not the one crawlers fetch. That matters in exactly one direction:
+# a Disallow: added here will look correct — valid syntax, file reachable, no
+# error reported anywhere — and will keep nothing out. To keep a page out of
+# search results, put the tag in the document itself:
 #
-# and no crawler has ever requested it. Two things follow, and the second is the
-# reason this comment is longer than the file:
+#     <meta name="robots" content="noindex, nofollow">
 #
-#   1. The Sitemap: line below has never been seen. sitemap.xml itself is served
-#      fine, but robots.txt is the only thing that was advertising it, so it is
-#      effectively undiscoverable. Submit the sitemap URL directly in Google
-#      Search Console instead — that is the supported route and needs no
-#      robots.txt at all.
+# which works at any path. assets/resume.src.html already does that.
 #
-#   2. A `Disallow:` added here will not keep anything out. It will LOOK like it
-#      did: the file is valid, the syntax is right, the file is reachable, and
-#      nothing anywhere reports an error. That is the trap. If you need a page
-#      kept out of search results, use a per-page tag in the document itself:
-#
-#          <meta name="robots" content="noindex, nofollow">
-#
-#      which works regardless of path. assets/resume.src.html already does this,
-#      and the comment above its tag explains why it had to.
-#
-# Kept rather than deleted — but NOT for the reason that used to be written
-# here, which was wrong and worth correcting in place.
-#
-# It said these directives "become live the moment this site moves to a custom
-# domain or a user-pages repo", and called them aspirational. Only the third
-# line is. `User-agent: *` with `Allow: /` and no `Disallow` is semantically
-# identical to having no robots.txt at all: a 404 already means crawl
-# everything. Serving this file from an origin root would therefore change
-# nothing whatsoever about how this site is crawled. `Sitemap:` is the one line
-# that would start having an effect — and submitting the sitemap URL in Search
-# Console does that job directly, without needing this file to be read at all.
-#
-# Which means there is no version of "fixing the delivery path" that pays for
-# itself. Standing up a bu1ldr.github.io user-pages repo purely to serve this
-# would buy one line that is already covered, and would leave a 404 sitting at
-# the root of the domain for anyone who trims the URL.
-#
-# What the file is genuinely worth keeping for is the warning at the top of it,
-# sitting at the exact path where someone would naturally add a `Disallow:` and
-# then believe it worked. Delete the file and that tripwire goes with it, and
-# the mistake becomes available again to the next person who tries.
+# Nothing is lost in the meantime: the directives below allow everything, which
+# is also what having no robots.txt means. Submit the sitemap URL in Search
+# Console to get it indexed — that route does not depend on this file.
 
 User-agent: *
 Allow: /

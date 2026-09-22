@@ -17,8 +17,8 @@
 
      Note that nothing currently advertises this file to anyone: robots.txt is
      read per ORIGIN, and this is a project site published under /Portfolio/, so
-     the Sitemap: line in it has never been fetched. The comment in robots.txt
-     has the full explanation. Submit this URL in Search Console directly. -->
+     the Sitemap: line in it has never been fetched. The comment at the top of
+     robots.txt explains why. Submit this URL in Search Console directly. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://bu1ldr.github.io/Portfolio/</loc>
