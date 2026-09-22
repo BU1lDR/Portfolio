@@ -9,8 +9,8 @@
  * owns, and the copy goes stale on any commit that adds a line above it — which
  * is most commits, since the numbers only ever move in one direction.
  *
- * All nine have been wrong twice. The second time they were out by between 45 and
- * 92 lines each, so every reference in the table pointed into the middle of
+ * All nine have been wrong more than once. The worst time they were out by between
+ * 45 and 92 lines each, so every reference in the table pointed into the middle of
  * whatever had moved up to take its place: near enough to look plausible, far
  * enough to be useless. Nothing detected it, because nothing here had ever read
  * index.html and the README in the same breath.

@@ -60,18 +60,18 @@ Search for `EDIT #` and work through them in order.
 | # | File | What it holds |
 |---|---|---|
 | 1 | `index.html:94` | Name, description, canonical URL, social preview, JSON-LD |
-| 2 | `index.html:601` | Hero pitch — the line under your name |
-| 3 | `index.html:624` | Social links (hero) |
-| 4 | `index.html:698` | Bio — three short paragraphs |
-| 5 | `index.html:758` | Skills — plain lists, one `article` per group |
-| 6 | `index.html:831` | Projects. Duplicate one `article.card` per project |
-| 7 | `index.html:937` | Timeline — education and experience |
-| 7b | `index.html:978` | Certifications |
-| 8 | `index.html:1177` | Contact form — the address it falls back to. No backend to configure |
+| 2 | `index.html:615` | Hero pitch — the line under your name |
+| 3 | `index.html:638` | Social links (hero) |
+| 4 | `index.html:712` | Bio — three short paragraphs |
+| 5 | `index.html:772` | Skills — plain lists, one `article` per group |
+| 6 | `index.html:845` | Projects. Duplicate one `article.card` per project |
+| 7 | `index.html:951` | Timeline — education and experience |
+| 7b | `index.html:992` | Certifications |
+| 8 | `index.html:1191` | Contact form — the address it falls back to. No backend to configure |
 | 9 | `js/data.js` | **The terminal's brain** — everything `whoami`, `skills`, `projects`, `certs`, `neofetch` etc. print |
 
 All nine of those line numbers drift every time the page grows, and all nine have
-now been wrong twice — the second time by between 45 and 92 lines each, which put
+now been wrong more than once — once by between 45 and 92 lines each, which put
 every reference in the middle of whatever had moved up to take its place. Near
 enough to look plausible, far enough to be useless. `grep -n 'EDIT #' index.html`
 is the version that cannot go stale, and it is still the better habit.
