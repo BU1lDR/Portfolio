@@ -93,7 +93,17 @@
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700&family=Shippori+Mincho:wght@500&display=swap" rel="stylesheet">
+<!-- Split for the same reason as index.html — &text= is a parameter of the whole
+     request, so on one URL it would subset the latin families too and empty them
+     out. The long explanation and the regeneration command live there; this page
+     only differs in weights (Space Grotesk 500;700, Shippori 500 — it has no 700
+     Japanese) and it keeps the list VERBATIM rather than trimmed to the eleven
+     CJK characters it actually shows. Two reasons: one list to regenerate is the
+     point, and a no-store font earns no cache reuse from being narrower. The 19
+     latin characters in the list are for .term__peek and .contact__ascii, neither
+     of which exists here — carried along for the same reason. -->
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500&display=swap&text=%20*/acdeiklnoprstuy%C2%A0、。「」あいうえおかがきくけこしすずせそたちつてでとどなにぬのはばびまもょよらりるれろをんアイウエオカキクケコサシスセソタチッツテトドナニヌネノハヒフヘホマミムメモヤユョヨラリルレロワンー一七三上不中亀事井人伍会作使侵信光入八写刀別動勝卵参取品回基塵壱夜大如始子定居履山島巻帰年弐弟影待徐急恥手打技掠攻新明時書木末本朱束林柄構歴流海火爪物生畳疾病相矢知石確示神票私積立端笠築系経絡線練縦聞肆能腹蛙術表見言証認識負貫走起転送連道達開陸隠零面額風鳥鷹" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css?v=27">
 <style>
   .nf {

@@ -131,7 +131,52 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=Shippori+Mincho:wght@500;700&display=swap" rel="stylesheet">
+
+<!-- TWO stylesheets, and they must stay two. Google splits CJK families into
+     ~120 unicode-range subsets; the Japanese on this page is scattered across 27
+     of them, so the browser used to pull 27 slices — 480 KB, 90% of all webfont
+     bytes, to show 223 distinct characters. &text= asks for just those and comes
+     back as 2 files, 105 KB. Measured end to end on the real page: 532.5 KB in 29
+     files before, 157.3 KB in 4 files after — 375 KB off a cold visit, 70%.
+
+     THE TRAP, and the reason for the split: &text= is a parameter of the REQUEST,
+     not of one family. Appended to a URL that also names JetBrains Mono and Space
+     Grotesk, it subsets THOSE too — down to a set of Japanese characters neither
+     font contains. Measured: Space Grotesk 187 KB -> 6.5 KB, JetBrains Mono
+     194 KB -> 4.9 KB, near-empty shells, every latin glyph on the page silently
+     gone. Nothing errors, and the Japanese still looks right, which is exactly why
+     a one-URL version passes a test that only checks the Japanese. It did.
+
+     Latin also stays on its own URL because those files keep a year of cache:
+     Google serves &text= subsets as no-store, so the JP file is re-fetched every
+     visit. That is the accepted cost — 105 KB per visit against 480 KB once — and
+     it is the right way round only because this page is overwhelmingly first-time
+     traffic. If that ever stops being true, self-host the subset instead.
+
+     THE LIST is every CJK character in html/css/js, plus the 19 latin characters
+     that sit inside a var(--f-jp) box: Shippori ships latin glyphs, and two
+     elements mix scripts — .term__peek::after ("click to open", or "tap to open"
+     under (hover: none)) and .contact__ascii. Drop those 19 and their latin falls
+     through --f-jp to Yu Gothic: 34 glyphs change face and .term__peek loses
+     2.51px, which moves the gap samurai.js aims the peek-bar cut at. 6.1 KB to
+     keep the page pixel-identical, verified by diffing the rendered face and box
+     of all 51 --f-jp elements before and after: zero changes either way.
+
+     Regenerate after adding Japanese anywhere, or after rewording either of those
+     two strings — new characters fall back to Yu Gothic (see --f-jp in style.css:
+     readable, just not mincho). Note it only ever grows the set; a character no
+     longer used stays until removed by hand.
+
+         node -e "const f=require('fs'),c=require('child_process');const r=/[\u3000-\u30ff\u4e00-\u9fff\uff00-\uffef]/u;const s=new Set(' */acdeiklnoprstuy\u00a0');for(const p of c.execSync('git ls-files',{encoding:'utf8'}).split('\n'))if(/[.](html|css|js)$/.test(p))for(const ch of f.readFileSync(p,'utf8'))if(r.test(ch))s.add(ch);console.log([...s].sort((a,b)=>a.codePointAt(0)-b.codePointAt(0)).map(x=>/[\s]/.test(x)||x.codePointAt(0)>127&&x.codePointAt(0)<256?encodeURIComponent(x):x).join(''))"
+
+     The ranges are \u escapes, and that is not a style choice. Spelled
+     literally, the six range endpoints are themselves CJK characters sitting in a
+     .html file, so the command sweeps them into the list it is generating: 223
+     became 228 and the five extras were the bounds. So no Japanese in this comment,
+     not even as punctuation, not even inside a regex. Same failure as the ?v=
+     example below, which once matched itself. -->
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&display=swap&text=%20*/acdeiklnoprstuy%C2%A0、。「」あいうえおかがきくけこしすずせそたちつてでとどなにぬのはばびまもょよらりるれろをんアイウエオカキクケコサシスセソタチッツテトドナニヌネノハヒフヘホマミムメモヤユョヨラリルレロワンー一七三上不中亀事井人伍会作使侵信光入八写刀別動勝卵参取品回基塵壱夜大如始子定居履山島巻帰年弐弟影待徐急恥手打技掠攻新明時書木末本朱束林柄構歴流海火爪物生畳疾病相矢知石確示神票私積立端笠築系経絡線練縦聞肆能腹蛙術表見言証認識負貫走起転送連道達開陸隠零面額風鳥鷹" rel="stylesheet">
 <!-- ?v= is a cache buster, and it earns its keep: GitHub Pages serves assets
      with a ten-minute max-age, so without it a visitor who has been here
      before can sit on an old stylesheet and an old main.js after a deploy —
