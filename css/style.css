@@ -5657,4 +5657,7 @@ body.term-stowed .sam.p-idle .sam__cel,
      break lands wherever it falls, which was through the middle of a project
      card. These are the pieces that do fit on a page. */
   .card, .tl, .certs__list li, .skillgroup, .idcard { break-inside: avoid; }
+  /* On screen the glows and the ID card's drop shadow are light and depth; on
+     paper they're a pink or grey smudge round the box. */
+  *, *::before, *::after { box-shadow: none !important; }
 }
