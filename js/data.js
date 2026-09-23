@@ -54,7 +54,7 @@ window.PORTFOLIO = {
      four hrefs in index.html as well would create a second source that drifts —
      and on a deploy where the two disagree, the stale one wins for anyone with
      JS off. */
-  resumeUrl: 'assets/resume.pdf?v=35',
+  resumeUrl: 'assets/resume.pdf?v=36',
 
   /* ── skills ─────────────────────────────────────────────── */
   /* Plain lists, no percentages. A number like "Python: 82%"   */
