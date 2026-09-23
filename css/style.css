@@ -1816,6 +1816,18 @@ body.term-cold .termlaunch { transition: none; }
   font-size: var(--t-sm);
   caret-color: var(--grn);
 }
+/* iOS Safari zooms the whole page in when a field under 16px takes focus, and does
+   not zoom back out when it loses it. --t-sm is 12.9px on a phone. The prompt comes
+   up with the input so the line being typed on stays one size; the output above does
+   not, because its banners and tables are laid out for --t-sm and would re-wrap.
+   Gated on the input device like the hint keys below, since it is a touch visitor
+   who gets zoomed, at any width. max() so a larger root size still wins. No engine
+   that runs here performs the zoom, so .preview-tools/ios-zoom.js measures the rule
+   iOS applies — the focused field's computed size — instead. */
+@media (hover: none), (pointer: coarse) {
+  .term__ps1,
+  .term__input { font-size: max(16px, var(--t-sm)); }
+}
 /* Green, not the global red — a red box around a text field in a page that
    also uses red for form errors reads as "you did something wrong". */
 .term__input:focus-visible {
@@ -5019,6 +5031,13 @@ body.term-stowed .sam.p-idle .sam__cel,
   border-radius: var(--r);
   caret-color: var(--red);
   transition: border-color .25s var(--ease), background-color .25s var(--ease);
+}
+/* The same iOS focus-zoom as .term__input, and this is where it did the most harm:
+   tapping "Your name" magnified the page and left the visitor to pinch back out to
+   find Send. Every textarea min-height is in em, so the fields grow with the text. */
+@media (hover: none), (pointer: coarse) {
+  .field input,
+  .field textarea { font-size: max(16px, var(--t-sm)); }
 }
 .field textarea { resize: vertical; min-height: 7.5em; }
 /* Same as .term__input::placeholder — explicit 1, because Firefox dims these by
