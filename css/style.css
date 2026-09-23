@@ -1244,6 +1244,14 @@ body.cursor-sel.cursor-down .cursor-ring::before {
 @media (forced-colors: active) {
   .hero__title { line-height: normal; }
 }
+/* An outline with nothing inside it doesn't survive a contrast theme: the
+   outline is forced to the text colour, and the text colour here is transparent.
+   Chromium forces that as well and paints VERMA solid in CanvasText. Firefox
+   keeps the transparent, so the outline goes transparent with it and the word
+   paints nothing at all. Naming CanvasText gives both the same solid word. */
+@media (forced-colors: active) {
+  .hero__title .glitch--accent { color: CanvasText; }
+}
 .hero__role {
   display: flex;
   flex-wrap: wrap;

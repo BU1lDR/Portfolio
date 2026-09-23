@@ -149,6 +149,10 @@
     -webkit-text-stroke: 2px var(--red);
     color: transparent;
   }
+  /* Solid under a contrast theme, for the reason VERMA is in css/style.css: the
+     outline is forced to the text colour, Firefox keeps that colour transparent,
+     and the number disappears. */
+  @media (forced-colors: active) { .nf__code { color: CanvasText; } }
   .nf__half { display: block; }
   .nf__half--a {
     clip-path: polygon(0 0, 65% 0, 36% 100%, 0 100%);
