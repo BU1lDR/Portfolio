@@ -1601,6 +1601,15 @@ body.term-cold .termlaunch { transition: none; }
 .term__dots i     { background: var(--grn); }
 .term__dot:hover  { filter: brightness(1.35); transform: scale(1.15); }
 .term__dot:focus-visible { outline-offset: 5px; }
+/* A contrast theme repaints every background as Canvas, and a background is all
+   these two buttons are — border: 0 above — so close and collapse turned into
+   empty title bar. A border is the one part forced-colors keeps and recolours,
+   and box-sizing keeps the circle at 11px. The green one is left to vanish: it
+   is aria-hidden, does nothing, and drawn next to two real buttons it would
+   read as a third. */
+@media (forced-colors: active) {
+  .term__dot { border: 1px solid ButtonText; }
+}
 
 .term__path {
   font-size: var(--t-xs);
@@ -1749,6 +1758,16 @@ body.term-cold .termlaunch { transition: none; }
   line-height: 1.65;
 }
 .term__screen:focus { outline: none; }
+/* The output is a tab stop (tabindex=0, so it can be scrolled from the keyboard)
+   and its focus ring is the window's: .term:focus-within tints the border and
+   adds a glow. Under forced-colors the border is recoloured to the same system
+   colour either way and the glow is dropped, so tabbing in changed nothing on
+   screen. Inset, because .term__body clips anything outside the screen's box.
+   CanvasText, not Highlight: Firefox leaves Highlight as its see-through
+   selection tint, which barely shows against Canvas. */
+@media (forced-colors: active) {
+  .term__screen:focus-visible { outline: 2px solid CanvasText; outline-offset: -2px; }
+}
 
 /* one printed line */
 .tl-line { white-space: pre-wrap; word-break: break-word; }
