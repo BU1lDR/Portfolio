@@ -302,8 +302,15 @@
        "cursor:pointer is the whole hint", because an underline or a hover colour
        would answer the question the egg asks. Blanking that pointer without
        putting the element here would have deleted the only hint the egg has. The
-       red ring is a louder one. */
-    var HOVER = 'a, button, [role="button"], .term__chips button, label, ' +
+       red ring is a louder one.
+
+       `.term__chips button` used to be in this list and is gone: `button` is
+       already here on its own, so the longer form matched a strict subset of what
+       the shorter one matched and never once changed an answer. It did cost
+       something, though — a descendant combinator inside closest() makes the
+       engine re-walk upward from every candidate, and this list is evaluated on
+       every pointerover. Two descendant selectors down to one. */
+    var HOVER = 'a, button, [role="button"], label, ' +
                 '.sec__num i, .sam__hit, .termwin.is-min .term__bar';
     var TEXT = 'input[type="text"], input[type="email"], textarea, .term__input';
 
@@ -331,10 +338,18 @@
       return getComputedStyle(el).userSelect !== 'none';
     }
 
+    /* Records where the pointer is and wakes the loop; it does NOT write a style.
+       It used to set dot.style.transform right here, which looks like the cheapest
+       possible thing and is not: pointermove can fire several times per frame, and
+       every one of those writes was a CSSOM parse the screen never showed, because
+       a frame only paints once. The write moved into follow() below, which runs
+       once per frame by construction and reads the same tx/ty. Nothing is delayed
+       by it — input is dispatched before rAF within the same frame, so the dot
+       still lands in the very next paint. */
     window.addEventListener('pointermove', function (ev) {
       if (ev.pointerType === 'touch') return;
       tx = ev.clientX; ty = ev.clientY;
-      dot.style.transform = 'translate3d(' + tx + 'px,' + ty + 'px,0)';
+      wake();
       if (!ready) { ready = true; doc.body.classList.add('cursor-ready'); }
     }, { passive: true });
 
@@ -342,52 +357,151 @@
        for every state except the blade is a scale, and a scale has to be written
        by the follow loop below — see the note at the end of §04's cursor block
        for why it cannot live in the stylesheet. */
-    var down = false, sel = false;
+    var down = false, sel = false, exact = false;
     var PRESS = .82;
 
-    window.addEventListener('pointerdown', function () { down = true; doc.body.classList.add('cursor-down'); }, { passive: true });
-    window.addEventListener('pointerup', function () { down = false; doc.body.classList.remove('cursor-down'); }, { passive: true });
+    /* Both wake() the loop: the press scale is part of the transform follow()
+       writes, so with the loop parked (see below) a press would otherwise not be
+       drawn until the pointer happened to move. */
+    window.addEventListener('pointerdown', function () { down = true; doc.body.classList.add('cursor-down'); wake(); }, { passive: true });
+    window.addEventListener('pointerup', function () { down = false; doc.body.classList.remove('cursor-down'); wake(); }, { passive: true });
 
     // Leaving / re-entering the window
     doc.addEventListener('mouseleave', function () { doc.body.classList.remove('cursor-ready'); });
     doc.addEventListener('mouseenter', function () { if (ready) doc.body.classList.add('cursor-ready'); });
 
+    /* This is the expensive handler — 89us a fire against 39us for the whole move
+       path, measured per listener in .preview-tools/cursor-perf.js — and it fires
+       once per element boundary the pointer crosses, so prose full of <b> and <a>
+       bills it far more often than a flat card does. Three changes, all of them
+       about doing less rather than doing it differently:
+
+       DECIDE EVERYTHING BEFORE WRITING ANYTHING. sel used to be computed AFTER
+       three classList.toggle calls, and prose() ends in getComputedStyle — so the
+       read landed on a style tree those three writes had just dirtied and had to
+       flush it synchronously. A forced style recalc, on every crossing, for a
+       value the very next line then wrote back. Reads first, writes last, and the
+       flush is gone.
+
+       STOP LOOKING ONCE SOMETHING HAS CLAIMED IT. The four states are a priority
+       order, not a set — a link inside a paragraph is a link — so once a higher
+       one matches, every closest() below it is work whose answer is discarded.
+       They are chained through ?: now instead of all being evaluated.
+
+       WRITE THE CLASSES ONLY WHEN THE STATE CHANGED. Crossing from a <p> into a
+       <b> inside it recomputes to the same state, and four toggles that each
+       invalidate style for what body's class list selects are not free. Comparing
+       one string first turns the common case into no writes at all. */
+    var state = '';
     doc.addEventListener('pointerover', function (ev) {
       var t = ev.target;
       if (!t || !t.closest) return;
 
       var labelled = t.closest('[data-cursor]');
-      var isText = t.closest(TEXT);
-      var isHover = t.closest(HOVER);
+      var isText = labelled ? null : t.closest(TEXT);
+      var isHover = (labelled || isText) ? null : t.closest(HOVER);
+      var isSel = !labelled && !isText && !isHover && prose(t);
 
-      doc.body.classList.toggle('cursor-label', !!labelled);
-      doc.body.classList.toggle('cursor-text', !!isText && !labelled);
-      doc.body.classList.toggle('cursor-hover', !!isHover && !labelled && !isText);
+      var next = labelled ? 'label' : isText ? 'text' : isHover ? 'hover' : isSel ? 'sel' : '';
+      if (next !== state) {
+        state = next;
+        doc.body.classList.toggle('cursor-label', next === 'label');
+        doc.body.classList.toggle('cursor-text', next === 'text');
+        doc.body.classList.toggle('cursor-hover', next === 'hover');
+        doc.body.classList.toggle('cursor-sel', next === 'sel');
+        sel = next === 'sel';
+        /* Whether the ring has to track exactly, and the reason is in the
+           stylesheet: these three states set .cursor to opacity 0, so the ring is
+           not a trailing companion to a dot that marks the truth — it IS the
+           cursor, and the only one on screen. See follow(). */
+        exact = next === 'label' || next === 'text' || next === 'sel';
+        wake();
+      }
 
-      /* Last, and only if nothing above claimed the pointer. The order is the
-         priority: a link inside a paragraph is a link. */
-      sel = !labelled && !isText && !isHover && prose(t);
-      doc.body.classList.toggle('cursor-sel', sel);
-
+      /* Outside the state guard: two different [data-cursor] elements are both
+         'label', and the second one still needs its own word in the ring. */
       if (labelled && label) label.textContent = labelled.dataset.cursor || '';
     }, { passive: true });
 
-    // The ring trails the dot with a light spring.
-    (function follow() {
-      rx += (tx - rx) * 0.17;
-      ry += (ty - ry) * 0.17;
-      /* The press scale is composed in HERE and not in the stylesheet. This line
-         writes an inline transform every frame, and an inline declaration beats
-         any stylesheet rule short of !important — so §04's old
-         `body.cursor-down .cursor-ring { transform: scale(.82) }` had never once
-         run, and !important would not have saved it either, since it would have
-         beaten the translate as well and parked the ring in the corner.
-         Skipped while the blade is up: that state answers a press by drawing the
-         blade 8px longer, and shrinking it at the same time reads as neither. */
-      ring.style.transform = 'translate3d(' + rx + 'px,' + ry + 'px,0)' +
-                             (down && !sel ? ' scale(' + PRESS + ')' : '');
-      requestAnimationFrame(follow);
-    })();
+    /* The ring trails the dot with a light spring — and that trail was the actual
+       bug behind "laggy at some points". Measured with .preview-tools/cursor-lag.js
+       at an ordinary 2000px/s sweep, the ring sat a median 58px and a p95 77px
+       behind the pointer. That is not a slow script; it is arithmetic. A spring
+       that closes a fraction k of the gap each frame settles, at constant speed, to
+       gap = v * tau, where tau is the time constant — about 90ms at k = .17. So
+       there is no "fast but still smooth" value of k: any smoothing you can see is
+       lag you can feel. The dot is what hides it, by sitting exactly on the
+       pointer while the ring drifts.
+
+       Except the dot is `opacity: 0` in cursor-label, cursor-text AND cursor-sel
+       (css/style.css), so in those three states the ring is the only cursor on
+       screen and the 58px IS the cursor's position. cursor-sel is the blade over
+       selectable prose, which is most of the page, and a blade is a text caret —
+       it has to be under the hand. Hence `exact`, set by the pointerover handler
+       above: when nothing else is drawing the true position, k becomes 1 and the
+       ring stops trailing. Over buttons and cards the dot is visible (.35) or the
+       target is a big shape, so the spring stays and the character with it.
+
+       The rest is bookkeeping this loop should always have done:
+
+       dt-NORMALISED k. `* 0.17` is per frame, not per second, so the trail was a
+       different length on every refresh rate — about 2.4x tighter on a 144Hz panel
+       and twice as loose across a dropped frame, which is exactly when it is most
+       visible. pow() converts "17% per 16.7ms" into this frame's share.
+
+       IT PARKS. An asymptotic lerp never arrives, so this loop used to re-assign a
+       transform 60 times a second forever, on a page nobody was touching. It now
+       snaps the last hundredth of a pixel and returns; wake() restarts it on move,
+       press and state change.
+
+       WRITE-IF-CHANGED. Both transforms are compared against the last string
+       written. Assigning the identical value still costs a CSSOM parse, and while
+       parked-but-woken (a press with the pointer still) the ring's string does not
+       change at all.
+
+       The press scale is composed in HERE and not in the stylesheet, because this
+       line writes an inline transform and an inline declaration beats any
+       stylesheet rule short of !important — so §04's old
+       `body.cursor-down .cursor-ring { transform: scale(.82) }` had never once
+       run, and !important would not have saved it either, since it would have
+       beaten the translate as well and parked the ring in the corner.
+       Skipped while the blade is up: that state answers a press by drawing the
+       blade 8px longer, and shrinking it at the same time reads as neither. */
+    var EASE = .17;
+    var raf = 0, last = 0, dotAt = '', ringAt = '';
+
+    function wake() {
+      if (!raf) { last = 0; raf = requestAnimationFrame(follow); }
+    }
+
+    function follow(now) {
+      /* Clamped: a tab restored after a minute must not arrive with dt = 60000 and
+         a k of 1 that teleports the ring — though with the loop parked that is
+         mostly theoretical now. */
+      var dt = last ? Math.min(100, now - last) : 16.7;
+      last = now;
+
+      var k = exact ? 1 : 1 - Math.pow(1 - EASE, dt / 16.667);
+      rx += (tx - rx) * k;
+      ry += (ty - ry) * k;
+
+      var d = 'translate3d(' + tx + 'px,' + ty + 'px,0)';
+      if (d !== dotAt) { dot.style.transform = d; dotAt = d; }
+
+      var r = 'translate3d(' + (Math.round(rx * 100) / 100) + 'px,' +
+                               (Math.round(ry * 100) / 100) + 'px,0)' +
+              (down && !sel ? ' scale(' + PRESS + ')' : '');
+      if (r !== ringAt) { ring.style.transform = r; ringAt = r; }
+
+      /* Settled — closer than a pixel can show. Land it exactly and stop. */
+      if (Math.abs(tx - rx) < .05 && Math.abs(ty - ry) < .05) {
+        rx = tx; ry = ty;
+        raf = 0;
+        return;
+      }
+      raf = requestAnimationFrame(follow);
+    }
+    wake();
   })();
 
 
