@@ -848,8 +848,15 @@ body.cursor-sel.cursor-down .cursor-ring::before {
 .boot__id.is-live .boot__id-scan { animation: idscan 1.35s var(--ease-io) 2; }
 .boot__id.is-live figcaption { color: var(--red); }
 
-/* photo out — frame stays, subject doesn't */
-.boot__id.is-out .boot__id-frame { border-color: color-mix(in srgb, var(--grn) 50%, var(--line)); }
+/* photo out — frame stays, subject doesn't.
+   Plain border-color first, then the blend; see the note on .nav for why every
+   color-mix() in this file is written twice. Pre-2023 browsers get the green at
+   full strength instead of half-mixed into the line colour, which for a frame
+   that is on screen for under a second is the right way to be wrong. */
+.boot__id.is-out .boot__id-frame {
+  border-color: var(--grn);
+  border-color: color-mix(in srgb, var(--grn) 50%, var(--line));
+}
 .boot__id.is-out figcaption { color: var(--grn); }
 
 @keyframes idscan {
@@ -913,6 +920,26 @@ body.cursor-sel.cursor-down .cursor-ring::before {
   gap: var(--gut);
   height: var(--nav-h);
   padding-inline: var(--gut);
+  /* Two background declarations, and the first one is not redundant. color-mix()
+     shipped in Chrome 111, Safari 16.2 and Firefox 113 — all 2023 — and a browser
+     older than that does not fall back to something reasonable, it throws the whole
+     declaration out at parse time as a syntax error. This element is
+     position: fixed with z-index 100, so no background meant the page scrolling
+     underneath came straight through the nav links. backdrop-filter covered for it
+     on Safari, which has had the prefixed version since 9; on Firefox before 103
+     there was no blur either and the bar was simply invisible.
+
+     The fallback is the opaque --bg rather than a hand-written rgba(5,6,10,.78),
+     for two reasons: it cannot go stale when --bg changes, and it errs toward
+     legible. Old browsers lose the glass, not the contrast. No @supports needed —
+     the cascade already does this, since anything that understands the second line
+     applies it over the first and anything that does not never sees it.
+
+     The other three color-mix() calls in this file are border-colors with a plain
+     border underneath them, so they degrade to "the state change does not show"
+     rather than to a hole. They are still given fallbacks, because a focus ring
+     that silently stops indicating focus is the same class of bug as this one. */
+  background: var(--bg);
   background: color-mix(in srgb, var(--bg) 78%, transparent);
   backdrop-filter: blur(14px) saturate(1.4);
   -webkit-backdrop-filter: blur(14px) saturate(1.4);
@@ -1499,6 +1526,13 @@ body.term-cold .termlaunch { transition: none; }
   font-family: var(--f-mono);
 }
 .term:focus-within {
+  /* Of the four color-mix() calls in this file this is the one that had to have a
+     fallback: it is a focus indicator. Dropped, the border stays at --line-2 and
+     the window gives a keyboard user no sign of where focus went — which the
+     box-shadow below partly covers, but partly is not a standard to hold a focus
+     ring to. Full-strength green rather than 45% mixed, so the old-browser
+     failure is toward a louder ring, never a quieter one. */
+  border-color: var(--grn);
   border-color: color-mix(in srgb, var(--grn) 45%, var(--line-2));
   box-shadow: 0 2px 8px -2px rgba(0, 0, 0, .7),
               0 28px 64px -16px rgba(0, 0, 0, .92),
@@ -4571,6 +4605,10 @@ body.term-stowed .sam.p-idle .sam__cel,
               box-shadow .4s var(--ease);
 }
 .card:hover .card__inner {
+  /* Fallback then blend, per the note on .nav. The mildest of the four: a dropped
+     hover border still leaves the lift and the glow, so nothing is lost except
+     half a shade. */
+  border-color: var(--red);
   border-color: color-mix(in srgb, var(--red) 45%, var(--line));
   box-shadow: var(--shadow), var(--glow);
 }
