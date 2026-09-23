@@ -5106,6 +5106,16 @@ body.term-stowed .sam.p-idle .sam__cel,
   border-color: var(--red);
   background: var(--elev-2);
 }
+/* That focus state is two colours, and a contrast theme replaces both: the fill
+   becomes Canvas and the border a system colour, so all that was left of it was
+   a 1px border changing shade — black to dark purple in Chromium's emulated
+   theme, about 1.4:1. Every other control on the page keeps the 2px outline
+   from :focus-visible; under forced-colors the fields get it back, in
+   CanvasText for the same reason as the terminal screen's. */
+@media (forced-colors: active) {
+  .field input:focus,
+  .field textarea:focus { outline: 2px solid CanvasText; outline-offset: 2px; }
+}
 .field.has-err input,
 .field.has-err textarea { border-color: var(--red); }
 .field__err {
