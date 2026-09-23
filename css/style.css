@@ -5627,6 +5627,27 @@ body.term-stowed .sam.p-idle .sam__cel,
   .termwin, .termlaunch, .sec--terminal, .skip-link { display: none !important; }
   body { background: #fff; color: #000; }
   .reveal { opacity: 1 !important; transform: none !important; }
-  a::after { content: ' (' attr(href) ')'; font-size: .8em; color: #555; }
+  /* The address only where it leads off the site: "(#work)" means nothing on
+     paper, and nor does a relative path with a ?v= on the end. The links that
+     already use ::after (the hero's underline, the tap areas in §18b) have it
+     absolutely positioned at this same specificity, so it's put back in the
+     line here or the URL lands on top of the link. text-transform because the
+     hero's links are in capitals and the URL shouldn't be. overflow-wrap
+     because a URL only breaks at its hyphens otherwise, and the widest piece
+     of a Credly badge's was enough to push its certificate past the edge of
+     the column on US Letter. */
+  a[href^="http"]::after {
+    content: ' (' attr(href) ')';
+    position: static;
+    width: auto;
+    height: auto;
+    background: none;
+    transform: none;
+    font-size: .8em;
+    color: #555;
+    text-transform: none;
+    letter-spacing: normal;
+    overflow-wrap: anywhere;
+  }
   .sec { padding-block: 1.2rem; page-break-inside: avoid; }
 }
