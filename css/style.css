@@ -394,6 +394,17 @@ ul, ol { list-style: none; }
    clip applies to text painted by descendants too, generated content
    included, so the background still lands inside these letterforms. */
 .glitch__photo::before { content: attr(data-text); }
+/* Not under a contrast theme. forced-colors puts a solid Canvas backplate behind
+   text so it stays readable over images, and this copy of the word then runs
+   that backplate through its own invert() at .58 — a grey slab over the name,
+   the letters pale grey inside it, the top of it cutting into the ./initialize
+   line. It is the filter and not the photo: without the image the slab stays,
+   without the filter it goes. The face could not survive the palette
+   anyway, and the element is aria-hidden, so nothing is lost but the slab. The
+   `aryan` egg below still fires; it just has nothing to resolve here. */
+@media (forced-colors: active) {
+  .glitch__photo { display: none; }
+}
 /* The surge. Same duration and the same stepped, un-eased feel as the
    chromatic split, so it reads as one event: the interference gets worse and
    the face is what's underneath it. */
