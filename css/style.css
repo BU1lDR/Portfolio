@@ -709,8 +709,17 @@ body.cursor-sel.cursor-down .cursor-ring::before {
    to the only place that can hold both at once. */
 
 /* Hide the whole custom-cursor rig on touch / no-hover devices,
-   and give the real cursor back. */
-@media (hover: none), (pointer: coarse) {
+   and give the real cursor back.
+
+   And under a Windows contrast theme, where it is not a style choice but a
+   missing pointer. forced-colors repaints every background as Canvas and drops
+   gradients and shadows, and the rig is made of those: the dot is a red fill,
+   the I-beam a green one, the blade nothing but gradients. Over prose the
+   pointer was simply gone — 0 changed pixels where normal mode has 144, with the
+   real cursor switched off below. Someone on a contrast theme has often set a
+   large system pointer as well, and the one they chose beats any we draw.
+   Measured in .preview-tools/forced-colors.js. */
+@media (hover: none), (pointer: coarse), (forced-colors: active) {
   .cursor, .cursor-ring { display: none; }
 }
 
@@ -730,15 +739,18 @@ body.cursor-sel.cursor-down .cursor-ring::before {
    Specificity cannot express "later than everything, including rules I have not
    written yet", and a longer list would just be the same bug with more entries.
    The declaration IS an override of the whole sheet, so it says so. It is safe
-   because both gates are still on: the coarse-pointer query above never reaches
-   this block, and .cursor-ready is only added once a real mouse has moved, so a
-   keyboard-only or touch visitor never loses a cursor they were using.
+   because the gates are still on: the coarse-pointer query above never reaches
+   this block, forced-colors: none keeps it off whenever the rig is hidden for a
+   contrast theme, and .cursor-ready is only added once a real mouse has moved,
+   so a keyboard-only or touch visitor never loses a cursor they were using. A
+   browser too old to know forced-colors fails that test and keeps its own
+   cursor on top of the rig — two pointers, never none.
 
    The elements that lost a MEANINGFUL pointer did not lose the hint — §06's
    HOVER list picked up .sec__num i, .sam__hit and the folded bar in the same
    change, so they get the red ring instead, which says "target" louder than the
    OS hand ever did. */
-@media (hover: hover) and (pointer: fine) {
+@media (hover: hover) and (pointer: fine) and (forced-colors: none) {
   body.cursor-ready,
   body.cursor-ready * { cursor: none !important; }
   /* And the last 10px: <html> keeps its own `auto` because .cursor-ready is on
