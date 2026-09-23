@@ -1234,6 +1234,16 @@ body.cursor-sel.cursor-down .cursor-ring::before {
   color: transparent;
   padding-left: .07em;
 }
+/* A contrast theme puts a Canvas backplate behind each run of text, and the
+   plate is the font's full height, not the line box. At .86 the two lines' plates
+   overlap by a third of a line and each is painted over the one above it: VERMA's
+   took the feet off ARYAN (all but a sliver on the left, where the padding is),
+   and ARYAN's took the bottom half off the ./initialize line. At normal the line
+   box is the font's height, so the plates sit edge to edge. The name gets taller,
+   but only there. */
+@media (forced-colors: active) {
+  .hero__title { line-height: normal; }
+}
 .hero__role {
   display: flex;
   flex-wrap: wrap;
