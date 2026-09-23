@@ -5650,4 +5650,8 @@ body.term-stowed .sam.p-idle .sam__cel,
     overflow-wrap: anywhere;
   }
   .sec { padding-block: 1.2rem; page-break-inside: avoid; }
+  /* Most sections are longer than a page, so the rule above can't hold and the
+     break lands wherever it falls, which was through the middle of a project
+     card. These are the pieces that do fit on a page. */
+  .card, .tl, .certs__list li, .skillgroup, .idcard { break-inside: avoid; }
 }
