@@ -5625,6 +5625,9 @@ body.term-stowed .sam.p-idle .sam__cel,
   .nav, .boot, .fx-grain, .fx-scan, .fx-vignette, .fx-matrix,
   .cursor, .cursor-ring, .hero__canvas, .hero__scroll,
   .termwin, .termlaunch, .sec--terminal, .skip-link { display: none !important; }
+  /* Empty fields and a Send button are no use on paper. The address, the
+     profiles and the resume are all in the column beside it. */
+  #contactForm { display: none; }
   body { background: #fff; color: #000; }
   .reveal { opacity: 1 !important; transform: none !important; }
   /* The address only where it leads off the site: "(#work)" means nothing on
