@@ -164,10 +164,11 @@ window.PORTFOLIO = {
     {
       name: 'अर्थNiti',
       year: '2026',
-      blurb: 'Smart India Hackathon 2026 — an AI-driven hyper-local business ' +
-             'advisory and financial structuring assistant for rural ' +
-             'micro-entrepreneurs. I built the backend: the API surface and ' +
-             'the integrations behind it.',
+      blurb: 'Smart India Hackathon 2026, problem statement SIH26091 for the ' +
+             'Ministry of Social Justice and Empowerment — an AI-driven ' +
+             'hyper-local business advisory and financial structuring assistant ' +
+             'for rural micro-entrepreneurs. I built the backend: the API ' +
+             'surface and the integrations behind it.',
       stack: ['Python', 'FastAPI', 'React', 'Tailwind CSS', 'Vite'],
       live: '',
       code: '',
@@ -220,7 +221,8 @@ window.PORTFOLIO = {
       when: '2026',
       what: 'Backend — Lead',
       where: 'Smart India Hackathon — अर्थNiti',
-      note: 'Problem statement: AI-driven hyper-local business advisory and ' +
+      note: 'Problem statement SIH26091, Ministry of Social Justice and ' +
+            'Empowerment: an AI-driven hyper-local business advisory and ' +
             'financial structuring assistant for rural micro-entrepreneurs.'
     }
   ],
