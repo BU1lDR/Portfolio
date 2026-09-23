@@ -65,9 +65,9 @@ Search for `EDIT #` and work through them in order.
 | 4 | `index.html:712` | Bio — three short paragraphs |
 | 5 | `index.html:772` | Skills — plain lists, one `article` per group |
 | 6 | `index.html:845` | Projects. Duplicate one `article.card` per project |
-| 7 | `index.html:951` | Timeline — education and experience |
-| 7b | `index.html:992` | Certifications |
-| 8 | `index.html:1191` | Contact form — the address it falls back to. No backend to configure |
+| 7 | `index.html:952` | Timeline — education and experience |
+| 7b | `index.html:993` | Certifications |
+| 8 | `index.html:1192` | Contact form — the address it falls back to. No backend to configure |
 | 9 | `js/data.js` | **The terminal's brain** — everything `whoami`, `skills`, `projects`, `certs`, `neofetch` etc. print |
 
 All nine of those line numbers drift every time the page grows, and all nine have
