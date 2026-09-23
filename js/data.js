@@ -189,6 +189,18 @@ window.PORTFOLIO = {
          JSON-LD alumniOf in step; they are three copies of one fact. */
       where: 'Dr Akhilesh Das Gupta Institute of Professional Studies (ADGIPS), GGSIPU — Delhi, India',
       note: 'CGPA 9.04.'
+    },
+    {
+      when: '2022 — 2025',
+      /* The resume gives this entry as school, dates and marks only — it names no
+         qualification. "Senior Secondary" is therefore inferred from the dates
+         rather than copied: the range closes months before the B.Tech opens, so
+         74.8% is a school-leaving mark. Flagged because a heading in the same
+         slot as "B.Tech — Information Technology" reads as sourced, and this one
+         is not. No city, for the same reason the resume gives none. */
+      what: 'Senior Secondary',
+      where: "Mother's Global School",
+      note: '74.8%.'
     }
   ],
 
