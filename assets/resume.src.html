@@ -313,6 +313,19 @@ h1 {
   text-align: center;
   line-height: 1.45;
 }
+/* The four URLs below are anchors, and this rule is what makes that free. Every
+   one of them used to be a bare text node, so the PDF carried no link
+   annotations at all — checked by inflating every stream and looking for /URI,
+   which found none — and a reader who wanted the site had to retype it from a
+   page they could not click. Chromium's print-to-PDF turns an <a href> into a
+   real annotation, so wrapping them is the entire fix.
+
+   Inheriting the colour and dropping the underline is not cosmetic tidying: it
+   keeps the rendered document byte-for-byte the same as before. Default link
+   styling would have put blue underlined text in a printed resume, and on a page
+   with six pixels of slack even a text-decoration can change nothing about the
+   height but everything about whether it looks like a resume. */
+.contact a { color: inherit; text-decoration: none; }
 
 /* ── section headings ────────────────────────────────────── */
 h2 {
@@ -402,8 +415,8 @@ h2 { break-after: avoid; page-break-after: avoid; }
      gets sent. The site links out to GitHub, Credly and LinkedIn; none of those
      three, and until now not this document either, linked back to the site. -->
 <p class="contact">
-  aryanverma102007@gmail.com | Delhi, India | bu1ldr.github.io/Portfolio<br>
-  GitHub: github.com/BU1lDR | Credly: credly.com/users/aryan_v | LinkedIn: linkedin.com/in/aryanver
+  <a href="mailto:aryanverma102007@gmail.com">aryanverma102007@gmail.com</a> | Delhi, India | <a href="https://bu1ldr.github.io/Portfolio/">bu1ldr.github.io/Portfolio</a><br>
+  GitHub: <a href="https://github.com/BU1lDR">github.com/BU1lDR</a> | Credly: <a href="https://www.credly.com/users/aryan_v">credly.com/users/aryan_v</a> | LinkedIn: <a href="https://www.linkedin.com/in/aryanver">linkedin.com/in/aryanver</a>
 </p>
 
 <p class="summary">Second-year Information Technology undergraduate (CGPA 9.04) who learns by building. Most
