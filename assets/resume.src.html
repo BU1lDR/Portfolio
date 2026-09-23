@@ -385,8 +385,24 @@ h2 { break-after: avoid; page-break-after: avoid; }
 <body>
 
 <h1>ARYAN VERMA</h1>
+
+<!-- The portfolio URL goes on the FIRST line, and the placement is the whole
+     reason it fits. Line two already carries three labelled URLs and runs to
+     about 95 characters — at 9.5pt in a 170mm column that is a full line, so a
+     fourth would wrap and cost ~13pt against the six pixels of slack this page
+     has (see the budget note above). Line one is email and a city, roughly 41
+     characters, with about half the measure unused. Same information, zero
+     height. Verified with .preview-tools/res-slack.js rather than by counting
+     characters, because where a line breaks is a font metrics question.
+
+     Unlabelled, unlike the three below it, because line one has no labels and
+     the path already says Portfolio. No scheme, matching every other URL here.
+
+     It is on the resume at all because the resume is the copy that actually
+     gets sent. The site links out to GitHub, Credly and LinkedIn; none of those
+     three, and until now not this document either, linked back to the site. -->
 <p class="contact">
-  aryanverma102007@gmail.com | Delhi, India<br>
+  aryanverma102007@gmail.com | Delhi, India | bu1ldr.github.io/Portfolio<br>
   GitHub: github.com/BU1lDR | Credly: credly.com/users/aryan_v | LinkedIn: linkedin.com/in/aryanver
 </p>
 

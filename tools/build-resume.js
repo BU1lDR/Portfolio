@@ -93,6 +93,13 @@ const REQUIRED = [
   ['the email', /aryanverma102007@gmail\.com/],
   ['the name', /ARYAN VERMA/],
   ['the city', /Delhi, India/],
+  /* The link back to the site. It sits at the end of the first contact line
+     purely because that line has the unused measure to hold it, which makes it
+     the easiest thing on the page to lose: reword the city or the email and the
+     line rewraps, the URL drops to line two, line two is already full, and the
+     one-page assertion below fails for a reason nobody would connect to this.
+     Asserting its presence turns that into a named failure instead. */
+  ['the portfolio URL', /bu1ldr\.github\.io\/Portfolio/],
   ['the transliteration that survives extraction', /ArthNiti/],
 ];
 
