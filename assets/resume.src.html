@@ -110,16 +110,14 @@
      segments. Keep the word "identified": those are the accounts the
      segmentation flags, not a confirmed count of customers who have left.
 
-     The capstone is NOT a fourth PROJECTS entry, and not only because of the six
-     pixels below — it is the internship's own output, so a PROJECTS entry would
-     be the same work billed twice. The second bullet is unchanged and stays: the
+     The capstone is NOT a PROJECTS entry — it is the internship's own output, so
+     a PROJECTS entry would be the same work billed twice. The second bullet is unchanged and stays: the
      role is titled "with AI", and dropping the one line that speaks to that in
      order to say more about the notebook would cost more than it buys.
 
-     Both replacements were length-checked, not eyeballed — see the note further
-     down about six pixels. Each bullet must stay on ONE line: they are indented
-     11pt, so the usable width is about 90 characters, and a bullet that wraps
-     costs a line this page does not have.
+     Both replacements were length-checked, not eyeballed. Each bullet should
+     stay on ONE line: they are indented 11pt, so the usable width is about 90
+     characters, and a bullet that wraps reads as a paragraph.
 
      TWO DISAGREEMENTS WITH THE SITE, NOW SETTLED — AND ON WHAT EVIDENCE
      Both were open questions here until they were checked against something
@@ -174,11 +172,19 @@
          "Sep 2026" date, because no other Projects entry carries one and dating
          exactly one of the three looks like an oversight rather than a fact.
 
-         The cost, stated plainly: EXPERIENCE now holds one entry. If you would
+         The cost, stated plainly: EXPERIENCE held one entry. If you would
          rather it held two, move this entry back there and cut the Projects
          copy instead — the same merge in the other direction, and the tradeoff
          is a fuller Experience section against a hackathon sitting next to an
          internship as though the two were the same kind of thing.
+
+         It holds two now, and the second is a hackathon: the RAKSHAM result
+         went in under EXPERIENCE on request (Nov 2026), with SACH under
+         PROJECTS. That pair is deliberate and it is the one place the same
+         work appears in both sections — Experience carries the title, the date
+         and the role, Projects the thing itself, and neither repeats the
+         other's sentence. This entry stays out: the objection to it was the
+         duplication, not the page count.
 
      THE CERTIFICATIONS LIST, AND WHAT WAS CHECKED BEFORE WRITING IT
      The old list had three lines. The site lists eleven, and assets/certs/ holds
@@ -240,14 +246,16 @@
      If you ever want per-project URLs, that is a change to all three entries
      and it needs a line found somewhere else first.
 
-     AND THE PAGE IS NOW TIGHTER THAN IT WAS. Measured at the real 170mm print
-     column: 965px of content against 257mm = 971px of page. Six pixels. It was
-     roughly 25 before this entry grew a Tech line. That is under half a line of
-     slack, so the next thing added here WILL push to page two — and the whole
-     point of tools/build-resume.js asserting the page count is that you find
-     that out from a failed build rather than from a recruiter. Do not treat the
-     assertion as advisory, and do not "fix" an overflow by dropping the body
-     text to 9.5pt; take a line out of the prose instead, the way this entry did.
+     THE PAGE BUDGET, AND WHY THERE ARE NOW TWO PAGES. At the real 170mm print
+     column the one-page version measured 965px of content against 257mm =
+     971px of page: six pixels, under half a line of slack. The next thing added
+     was always going to push to page two, and on request (Nov 2026) the RAKSHAM
+     result, SACH and Document Forensics went in and it did. tools/build-resume.js
+     now asserts at most two pages and still fails on a third, which means
+     something grew by accident. Entries do not split across the break (see
+     .entry below), so whatever does not fit moves whole to page two. Do not
+     "fix" an overflow by dropping the body text to 9.5pt; take a line out of
+     the prose instead.
 
      THE EDUCATION LINE
      It named GGSIPU alone, which is the affiliating university and not where you
@@ -322,9 +330,10 @@ h1 {
 
    Inheriting the colour and dropping the underline is not cosmetic tidying: it
    keeps the rendered document byte-for-byte the same as before. Default link
-   styling would have put blue underlined text in a printed resume, and on a page
-   with six pixels of slack even a text-decoration can change nothing about the
-   height but everything about whether it looks like a resume. */
+   styling would have put blue underlined text in a printed resume, and on the
+   one-page version, with six pixels of slack, even a text-decoration could
+   change nothing about the height but everything about whether it looks like a
+   resume. */
 .contact a { color: inherit; text-decoration: none; }
 
 /* ── section headings ────────────────────────────────────── */
@@ -342,7 +351,7 @@ h2 {
      the text to 9.5pt would also have made it fit, and would have made it worse
      to read on the way. Every number here was measured with resume-fit.js and
      confirmed by build-resume.js asserting the page count; none of it was
-     eyeballed, because the whole document sits within about 9pt of the bottom
+     eyeballed, because the whole document sat within about 9pt of the bottom
      margin and at that tolerance eyeballing is just a slower way to be wrong. */
   margin: 9pt 0 5pt;
 }
@@ -370,17 +379,16 @@ li::before { content: "\2022\00a0\00a0"; }
    divs, so it would have singled out the first entry on the page and nothing
    else, leaving Experience and Projects with different opening gaps.
 
-   The page clears the bottom margin by about 9pt, so this is a tight one-pager
-   the same way the PDF it replaces was. That slack is thin enough that a missing
-   Arial, or one more certification, pushes it over — which is why
-   build-resume.js asserts the page count rather than trusting it, and why the
-   assertion is a failure and not a warning. */
+   This was a tight one-pager, within about 9pt of the bottom margin, and is two
+   pages now. build-resume.js still asserts the page count (at most two) rather
+   than trusting it, and the assertion is a failure and not a warning. */
 .entry { margin-top: 7pt; }
 .line { margin-top: 0; }
 .tech { margin-top: 1pt; }
 
-/* Keep an entry from being split across the page break. There is only one page
-   today, but the first thing anyone does to a resume is add to it. */
+/* Keep an entry from being split across the page break. This was added before
+   there was a second page, because the first thing anyone does to a resume is
+   add to it; it is what moves Document Forensics whole to page two. */
 .entry, .edu { break-inside: avoid; page-break-inside: avoid; }
 h2 { break-after: avoid; page-break-after: avoid; }
 
@@ -402,8 +410,8 @@ h2 { break-after: avoid; page-break-after: avoid; }
 <!-- The portfolio URL goes on the FIRST line, and the placement is the whole
      reason it fits. Line two already carries three labelled URLs and runs to
      about 95 characters — at 9.5pt in a 170mm column that is a full line, so a
-     fourth would wrap and cost ~13pt against the six pixels of slack this page
-     has (see the budget note above). Line one is email and a city, roughly 41
+     fourth would wrap and cost ~13pt of height (see the budget note above).
+     Line one is email and a city, roughly 41
      characters, with about half the measure unused. Same information, zero
      height. Verified with .preview-tools/res-slack.js rather than by counting
      characters, because where a line breaks is a font metrics question.
@@ -422,8 +430,8 @@ h2 { break-after: avoid; page-break-after: avoid; }
 <p class="summary">Second-year Information Technology undergraduate (CGPA 9.04) who learns by building. Built
 secscan, a released Python CLI that points dependency-CVE, source-pattern and live-site
 checks at one target and keeps the intrusive probes behind an authorization gate; before it, a
-file integrity monitor. Grand Finalist (Top 30), RAKSHAM Hackathon, IIT Delhi.
-Looking for a cybersecurity internship with real systems in it.</p>
+file integrity monitor. <span style="white-space:nowrap">Grand Finalist (Top 30)</span>, RAKSHAM Hackathon, IIT Delhi. Strongest in Python
+and Linux. Looking for a cybersecurity internship with real systems in it.</p>
 
 <h2>SKILLS</h2>
 <p class="line">Security: Ethical Hacking, SAST, DAST, Dependency Scanning, Nmap, Burp Suite</p>
@@ -431,6 +439,18 @@ Looking for a cybersecurity internship with real systems in it.</p>
 <p class="line">Systems: Linux, Bash, Git, Networking</p>
 
 <h2>EXPERIENCE</h2>
+<!-- Newest first. Roles and outcome only: the SACH entry under PROJECTS describes the
+     thing itself, so the two do not say the same sentence twice. Facts are the certificate's
+     (organized by IIT Delhi, 25 Oct 2026, Grand Finalist (Top 30)) and the SACH team guide's
+     (Aryan owns "Engine and ML"). Nothing here about the result beyond the title. -->
+<div class="entry">
+  <p class="role">IIT Delhi | RAKSHAM AI Cybersecurity Hackathon - Grand Finalist (Top 30)</p>
+  <p class="when">Oct 2026</p>
+  <ul>
+    <li>One of 30 finalist teams (Team Koshish, four people); owned the engine and the ML.</li>
+    <li>Built SACH, a scam-warning prototype for the payment screen.</li>
+  </ul>
+</div>
 <div class="entry">
   <p class="role">IBM SkillsBuild | BharatCares Internship - Data Analytics with AI</p>
   <p class="when">Aug 2026 - Sep 2026</p>
@@ -471,6 +491,27 @@ Looking for a cybersecurity internship with real systems in it.</p>
      secrets, passive DAST for TLS/headers/cookies, opt-in active checks behind an authorization
      gate.</p>
   <p class="tech">Tech: Python, asyncio, httpx, cryptography, pytest (600+ tests)</p>
+</div>
+<div class="entry">
+  <!-- Wording and Tech line are the Portfolio's SACH card (js/data.js). The repo has no Code
+       link on the card on purpose, so none here either. -->
+  <p class="role">SACH - Engine and ML Developer (Team Koshish)</p>
+  <p>A hackathon prototype: before a risky payment goes through, it asks who told the payer to pay,
+     checks the answer against facts about the payee and warns on a mismatch, never blocking.
+     Mismatches, with no message content, feed a radar for new scam waves. Synthetic and public
+     data only.</p>
+  <p class="tech">Tech: Python, LightGBM, Kotlin, JavaScript</p>
+</div>
+<div class="entry">
+  <!-- From the repo README (github.com/BU1lDR/docforensics): solo entry to the DataOps
+       Innovation Hackathon 2026; it lists anomalies and does not decide authenticity. -->
+  <p class="role">Document Forensics - Solo Developer</p>
+  <p>Offline forensics for a human investigator: scanned and digital documents go in, a dossier comes
+     out in which every finding is traced to a box on a page of the stored file, backed by a
+     hash-chained, signed audit trail. Lists anomalies for a reviewer; never decides authenticity.
+     Solo entry to the DataOps Innovation Hackathon 2026, built and tested on synthetic documents
+     only.</p>
+  <p class="tech">Tech: Python, FastAPI, RapidOCR, PyMuPDF, OpenCV</p>
 </div>
 
 <h2>EDUCATION</h2>

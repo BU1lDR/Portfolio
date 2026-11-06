@@ -97,7 +97,7 @@ const REQUIRED = [
      purely because that line has the unused measure to hold it, which makes it
      the easiest thing on the page to lose: reword the city or the email and the
      line rewraps, the URL drops to line two, line two is already full, and the
-     one-page assertion below fails for a reason nobody would connect to this.
+     header grows a line for a reason nobody would connect to this.
      Asserting its presence turns that into a named failure instead. */
   ['the portfolio URL', /bu1ldr\.github\.io\/Portfolio/],
   ['the transliteration that survives extraction', /ArthNiti/],
@@ -154,7 +154,10 @@ const REQUIRED = [
      pdftotext's form feeds on a genuine two-pager, because a page-count check
      that is wrong in the safe direction is worse than no check. */
   const pages = (raw.match(/\/Type\s*\/Page[^s]/g) || []).length;
-  check(pages === 1, 'one page (' + pages + ')');
+  /* Two pages, on request, once SACH, Document Forensics and the RAKSHAM result
+     went in. The ceiling stays a failure and not a warning: a third page means
+     something grew by accident. */
+  check(pages <= 2, 'at most two pages (' + pages + ')');
 
   /* The test count in the secscan entry is the only figure here that goes stale
      on its own — it changes whenever that repo gains a test, and it went stale
