@@ -54,7 +54,7 @@ window.PORTFOLIO = {
      four hrefs in index.html as well would create a second source that drifts —
      and on a deploy where the two disagree, the stale one wins for anyone with
      JS off. */
-  resumeUrl: 'assets/resume.pdf?v=37',
+  resumeUrl: 'assets/resume.pdf?v=38',
 
   /* ── skills ─────────────────────────────────────────────── */
   /* Plain lists, no percentages. A number like "Python: 82%"   */
@@ -184,7 +184,7 @@ window.PORTFOLIO = {
              'payment goes through it asks who told the payer to pay, checks the ' +
              'answer against facts about the payee and warns on a mismatch, never ' +
              'blocking; mismatches feed a content-free radar for new scam waves. ' +
-             'I owned the engine and the ML. Reached the finale (top 30 teams).',
+             'I owned the engine and the ML. Grand Finalist (top 30 teams).',
       stack: ['Python', 'LightGBM', 'Kotlin', 'JavaScript'],
       live: '',
       // No code link on purpose: add one once the team has agreed to point at the repo.
