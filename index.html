@@ -225,7 +225,7 @@
      404.html loads the same stylesheet and its own subset of the scripts, so
      leaving it behind gives you a shell on the 404 page running against last
      week's CSS. -->
-<link rel="stylesheet" href="css/style.css?v=36">
+<link rel="stylesheet" href="css/style.css?v=37">
 
 <!-- The boot overlay shows this ~0.7s in, so it must not be discovered
      late by the parser. 15 KB — it is on the critical path by design. -->
@@ -920,13 +920,63 @@
             <div class="card__thumb" aria-hidden="true"><span>肆</span></div>
             <div class="card__body">
               <h3 class="card__title">अर्थNiti</h3>
-              <p class="card__desc">Smart India Hackathon 2026, problem statement
-                SIH26091 for the Ministry of Social Justice and Empowerment — an
-                AI-driven hyper-local business advisory and financial structuring
-                assistant for rural micro-entrepreneurs. I built the backend: the
-                API surface and the integrations behind it.</p>
+              <p class="card__desc">Rule-based loan, scheme and registration advice
+                for rural micro-entrepreneurs, in eight Indian languages. Plain
+                questions in; out come whether the business makes money, how risky
+                the repayment looks, which schemes cover the work and which
+                registrations to ask about. Every figure comes from hand-written
+                rules; a model only helps with the optional voice intake and
+                written plan. A prototype: it began as the Smart India Hackathon
+                2026 team project and is now my solo entry to Meta’s Global AI
+                Developer Hackathon (Indie Track).</p>
               <ul class="card__stack"><li>Python</li><li>FastAPI</li><li>React</li><li>Tailwind CSS</li><li>Vite</li></ul>
-              <p class="card__note">Prototype phase · repository private</p>
+              <div class="card__links">
+                <a href="https://github.com/BU1lDR/ArthNiti"
+                   target="_blank" rel="noopener noreferrer">Code<i>↗</i></a>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card reveal" data-reveal-delay="320" data-tilt>
+          <div class="card__inner">
+            <span class="card__index" aria-hidden="true">05</span>
+            <div class="card__thumb" aria-hidden="true"><span>伍</span></div>
+            <div class="card__body">
+              <h3 class="card__title">SACH</h3>
+              <p class="card__desc">A truth check at the pay screen, built with Team
+                Koshish for the RAKSHAM AI Cybersecurity Hackathon at IIT Delhi.
+                Before a risky payment goes through it asks who told the payer to
+                pay, checks the answer against facts about the payee and warns on a
+                mismatch, never blocking; mismatches feed a content-free radar for
+                new scam waves. I owned the engine and the ML. Reached the finale
+                (top 30 teams).</p>
+              <ul class="card__stack"><li>Python</li><li>LightGBM</li><li>Kotlin</li><li>JavaScript</li></ul>
+              <!-- No Code link on purpose: add one once the team has agreed to
+                   point at the repo. -->
+              <p class="card__note">Four-person team · hackathon prototype</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="card reveal" data-reveal-delay="400" data-tilt>
+          <div class="card__inner">
+            <span class="card__index" aria-hidden="true">06</span>
+            <div class="card__thumb" aria-hidden="true"><span>陸</span></div>
+            <div class="card__body">
+              <h3 class="card__title">Document Forensics</h3>
+              <p class="card__desc">Offline forensics for a human investigator — my
+                solo entry to the DataOps Innovation Hackathon 2026. A case of
+                scanned and digital documents goes in; a dossier comes out in which
+                every finding is traced to a box on a page of the stored file, with
+                a hash-chained, signed audit trail. It lists anomalies for a
+                reviewer and never decides authenticity. Built and tested on
+                synthetic documents only.</p>
+              <ul class="card__stack"><li>Python</li><li>FastAPI</li><li>RapidOCR</li><li>PyMuPDF</li><li>OpenCV</li></ul>
+              <div class="card__links">
+                <a href="https://github.com/BU1lDR/docforensics"
+                   target="_blank" rel="noopener noreferrer">Code<i>↗</i></a>
+              </div>
             </div>
           </div>
         </article>
@@ -1354,15 +1404,15 @@
      not even data.js — so first is a position it can actually hold. Deleting
      this one line turns the scoreboard off and leaves all two dozen eggs
      working: every call site is guarded. -->
-<script src="js/eggs.js?v=36"></script>
-<script src="js/data.js?v=36"></script>
-<script src="js/scene.js?v=36" defer></script>
-<script src="js/terminal.js?v=36" defer></script>
-<script src="js/main.js?v=36" defer></script>
+<script src="js/eggs.js?v=37"></script>
+<script src="js/data.js?v=37"></script>
+<script src="js/scene.js?v=37" defer></script>
+<script src="js/terminal.js?v=37" defer></script>
+<script src="js/main.js?v=37" defer></script>
 <!-- After main.js, not before: samurai.js checks for window.TermWindow and
      stands down if it is missing, which is only a meaningful test once module 09
      has defined it. Deleting this one line is the samurai's kill switch — he
      stays on the roof, breathing, from CSS alone. -->
-<script src="js/samurai.js?v=36" defer></script>
+<script src="js/samurai.js?v=37" defer></script>
 </body>
 </html>

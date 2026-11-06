@@ -54,7 +54,7 @@ window.PORTFOLIO = {
      four hrefs in index.html as well would create a second source that drifts —
      and on a deploy where the two disagree, the stale one wins for anyone with
      JS off. */
-  resumeUrl: 'assets/resume.pdf?v=36',
+  resumeUrl: 'assets/resume.pdf?v=37',
 
   /* ── skills ─────────────────────────────────────────────── */
   /* Plain lists, no percentages. A number like "Python: 82%"   */
@@ -164,15 +164,45 @@ window.PORTFOLIO = {
     {
       name: 'अर्थNiti',
       year: '2026',
-      blurb: 'Smart India Hackathon 2026, problem statement SIH26091 for the ' +
-             'Ministry of Social Justice and Empowerment — an AI-driven ' +
-             'hyper-local business advisory and financial structuring assistant ' +
-             'for rural micro-entrepreneurs. I built the backend: the API ' +
-             'surface and the integrations behind it.',
+      blurb: 'Rule-based loan, scheme and registration advice for rural ' +
+             'micro-entrepreneurs, in eight Indian languages. Plain questions in; ' +
+             'out come whether the business makes money, how risky the repayment ' +
+             'looks, which schemes cover the work and which registrations to ask ' +
+             'about. Every figure comes from hand-written rules; a model only ' +
+             'helps with the optional voice intake and written plan. A prototype: ' +
+             'it began as the Smart India Hackathon 2026 team project and is now ' +
+             'my solo entry to Meta’s Global AI Developer Hackathon (Indie Track).',
       stack: ['Python', 'FastAPI', 'React', 'Tailwind CSS', 'Vite'],
       live: '',
+      code: 'https://github.com/BU1lDR/ArthNiti'
+    },
+    {
+      name: 'SACH',
+      year: '2026',
+      blurb: 'A truth check at the pay screen, built with Team Koshish for the ' +
+             'RAKSHAM AI Cybersecurity Hackathon at IIT Delhi. Before a risky ' +
+             'payment goes through it asks who told the payer to pay, checks the ' +
+             'answer against facts about the payee and warns on a mismatch, never ' +
+             'blocking; mismatches feed a content-free radar for new scam waves. ' +
+             'I owned the engine and the ML. Reached the finale (top 30 teams).',
+      stack: ['Python', 'LightGBM', 'Kotlin', 'JavaScript'],
+      live: '',
+      // No code link on purpose: add one once the team has agreed to point at the repo.
       code: '',
-      note: 'Prototype phase · repository private'
+      note: 'Four-person team · hackathon prototype'
+    },
+    {
+      name: 'Document Forensics',
+      year: '2026',
+      blurb: 'Offline forensics for a human investigator — my solo entry to the ' +
+             'DataOps Innovation Hackathon 2026. A case of scanned and digital ' +
+             'documents goes in; a dossier comes out in which every finding is ' +
+             'traced to a box on a page of the stored file, with a hash-chained, ' +
+             'signed audit trail. It lists anomalies for a reviewer and never ' +
+             'decides authenticity. Built and tested on synthetic documents only.',
+      stack: ['Python', 'FastAPI', 'RapidOCR', 'PyMuPDF', 'OpenCV'],
+      live: '',
+      code: 'https://github.com/BU1lDR/docforensics'
     }
   ],
 
